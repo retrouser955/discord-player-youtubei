@@ -1,4 +1,4 @@
-./README.md
-./LEGAL.md
-./.yarn
-./.yarnrc.yml
+LEGAL.md
+.yarn
+.yarnrc.yml
+lib/
