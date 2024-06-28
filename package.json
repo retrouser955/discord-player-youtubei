@@ -1,0 +1,21 @@
+{
+  "name": "discord-player-youtubei",
+  "version": "0.0.1",
+  "description": "An unofficial package to test the use of youtubei in discord-player v6.",
+  "main": "dist/index.js",
+  "repository": "https://github.com/retrouser955/discord-player-youtubei",
+  "author": "retro_ig",
+  "license": "Creative Commons",
+  "devDependencies": {
+    "@discord-player/extractor": "^4.4.7",
+    "discord-player": "^6.6.10",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.2"
+  },
+  "dependencies": {
+    "youtubei.js": "^10.0.0"
+  },
+  "scripts": {
+    "build": "tsup"
+  }
+}
