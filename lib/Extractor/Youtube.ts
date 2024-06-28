@@ -133,7 +133,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             }
             case QueryType.YOUTUBE_VIDEO: {
                 const videoId = new URL(query).searchParams.get("v")!
-                const vid = await this.innerTube.getBasicInfo(videoId)
+                const vid = await this.innerTube.getInfo(videoId)
 
                 return {
                     playlist: null,
@@ -215,7 +215,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         // @ts-expect-error
         const isVidInfo = typeof video?.getWatchNextContinuation === "function"
-        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getBasicInfo(track.url)
+        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo(track.url)
 
         const vid = await rawVideo.getWatchNextContinuation()
 
