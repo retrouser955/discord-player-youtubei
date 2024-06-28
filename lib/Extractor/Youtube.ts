@@ -4,7 +4,6 @@ import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream"
 import { YouTubeExtractor } from "@discord-player/extractor";
 import { type Video } from "youtubei.js/dist/src/parser/nodes";
-import { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YoutubeiOptions {
     authenication?: OAuth2Tokens;
@@ -50,7 +49,7 @@ async function streamFromYT(query: string, innerTube: Innertube, options: YTStre
 }
 
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
-    public static identifier: string = "";
+    public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
     public innerTube!: Innertube
     public _stream!: (q: string, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>
  
@@ -137,7 +136,23 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                 return {
                     playlist: null,
                     tracks: [
-                        this.buildTrack(vid, context)
+                        new Track(this.context.player, {
+                            title: vid.basic_info.title ?? "UNKNOWN TITLE",
+                            thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
+                            description: vid.basic_info.short_description,
+                            author: vid.basic_info.channel?.name,
+                            requestedBy: context.requestedBy,
+                            url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
+                            views: vid.basic_info.view_count,
+                            duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
+                            raw: vid,
+                            source: "youtube",
+                            queryType: "youtubeVideo",
+                            metadata: vid,
+                            async requestMetadata() {
+                                return vid
+                            },
+                        })
                     ]
                 }
             }
@@ -155,25 +170,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         }
     }
 
-    buildTrack(vid: Video | VideoInfo, context: ExtractorSearchContext, pl?: Playlist) {
-        const track = vid instanceof VideoInfo ? new Track(this.context.player, {
-            title: vid.basic_info.title ?? "UNKNOWN TITLE",
-            thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
-            description: vid.basic_info.short_description,
-            author: vid.basic_info.channel?.name,
-            requestedBy: context.requestedBy,
-            url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
-            views: vid.basic_info.view_count,
-            duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
-            raw: vid,
-            playlist: pl,
-            source: "youtube",
-            queryType: "youtubeVideo",
-            metadata: vid,
-            async requestMetadata() {
-                return vid
-            },
-        }) : new Track(this.context.player, {
+    buildTrack(vid: Video, context: ExtractorSearchContext, pl?: Playlist) {
+        const track = new Track(this.context.player, {
             title: vid.title.text ?? "UNKNOWN YOUTUBE VIDEO",
             thumbnail: vid.best_thumbnail?.url ?? vid.thumbnails[0].url,
             description: vid.description ?? vid.title ?? "UNKNOWN DESCRIPTION",
