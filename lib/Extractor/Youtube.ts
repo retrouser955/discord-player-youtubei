@@ -6,7 +6,7 @@ import { YouTubeExtractor } from "@discord-player/extractor";
 import { type Video } from "youtubei.js/dist/src/parser/nodes";
 
 export interface YoutubeiOptions {
-    authenication?: OAuth2Tokens;
+    authentication?: OAuth2Tokens;
     overrideDownloadOptions?: DownloadOptions;
     createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string|Readable>;
     signOutOnDeactive?: boolean;
@@ -14,7 +14,7 @@ export interface YoutubeiOptions {
 
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;
-    authenication?: OAuth2Tokens;
+    authentication?: OAuth2Tokens;
     demuxable?: boolean;
     overrideDownloadOptions?: DownloadOptions;
 }
@@ -57,9 +57,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         this.protocols = ['ytsearch', 'youtube']
 
         this.innerTube = await Innertube.create()
-        if(this.options.authenication) {
+        if(this.options.authentication) {
             try {
-                this.innerTube.session.signIn(this.options.authenication)
+                await this.innerTube.session.signIn(this.options.authentication)
+                this.context.player.debug(`Signed into YouTube TV API using client name: ${this.innerTube.session.client_name}`)
             } catch (error) {
                 this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`)
             }
@@ -79,7 +80,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     async deactivate(): Promise<void> {
         this.protocols = []
-        if(this.options.signOutOnDeactive) await this.innerTube.session.signOut()
+        if(this.options.signOutOnDeactive && this.innerTube.session.logged_in) await this.innerTube.session.signOut()
     }
 
     async validate(query: string, type?: SearchQueryType | null | undefined): Promise<boolean> {

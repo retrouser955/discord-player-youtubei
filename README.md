@@ -55,7 +55,7 @@ const player = getPlayerSomehow()
 const oauthTokens = getOauthTokens() // The tokens printed from `generateOauthTokens()
 
 player.extractors.register(YoutubeiExtractor, {
-    authenication: oauthTokens
+    authentication: oauthTokens
 })
 ```
 
@@ -63,7 +63,7 @@ player.extractors.register(YoutubeiExtractor, {
 
 ```ts
 interface YoutubeiOptions {
-    authenication?: OAuth2Tokens;
+    authentication?: OAuth2Tokens;
     overrideDownloadOptions?: DownloadOptions;
     createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string|Readable>;
     signOutOnDeactive?: boolean;
