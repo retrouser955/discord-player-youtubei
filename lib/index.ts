@@ -27,6 +27,7 @@ export async function generateOauthTokens() {
             
         console.log('Your cookies are printed down below')
         console.log(data.credentials)
+        exit("Done Getting the credentials", true)
     })
 
     await youtube.session.signIn()
