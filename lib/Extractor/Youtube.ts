@@ -1,9 +1,10 @@
-import { BaseExtractor, ExtractorStreamable, Track, SearchQueryType, QueryType, ExtractorInfo, ExtractorSearchContext, Playlist, Util } from "discord-player";
+import { BaseExtractor, ExtractorStreamable, Track, SearchQueryType, QueryType, ExtractorInfo, ExtractorSearchContext, Playlist, Util, GuildQueueHistory } from "discord-player";
 import Innertube, { type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream"
 import { YouTubeExtractor } from "@discord-player/extractor";
 import { type Video } from "youtubei.js/dist/src/parser/nodes";
+import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YoutubeiOptions {
     authentication?: OAuth2Tokens;
@@ -198,5 +199,47 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     stream(info: Track<unknown>): Promise<ExtractorStreamable> {
         return this._stream(info.url, this)
+    }
+
+    async getRelatedTracks(track: Track<VideoInfo|Video>, _: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
+        const video = await track.requestMetadata()
+
+        if(!video) {
+            this.context.player.debug("UNEXPECTED! VIDEO METADATA WAS NOT FOUND. HAVE YOU BEEN TEMPERING?")
+
+            return {
+                playlist: null,
+                tracks: []
+            }
+        }
+
+        // @ts-expect-error
+        const isVidInfo = typeof video?.getWatchNextContinuation === "function"
+        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getBasicInfo(track.url)
+
+        const vid = await rawVideo.getWatchNextContinuation()
+
+        return {
+            playlist: null,
+            tracks: [
+                new Track(this.context.player, {
+                    title: vid.basic_info.title ?? "UNKNOWN TITLE",
+                    thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
+                    description: vid.basic_info.short_description,
+                    author: vid.basic_info.channel?.name,
+                    requestedBy: track.requestedBy,
+                    url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
+                    views: vid.basic_info.view_count,
+                    duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
+                    raw: vid,
+                    source: "youtube",
+                    queryType: "youtubeVideo",
+                    metadata: vid,
+                    async requestMetadata() {
+                        return vid
+                    },
+                })
+            ]
+        }
     }
 }
