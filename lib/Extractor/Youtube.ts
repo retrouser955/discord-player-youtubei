@@ -247,7 +247,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
 
             const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) => 
-                !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
+                !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`) && v.type === "CompactVideo"
             )
 
             if(!recommended) {
