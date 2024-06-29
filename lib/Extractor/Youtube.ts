@@ -243,72 +243,45 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         const isVidInfo = typeof video?.getWatchNextContinuation === "function"
         const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video|CompactVideo)).id)
 
-        try {
-            const vid = await rawVideo.getWatchNextContinuation()
+        if(rawVideo.watch_next_feed) {
+            this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
+
+            const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) => 
+                !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
+            )
+
+            if(!recommended) {
+                this.context.player.debug("Unable to fetch recommendations")
+                return this.#emptyResponse()
+            }
+
+            const trackConstruct = recommended.map(v => {
+                return new Track(this.context.player, {
+                    title: v.title.text ?? "UNKNOWN TITLE",
+                    thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0].url,
+                    author: v.author.name,
+                    requestedBy: track.requestedBy,
+                    url: `https://youtube.com/watch?v=${v.id}`,
+                    views: parseInt(v.view_count.text ?? "0"),
+                    duration: v.duration.text,
+                    raw: v,
+                    source: "youtube",
+                    queryType: "youtubeVideo",
+                    metadata: v,
+                    async requestMetadata() {
+                        return v
+                    },
+                })
+            })
 
             return {
                 playlist: null,
-                tracks: [
-                    new Track(this.context.player, {
-                        title: vid.basic_info.title ?? "UNKNOWN TITLE",
-                        thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
-                        description: vid.basic_info.short_description,
-                        author: vid.basic_info.channel?.name,
-                        requestedBy: track.requestedBy,
-                        url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
-                        views: vid.basic_info.view_count,
-                        duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
-                        raw: vid,
-                        source: "youtube",
-                        queryType: "youtubeVideo",
-                        metadata: vid,
-                        async requestMetadata() {
-                            return vid
-                        },
-                    })
-                ]
+                tracks: trackConstruct
             }
-        } catch {
-            if(rawVideo.watch_next_feed) {
-                this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
-
-                const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) => 
-                    !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
-                )
-
-                if(!recommended) {
-                    this.context.player.debug("Unable to fetch recommendations")
-                    return this.#emptyResponse()
-                }
-
-                const trackConstruct = recommended.map(v => {
-                    return new Track(this.context.player, {
-                        title: v.title.text ?? "UNKNOWN TITLE",
-                        thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0].url,
-                        author: v.author.name,
-                        requestedBy: track.requestedBy,
-                        url: `https://youtube.com/watch?v=${v.id}`,
-                        views: parseInt(v.view_count.text ?? "0"),
-                        duration: v.duration.text,
-                        raw: v,
-                        source: "youtube",
-                        queryType: "youtubeVideo",
-                        metadata: v,
-                        async requestMetadata() {
-                            return v
-                        },
-                    })
-                })
-
-                return {
-                    playlist: null,
-                    tracks: trackConstruct
-                }
-            }
-
-            this.context.player.debug("Unable to fetch recommendations")
-            return this.#emptyResponse()
         }
+
+        this.context.player.debug("Unable to fetch recommendations")
+        return this.#emptyResponse()
     }
 
     #emptyResponse() {
