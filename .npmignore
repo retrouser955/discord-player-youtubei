@@ -2,3 +2,5 @@ LEGAL.md
 .yarn
 .yarnrc.yml
 lib/
+tsconfig.json
+tsup.config.ts

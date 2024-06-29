@@ -1,9 +1,9 @@
 import { BaseExtractor, ExtractorStreamable, Track, SearchQueryType, QueryType, ExtractorInfo, ExtractorSearchContext, Playlist, Util, GuildQueueHistory } from "discord-player";
-import Innertube, { type OAuth2Tokens } from "youtubei.js";
+import Innertube, { UniversalCache, type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream"
 import { YouTubeExtractor } from "@discord-player/extractor";
-import { type Video } from "youtubei.js/dist/src/parser/nodes";
+import { type CompactVideo, type Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YoutubeiOptions {
@@ -26,6 +26,28 @@ const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
     type: "audio"
 }
 
+// async function streamFromYTAdv(query: Video | VideoInfo, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
+//     // @ts-expect-error
+//     const isVidInfo = typeof query?.getWatchNextContinuation === "function"
+//     const rawVideo = isVidInfo ? (query as VideoInfo) : await innerTube.getInfo((query as Video).id)
+
+//     if(options.demuxable) {
+//         const readable = await rawVideo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
+
+//         // @ts-expect-error
+//         const stream = Readable.fromWeb(readable)
+
+//         return {
+//             $fmt: options.overrideDownloadOptions?.format ?? "mp4",
+//             stream
+//         }
+//     }
+
+//     const streamData = rawVideo.chooseFormat(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
+//     const url = streamData?.decipher(innerTube.session.player)
+
+//     return url
+// }
 
 async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
     const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
@@ -57,7 +79,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     async activate(): Promise<void> {
         this.protocols = ['ytsearch', 'youtube']
 
-        this.innerTube = await Innertube.create()
+        this.innerTube = await Innertube.create({
+            cache: new UniversalCache(true, `${process.cwd()}/.dpy`)
+        })
         if(this.options.authentication) {
             try {
                 await this.innerTube.session.signIn(this.options.authentication)
@@ -146,7 +170,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                             requestedBy: context.requestedBy,
                             url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
                             views: vid.basic_info.view_count,
-                            duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
+                            duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
                             raw: vid,
                             source: "youtube",
                             queryType: "youtubeVideo",
@@ -201,7 +225,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         return this._stream(info.url, this)
     }
 
-    async getRelatedTracks(track: Track<VideoInfo|Video>, _: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
+    async getRelatedTracks(track: Track<VideoInfo|Video|CompactVideo>, _: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
         const video = await track.requestMetadata()
 
         if(!video) {
@@ -215,31 +239,76 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         // @ts-expect-error
         const isVidInfo = typeof video?.getWatchNextContinuation === "function"
-        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo(track.url)
+        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video|CompactVideo)).id)
 
-        const vid = await rawVideo.getWatchNextContinuation()
+        try {
+            const vid = await rawVideo.getWatchNextContinuation()
 
-        return {
-            playlist: null,
-            tracks: [
-                new Track(this.context.player, {
-                    title: vid.basic_info.title ?? "UNKNOWN TITLE",
-                    thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
-                    description: vid.basic_info.short_description,
-                    author: vid.basic_info.channel?.name,
+            return {
+                playlist: null,
+                tracks: [
+                    new Track(this.context.player, {
+                        title: vid.basic_info.title ?? "UNKNOWN TITLE",
+                        thumbnail: vid.basic_info.thumbnail?.at(0)?.url,
+                        description: vid.basic_info.short_description,
+                        author: vid.basic_info.channel?.name,
+                        requestedBy: track.requestedBy,
+                        url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
+                        views: vid.basic_info.view_count,
+                        duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
+                        raw: vid,
+                        source: "youtube",
+                        queryType: "youtubeVideo",
+                        metadata: vid,
+                        async requestMetadata() {
+                            return vid
+                        },
+                    })
+                ]
+            }
+        } catch {
+            if(rawVideo.watch_next_feed) {
+                this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
+
+                const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[])[0]
+
+                if(!recommended) {
+                    this.context.player.debug("Unable to fetch recommendations")
+                    return this.#emptyResponse()
+                }
+
+                const trackConstruct = new Track(this.context.player, {
+                    title: recommended.title.text ?? "UNKNOWN TITLE",
+                    thumbnail: recommended.best_thumbnail?.url ?? recommended.thumbnails[0].url,
+                    author: recommended.author.name,
                     requestedBy: track.requestedBy,
-                    url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
-                    views: vid.basic_info.view_count,
-                    duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
-                    raw: vid,
+                    url: `https://youtube.com/watch?v=${recommended.id}`,
+                    views: parseInt(recommended.view_count.text ?? "0"),
+                    duration: recommended.duration.text,
+                    raw: recommended,
                     source: "youtube",
                     queryType: "youtubeVideo",
-                    metadata: vid,
+                    metadata: recommended,
                     async requestMetadata() {
-                        return vid
+                        return recommended
                     },
                 })
-            ]
+
+                return {
+                    playlist: null,
+                    tracks: [trackConstruct]
+                }
+            }
+
+            this.context.player.debug("Unable to fetch recommendations")
+            return this.#emptyResponse()
+        }
+    }
+
+    #emptyResponse() {
+        return {
+            playlist: null,
+            tracks: []
         }
     }
 }
