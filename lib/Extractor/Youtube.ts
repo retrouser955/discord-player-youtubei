@@ -225,7 +225,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         return this._stream(info.url, this)
     }
 
-    async getRelatedTracks(track: Track<VideoInfo|Video|CompactVideo>, _: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
+    async getRelatedTracks(track: Track<VideoInfo|Video|CompactVideo>, history: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
         const video = await track.requestMetadata()
 
         if(!video) {
@@ -270,33 +270,37 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             if(rawVideo.watch_next_feed) {
                 this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
 
-                const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[])[0]
+                const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) => 
+                    !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
+                )
 
                 if(!recommended) {
                     this.context.player.debug("Unable to fetch recommendations")
                     return this.#emptyResponse()
                 }
 
-                const trackConstruct = new Track(this.context.player, {
-                    title: recommended.title.text ?? "UNKNOWN TITLE",
-                    thumbnail: recommended.best_thumbnail?.url ?? recommended.thumbnails[0].url,
-                    author: recommended.author.name,
-                    requestedBy: track.requestedBy,
-                    url: `https://youtube.com/watch?v=${recommended.id}`,
-                    views: parseInt(recommended.view_count.text ?? "0"),
-                    duration: recommended.duration.text,
-                    raw: recommended,
-                    source: "youtube",
-                    queryType: "youtubeVideo",
-                    metadata: recommended,
-                    async requestMetadata() {
-                        return recommended
-                    },
+                const trackConstruct = recommended.map(v => {
+                    return new Track(this.context.player, {
+                        title: v.title.text ?? "UNKNOWN TITLE",
+                        thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0].url,
+                        author: v.author.name,
+                        requestedBy: track.requestedBy,
+                        url: `https://youtube.com/watch?v=${v.id}`,
+                        views: parseInt(v.view_count.text ?? "0"),
+                        duration: v.duration.text,
+                        raw: v,
+                        source: "youtube",
+                        queryType: "youtubeVideo",
+                        metadata: v,
+                        async requestMetadata() {
+                            return v
+                        },
+                    })
                 })
 
                 return {
                     playlist: null,
-                    tracks: [trackConstruct]
+                    tracks: trackConstruct
                 }
             }
 
