@@ -2,7 +2,7 @@ import { BaseExtractor, ExtractorStreamable, Track, SearchQueryType, QueryType, 
 import Innertube, { UniversalCache, type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream"
-import { YouTubeExtractor } from "@discord-player/extractor";
+import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
 import { type CompactVideo, type Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
@@ -226,6 +226,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     }
 
     async getRelatedTracks(track: Track<VideoInfo|Video|CompactVideo>, history: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
+        if(!YoutubeExtractor.validateURL(track.url)) return this.#emptyResponse()
+
         const video = await track.requestMetadata()
 
         if(!video) {
@@ -255,7 +257,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                         requestedBy: track.requestedBy,
                         url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
                         views: vid.basic_info.view_count,
-                        duration: Util.buildTimeCode(Util.parseMS(vid.basic_info.duration ?? 0)),
+                        duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
                         raw: vid,
                         source: "youtube",
                         queryType: "youtubeVideo",
