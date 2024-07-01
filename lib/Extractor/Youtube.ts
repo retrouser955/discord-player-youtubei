@@ -5,6 +5,7 @@ import { Readable } from "node:stream"
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
 import { type CompactVideo, type Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
+import { type YTNode } from "youtubei.js/dist/src/parser/helpers";
 
 export interface YoutubeiOptions {
     authentication?: OAuth2Tokens;
@@ -25,29 +26,6 @@ const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
     format: "mp4",
     type: "audio"
 }
-
-// async function streamFromYTAdv(query: Video | VideoInfo, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
-//     // @ts-expect-error
-//     const isVidInfo = typeof query?.getWatchNextContinuation === "function"
-//     const rawVideo = isVidInfo ? (query as VideoInfo) : await innerTube.getInfo((query as Video).id)
-
-//     if(options.demuxable) {
-//         const readable = await rawVideo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-
-//         // @ts-expect-error
-//         const stream = Readable.fromWeb(readable)
-
-//         return {
-//             $fmt: options.overrideDownloadOptions?.format ?? "mp4",
-//             stream
-//         }
-//     }
-
-//     const streamData = rawVideo.chooseFormat(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-//     const url = streamData?.decipher(innerTube.session.player)
-
-//     return url
-// }
 
 async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
     const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
@@ -186,7 +164,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                 const search = await this.innerTube.search(query, {
                     type: "video"
                 })
-                const videos = (search.videos as Video[])
+                const videos = (search.videos?.filter((v) => v.type === "Video") as Video[])
 
                 return {
                     playlist: null,
@@ -258,13 +236,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
             const trackConstruct = recommended.map(v => {
                 return new Track(this.context.player, {
-                    title: v.title.text ?? "UNKNOWN TITLE",
-                    thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0].url,
-                    author: v.author.name,
+                    title: v.title?.text ?? "UNKNOWN TITLE",
+                    thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0]?.url,
+                    author: v.author?.name ?? "UNKNOWN AUTHOR",
                     requestedBy: track.requestedBy,
                     url: `https://youtube.com/watch?v=${v.id}`,
-                    views: parseInt(v.view_count.text ?? "0"),
-                    duration: v.duration.text,
+                    views: parseInt(v.view_count?.text ?? "0"),
+                    duration: v.duration?.text,
                     raw: v,
                     source: "youtube",
                     queryType: "youtubeVideo",
