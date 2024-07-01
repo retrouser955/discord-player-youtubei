@@ -9,7 +9,7 @@ import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 export interface YoutubeiOptions {
     authentication?: OAuth2Tokens;
     overrideDownloadOptions?: DownloadOptions;
-    createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string|Readable>;
+    createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string | Readable>;
     signOutOnDeactive?: boolean;
 }
 
@@ -52,7 +52,7 @@ const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
 async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
     const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
 
-    if(options.demuxable) {
+    if (options.demuxable) {
         const readable = await innerTube.download(ytId, options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
 
         // @ts-expect-error
@@ -66,7 +66,7 @@ async function streamFromYT(query: string, innerTube: Innertube, options: YTStre
 
     const streamData = await innerTube.getStreamingData(ytId, options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
 
-    if(!streamData.url) throw new Error("Unable to get stream data from video.")
+    if (!streamData.url) throw new Error("Unable to get stream data from video.")
 
     return streamData.url
 }
@@ -75,14 +75,14 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
     public innerTube!: Innertube
     public _stream!: (q: string, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>
- 
+
     async activate(): Promise<void> {
         this.protocols = ['ytsearch', 'youtube']
 
         this.innerTube = await Innertube.create({
             cache: new UniversalCache(true, `${process.cwd()}/.dpy`)
         })
-        if(this.options.authentication) {
+        if (this.options.authentication) {
             try {
                 await this.innerTube.session.signIn(this.options.authentication)
                 this.context.player.debug(`Signed into YouTube TV API using client name: ${this.innerTube.session.client_name}`)
@@ -91,7 +91,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             }
         }
 
-        if(typeof this.options.createStream ===  "function") {
+        if (typeof this.options.createStream === "function") {
             this._stream = this.options.createStream
         } else {
             this._stream = (q, _) => {
@@ -105,7 +105,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     async deactivate(): Promise<void> {
         this.protocols = []
-        if(this.options.signOutOnDeactive && this.innerTube.session.logged_in) await this.innerTube.session.signOut()
+        if (this.options.signOutOnDeactive && this.innerTube.session.logged_in) await this.innerTube.session.signOut()
     }
 
     async validate(query: string, type?: SearchQueryType | null | undefined): Promise<boolean> {
@@ -126,7 +126,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         query = query.includes('youtube.com') ? query.replace(/(m(usic)?|gaming)\./, '') : query;
         if (!query.includes('list=RD') && YouTubeExtractor.validateURL(query)) context.type = QueryType.YOUTUBE_VIDEO;
 
-        switch(context.type) {
+        switch (context.type) {
             case QueryType.YOUTUBE_PLAYLIST: {
                 const playlistUrl = new URL(query)
                 const plId = playlistUrl.searchParams.get("list")!
@@ -199,13 +199,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     buildTrack(vid: Video, context: ExtractorSearchContext, pl?: Playlist) {
         const track = new Track(this.context.player, {
             title: vid.title.text ?? "UNKNOWN YOUTUBE VIDEO",
-            thumbnail: vid.best_thumbnail?.url ?? vid.thumbnails[0].url,
+            thumbnail: vid.best_thumbnail?.url ?? vid.thumbnails[0]?.url ?? "",
             description: vid.description ?? vid.title ?? "UNKNOWN DESCRIPTION",
-            author: vid.author.name,
+            author: vid.author?.name ?? "UNKNOWN AUTHOR",
             requestedBy: context.requestedBy,
             url: `https://youtube.com/watch?v=${vid.id}`,
-            views: parseInt(vid.view_count.text ?? "0"),
-            duration: vid.duration.text,
+            views: parseInt(vid.view_count?.text ?? "0"),
+            duration: vid.duration?.text ?? 0,
             raw: vid,
             playlist: pl,
             source: "youtube",
@@ -221,16 +221,17 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         return track
     }
 
+
     stream(info: Track<unknown>): Promise<ExtractorStreamable> {
         return this._stream(info.url, this)
     }
 
-    async getRelatedTracks(track: Track<VideoInfo|Video|CompactVideo>, history: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
-        if(!YoutubeExtractor.validateURL(track.url)) return this.#emptyResponse()
+    async getRelatedTracks(track: Track<VideoInfo | Video | CompactVideo>, history: GuildQueueHistory<unknown>): Promise<ExtractorInfo> {
+        if (!YoutubeExtractor.validateURL(track.url)) return this.#emptyResponse()
 
         const video = await track.requestMetadata()
 
-        if(!video) {
+        if (!video) {
             this.context.player.debug("UNEXPECTED! VIDEO METADATA WAS NOT FOUND. HAVE YOU BEEN TEMPERING?")
 
             return {
@@ -241,16 +242,16 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         // @ts-expect-error
         const isVidInfo = typeof video?.getWatchNextContinuation === "function"
-        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video|CompactVideo)).id)
+        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video | CompactVideo)).id)
 
-        if(rawVideo.watch_next_feed) {
+        if (rawVideo.watch_next_feed) {
             this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
 
-            const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) => 
-                !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
+            const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter((v) =>
+                !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`) && v.type === "CompactVideo"
             )
 
-            if(!recommended) {
+            if (!recommended) {
                 this.context.player.debug("Unable to fetch recommendations")
                 return this.#emptyResponse()
             }
