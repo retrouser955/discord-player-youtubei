@@ -5,7 +5,6 @@ import { Readable } from "node:stream"
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
 import { type CompactVideo, type Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
-import { type YTNode } from "youtubei.js/dist/src/parser/helpers";
 
 export interface YoutubeiOptions {
     authentication?: OAuth2Tokens;
@@ -17,7 +16,6 @@ export interface YoutubeiOptions {
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;
     authentication?: OAuth2Tokens;
-    demuxable?: boolean;
     overrideDownloadOptions?: DownloadOptions;
 }
 
@@ -27,26 +25,16 @@ const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
     type: "audio"
 }
 
-async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { demuxable: false, overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
+async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
     const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
-
-    if (options.demuxable) {
-        const readable = await innerTube.download(ytId, options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-
-        // @ts-expect-error
-        const stream = Readable.fromWeb(readable)
-
-        return {
-            $fmt: options.overrideDownloadOptions?.format ?? "mp4",
-            stream
-        }
-    }
 
     const streamData = await innerTube.getStreamingData(ytId, options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
 
-    if (!streamData.url) throw new Error("Unable to get stream data from video.")
+    const decipheredStream = streamData.decipher(innerTube.session.player)
 
-    return streamData.url
+    if (!decipheredStream) throw new Error("Unable to get stream data from video.")
+
+    return decipheredStream
 }
 
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
@@ -74,8 +62,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         } else {
             this._stream = (q, _) => {
                 return streamFromYT(q, this.innerTube, {
-                    overrideDownloadOptions: this.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
-                    demuxable: this.supportsDemux
+                    overrideDownloadOptions: this.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS
                 })
             }
         }
