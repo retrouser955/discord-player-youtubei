@@ -70,6 +70,24 @@ interface YoutubeiOptions {
 }
 ```
 
+## Using the bridge provider
+
+Discord Player Youtubei provides a function that is supported by most of the default discord-player extractors. Here is an example using SpotifyExtractor
+
+```ts
+import { YoutubeiExtractor, createYoutubeiStream } from "discord-player-youtubei"
+import { SpotifyExtractor } from "@discord-player/extractor"
+
+const player = getPlayerSomehow()
+
+await player.extractors.register(YoutubeiExtractor, {})
+await player.extractors.register(SpotifyExtractor, {
+    createStream: createYoutubeiStream
+})
+```
+
+Notice how we are registering the YoutubeiExtractor before the Spotify extractor. This is because the `createYoutubeiStream` uses the `YoutubeiExtractor.instance` property which is only available after discord-player internally calls `<YoutubeiExtractor>.activate()`.
+
 ### Notice Regarding YouTube Streaming
 
 Streaming from YouTube is against their Terms of Service (ToS). Refer to `LEGAL.md` to view the risks using YouTube.

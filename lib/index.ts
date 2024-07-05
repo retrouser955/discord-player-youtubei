@@ -34,3 +34,4 @@ export async function generateOauthTokens() {
 }
 
 export * from "./Extractor/Youtube"
+export * from "./BridgeProvider/YoutubeiProvider"

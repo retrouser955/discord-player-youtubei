@@ -5,6 +5,8 @@ import { Readable } from "node:stream"
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
 import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
+import { streamFromYT } from "../common/generateYTStream";
+import { createInnertubeClient } from "../common/createInnertubeClient";
 
 export interface YoutubeiOptions {
     authentication?: OAuth2Tokens;
@@ -13,41 +15,17 @@ export interface YoutubeiOptions {
     signOutOnDeactive?: boolean;
 }
 
-export interface YTStreamingOptions {
-    extractor?: BaseExtractor<object>;
-    authentication?: OAuth2Tokens;
-    overrideDownloadOptions?: DownloadOptions;
-}
-
-const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
-    quality: "best",
-    format: "mp4",
-    type: "audio"
-}
-
-async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
-    const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
-
-    const streamData = await innerTube.getStreamingData(ytId, options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-
-    const decipheredStream = streamData.decipher(innerTube.session.player)
-
-    if (!decipheredStream) throw new Error("Unable to get stream data from video.")
-
-    return decipheredStream
-}
-
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
-    public innerTube!: Innertube
-    public _stream!: (q: string, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>
+    public innerTube!: Innertube;
+    public _stream!: (q: string, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>;
+    public static instance?: YoutubeiExtractor
 
     async activate(): Promise<void> {
         this.protocols = ['ytsearch', 'youtube']
 
-        this.innerTube = await Innertube.create({
-            cache: new UniversalCache(true, `${process.cwd()}/.dpy`)
-        })
+        this.innerTube = await createInnertubeClient()
+        
         if (this.options.authentication) {
             try {
                 await this.innerTube.session.signIn(this.options.authentication)
@@ -62,10 +40,12 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         } else {
             this._stream = (q, _) => {
                 return streamFromYT(q, this.innerTube, {
-                    overrideDownloadOptions: this.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS
+                    overrideDownloadOptions: this.options.overrideDownloadOptions
                 })
             }
         }
+
+        YoutubeiExtractor.instance = this
     }
 
     async deactivate(): Promise<void> {
@@ -165,10 +145,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                 }
             }
             default: {
-                const search = await this.innerTube.search(query, {
-                    type: "video"
-                })
-                const videos = (search.videos?.filter((v) => v.type === "Video") as Video[])
+                const search = await this.innerTube.search(query)
+                const videos = (search.videos.filter(v => v.type === "Video") as Video[])
 
                 return {
                     playlist: null,
