@@ -3,7 +3,7 @@ import Innertube, { UniversalCache, type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream"
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
-import { type CompactVideo, type Video } from "youtubei.js/dist/src/parser/nodes";
+import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YoutubeiOptions {
@@ -113,7 +113,24 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                     source: "youtube"
                 })
 
-                pl.tracks = (playlist.videos as Video[]).map((vid) => this.buildTrack(vid, context, pl))
+                pl.tracks = (playlist.videos.filter(v => v.type === "PlaylistVideo") as PlaylistVideo[]).map(v => new Track(
+                    this.context.player,
+                    {
+                        title: v.title.text ?? "UNKNOWN TITLE",
+                        duration: v.duration.text,
+                        thumbnail: v.thumbnails[0]?.url,
+                        author: v.author.name,
+                        requestedBy: context.requestedBy,
+                        url: `https://youtube.com/watch?v=${v.id}`,
+                        raw: v,
+                        source: "youtube",
+                        queryType: "youtubeVideo",
+                        metadata: v,
+                        async requestMetadata() {
+                            return v
+                        },
+                    }
+                ))
 
                 return {
                     playlist: pl,
@@ -207,7 +224,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         // @ts-expect-error
         const isVidInfo = typeof video?.getWatchNextContinuation === "function"
-        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video | CompactVideo)).id)
+        const rawVideo = isVidInfo ? (video as VideoInfo) : await this.innerTube.getInfo((video as (Video | CompactVideo | PlaylistVideo)).id)
 
         if (rawVideo.watch_next_feed) {
             this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`")
