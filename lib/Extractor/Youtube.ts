@@ -96,8 +96,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					description: playlist.info.description ?? playlist.info.title ?? "UNKNOWN DESCRIPTION",
 					type: "playlist",
 					author: {
-						name: playlist.info.author.name ?? "UNKNOWN AUTHOR",
-						url: playlist.info.author.url ?? "UNKNOWN AUTHOR",
+						name: playlist?.channels[0]?.author?.name ?? playlist.info.author.name ?? "UNKNOWN AUTHOR",
+						url: playlist?.channels[0]?.author?.url ?? playlist.info.author.url ?? "UNKNOWN AUTHOR",
 					},
 					tracks: [],
 					id: plId,
