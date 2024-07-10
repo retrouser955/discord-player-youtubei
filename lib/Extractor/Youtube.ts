@@ -31,7 +31,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public innerTube!: Innertube;
 	public _stream!: (q: Track, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>;
 	public static instance?: YoutubeiExtractor;
-	public priority= 2;
+	public priority = 2;
 
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
