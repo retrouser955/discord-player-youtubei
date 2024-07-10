@@ -54,6 +54,10 @@ import { YoutubeiExtractor } from "discord-player-youtubei"
 const player = getPlayerSomehow()
 const oauthTokens = getOauthTokens() // The tokens printed from `generateOauthTokens()
 
+/**
+ * MAKE SURE YOU ARE NOT LOADING THE DEFAULT YOUTUBE EXTRACTOR IF YOU ARE USING THIS
+ * await player.extractors.loadDefault((ext) => ext !== 'YouTubeExtractor');
+ */
 player.extractors.register(YoutubeiExtractor, {
     authentication: oauthTokens
 })

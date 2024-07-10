@@ -10,7 +10,7 @@ import {
 	Util,
 	GuildQueueHistory,
 } from "discord-player";
-import Innertube, { UniversalCache, type OAuth2Tokens } from "youtubei.js";
+import Innertube, { type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";

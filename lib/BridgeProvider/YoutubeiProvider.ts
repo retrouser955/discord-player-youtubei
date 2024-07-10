@@ -1,7 +1,8 @@
 import { type BaseExtractor, QueryResolver, QueryType } from "discord-player";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
+import { type Readable } from "node:stream"
 
-export async function createYoutubeiStream(ext: BaseExtractor<Object>, url: string) {
+export async function createYoutubeiStream(ext: BaseExtractor<Object>, url: string): Promise<string | Readable> {
     if(!YoutubeiExtractor.instance) throw new Error("Unable to find youtubei extractor. Register this first!")
 
     const queryType = QueryResolver.resolve(url).type
@@ -16,5 +17,5 @@ export async function createYoutubeiStream(ext: BaseExtractor<Object>, url: stri
         type: QueryType.YOUTUBE_SEARCH
     })
 
-    return await YoutubeiExtractor.instance._stream(bridgedTracks[0].url, YoutubeiExtractor.instance)
+    return (await YoutubeiExtractor.instance._stream(bridgedTracks[0].url, YoutubeiExtractor.instance)) as string
 }
