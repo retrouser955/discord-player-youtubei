@@ -17,7 +17,7 @@ $ yarn add discord-player-youtubei
 ```ts
 import { YoutubeiExtractor } from "discord-player-youtubei"
 
-const player = getPlayerSomehow()
+const player = useMainPlayer()
 
 player.extractors.register(YoutubeiExtractor, {})
 ```
@@ -27,7 +27,7 @@ player.extractors.register(YoutubeiExtractor, {})
 ```ts
 const { YoutubeiExtractor } = require("discord-player-youtubei")
 
-const player = getPlayerSomehow()
+const player = useMainPlayer()
 
 player.extractors.register(YoutubeiExtractor, {})
 ```
@@ -51,7 +51,7 @@ These tokens can be used as an option for `YoutubeiExtractor`
 ```ts
 import { YoutubeiExtractor } from "discord-player-youtubei"
 
-const player = getPlayerSomehow()
+const player = useMainPlayer()
 const oauthTokens = getOauthTokens() // The tokens printed from `generateOauthTokens()
 
 /**
@@ -82,7 +82,7 @@ Discord Player Youtubei provides a function that is supported by most of the def
 import { YoutubeiExtractor, createYoutubeiStream } from "discord-player-youtubei"
 import { SpotifyExtractor } from "@discord-player/extractor"
 
-const player = getPlayerSomehow()
+const player = useMainPlayer()
 
 await player.extractors.register(YoutubeiExtractor, {})
 await player.extractors.register(SpotifyExtractor, {
