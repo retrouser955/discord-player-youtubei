@@ -22,14 +22,14 @@ import { createInnertubeClient } from "../common/createInnertubeClient";
 export interface YoutubeiOptions {
 	authentication?: OAuth2Tokens;
 	overrideDownloadOptions?: DownloadOptions;
-	createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string | Readable>;
+	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
 }
 
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
 	public innerTube!: Innertube;
-	public _stream!: (q: string, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>;
+	public _stream!: (q: Track, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>;
 	public static instance?: YoutubeiExtractor;
 
 	async activate(): Promise<void> {
@@ -195,7 +195,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	}
 
 	stream(info: Track<unknown>): Promise<ExtractorStreamable> {
-		return this._stream(info.url, this);
+		return this._stream(info, this);
 	}
 
 	async getRelatedTracks(
@@ -219,7 +219,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		const isVidInfo = typeof video?.getWatchNextContinuation === "function";
 		const rawVideo = isVidInfo
 			? (video as VideoInfo)
-			: await this.innerTube.getInfo((video as Video | CompactVideo | PlaylistVideo).id);
+			: await this.innerTube.getInfo((video as Video | CompactVideo | PlaylistVideo).id, "ANDROID");
 
 		if (rawVideo.watch_next_feed) {
 			this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`");

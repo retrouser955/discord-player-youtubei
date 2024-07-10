@@ -17,5 +17,5 @@ export async function createYoutubeiStream(ext: BaseExtractor<Object>, url: stri
         type: QueryType.YOUTUBE_SEARCH
     })
 
-    return (await YoutubeiExtractor.instance._stream(bridgedTracks[0].url, YoutubeiExtractor.instance)) as string
+    return (await YoutubeiExtractor.instance._stream(bridgedTracks[0], YoutubeiExtractor.instance)) as string
 }

@@ -1,7 +1,9 @@
 import type Innertube from "youtubei.js/agnostic";
-import type { BaseExtractor } from "discord-player";
+import type { BaseExtractor, Track } from "discord-player";
 import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type { DownloadOptions } from "youtubei.js/dist/src/types";
+import type { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
+import type { Video, CompactVideo, PlaylistVideo } from "youtubei.js/dist/src/parser/nodes";
 
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;
@@ -15,14 +17,11 @@ const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
     type: "audio"
 }
 
-export async function streamFromYT(query: string, innerTube: Innertube, options: YTStreamingOptions = { overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
-    const ytId = query.includes("shorts") ? query.split("/").at(-1)!.split("?")[0]! : new URL(query).searchParams.get("v")!
-
-    const streamData = await innerTube.getStreamingData(ytId, options.overrideDownloadOptions)
-
-    const decipheredStream = streamData.decipher(innerTube.session.player)
-
-    if (!decipheredStream) throw new Error("Unable to get stream data from video.")
-
-    return decipheredStream
+export async function streamFromYT(query: Track, innerTube: Innertube, options: YTStreamingOptions = { overrideDownloadOptions: DEFAULT_DOWNLOAD_OPTIONS }) {
+    let id = new URL(query.url).searchParams.get("v")
+    // VIDEO DETECTED AS YT SHORTS OR youtu.be link
+    if(!id) id = query.url.split("/")[-1].split("?")[0]
+    const videoInfo = await innerTube.getBasicInfo(id,"ANDROID")
+    const format = videoInfo.chooseFormat(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
+    return format.decipher(innerTube.session.player)
 }
