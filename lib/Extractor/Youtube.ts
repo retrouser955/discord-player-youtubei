@@ -35,7 +35,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
 
-		this.innerTube = await createInnertubeClient();
+		this.innerTube = await createInnertubeClient(this.context.player);
 
 		if (this.options.authentication) {
 			try {
