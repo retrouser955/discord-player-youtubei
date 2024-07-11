@@ -162,7 +162,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				let videoId = new URL(query).searchParams.get("v");
 
 				// detected as yt shorts or youtu.be link
-				if(!videoId) videoId = query.split("/")[-1].split("?")[0]
+				if(!videoId) videoId = query.split("/").at(-1)!.split("?")[0]
 
 				const vid = await this.innerTube.getInfo(videoId);
 
