@@ -1,7 +1,7 @@
 import { type OAuth2Tokens } from "youtubei.js";
 
 export function objectToToken(tokens: OAuth2Tokens) {
-    return Object.entries(tokens).map(([k, v]) => `${k}=${v instanceof Date ? v.toISOString : v}`).join("; ")
+    return Object.entries(tokens).map(([k, v]) => `${k}=${v instanceof Date ? v.toISOString() : v}`).join("; ")
 }
 
 export function tokenToObject(token: string): OAuth2Tokens {
