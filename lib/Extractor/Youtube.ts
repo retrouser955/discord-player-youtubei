@@ -110,7 +110,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					(v) =>
 						new Track(this.context.player, {
 							title: v.title.text ?? "UNKNOWN TITLE",
-							duration: v.duration.text,
+							duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
 							thumbnail: v.thumbnails[0]?.url,
 							author: v.author.name,
 							requestedBy: context.requestedBy,
@@ -178,7 +178,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			requestedBy: context.requestedBy,
 			url: `https://youtube.com/watch?v=${vid.id}`,
 			views: parseInt(vid.view_count?.text ?? "0"),
-			duration: vid.duration?.text ?? 0,
+			duration: Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000)),
 			raw: vid,
 			playlist: pl,
 			source: "youtube",
@@ -241,7 +241,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					requestedBy: track.requestedBy,
 					url: `https://youtube.com/watch?v=${v.id}`,
 					views: parseInt(v.view_count?.text ?? "0"),
-					duration: v.duration?.text,
+					duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
 					raw: v,
 					source: "youtube",
 					queryType: "youtubeVideo",
