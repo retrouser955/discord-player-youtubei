@@ -32,8 +32,6 @@ const player = useMainPlayer()
 player.extractors.register(YoutubeiExtractor, {})
 ```
 
-#### Warning!!! Using this extractor result in cache with the name ".dpy". DO NOT PUSH THIS CACHE TO GITHUB, IT CONTAINS DATA SUCH AS YOUTUBE TOKENS
-
 ## Signing into YouTube
 
 With the power of youtubei.js, we can sign into YouTube through their YouTube TV API.
