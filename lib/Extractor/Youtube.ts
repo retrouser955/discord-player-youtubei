@@ -159,7 +159,11 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				};
 			}
 			case QueryType.YOUTUBE_VIDEO: {
-				const videoId = new URL(query).searchParams.get("v")!;
+				let videoId = new URL(query).searchParams.get("v");
+
+				// detected as yt shorts or youtu.be link
+				if(!videoId) videoId = query.split("/")[-1].split("?")[0]
+
 				const vid = await this.innerTube.getInfo(videoId);
 
 				return {
