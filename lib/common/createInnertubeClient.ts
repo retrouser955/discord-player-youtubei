@@ -7,7 +7,7 @@ let innerTube: Innertube
 export async function createInnertubeClient(player: Player) {
     if(innerTube) return innerTube
     innerTube = await Innertube.create({
-        cache: new UniversalCache(true, `${process.cwd()}/.dpy`),
+        cache: new UniversalCache(true, `${__dirname}/.dpy`),
         fetch: (i, init) => {
             const planner = player.routePlanner
 

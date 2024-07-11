@@ -10,7 +10,7 @@ import {
 	Util,
 	GuildQueueHistory,
 } from "discord-player";
-import Innertube, { type OAuth2Tokens } from "youtubei.js";
+import Innertube, { type InnerTubeClient, type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
@@ -18,12 +18,21 @@ import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/pa
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
 import { createInnertubeClient } from "../common/createInnertubeClient";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { tokenToObject } from "../common/tokenUtils";
 
 export interface YoutubeiOptions {
-	authentication?: OAuth2Tokens;
+	authentication?: OAuth2Tokens | string;
 	overrideDownloadOptions?: DownloadOptions;
 	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
+	streamOptions?: {
+		useClient?: InnerTubeClient
+	}
+}
+
+export interface AsyncTrackingContext {
+	useClient: InnerTubeClient
 }
 
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
@@ -32,6 +41,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public _stream!: (q: Track, extractor: BaseExtractor<object>) => Promise<ExtractorStreamable>;
 	public static instance?: YoutubeiExtractor;
 	public priority = 2;
+	static ytContext = new AsyncLocalStorage<AsyncTrackingContext>()
+
+	static getStreamingContext() {
+		const ctx = YoutubeiExtractor.ytContext.getStore()
+		if(!ctx) throw new Error("INVALID INVOKCATION")
+		return ctx
+	}
 
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
@@ -40,10 +56,17 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		if (this.options.authentication) {
 			try {
-				await this.innerTube.session.signIn(this.options.authentication);
-				this.context.player.debug(
-					`Signed into YouTube TV API using client name: ${this.innerTube.session.client_name}`
-				);
+				// this is really stupid but i don't wanna code for the day anymore so
+				if(typeof this.options.authentication !== "string") {
+					console.log("[DISCORD PLAYER YOUTUBEI WARNING] USING THE RAW OAUTH2 OBJECT IS DEPRICATED. GENERATE ANOTHER ONE USING THE generateOauth2Tokens FUNCTION")
+				}
+				const tokens = typeof this.options.authentication === "string" ? tokenToObject(this.options.authentication) : this.options.authentication
+
+				await this.innerTube.session.signIn(tokens);
+
+				const info = await this.innerTube.account.getInfo()
+
+				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
 			} catch (error) {
 				this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`);
 			}
@@ -53,9 +76,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			this._stream = this.options.createStream;
 		} else {
 			this._stream = (q, _) => {
-				return streamFromYT(q, this.innerTube, {
-					overrideDownloadOptions: this.options.overrideDownloadOptions,
-				});
+				return YoutubeiExtractor.ytContext.run({
+					useClient: this.options.streamOptions?.useClient ?? "WEB"
+				}, () => {
+					return streamFromYT(q, this.innerTube, {
+						overrideDownloadOptions: this.options.overrideDownloadOptions,
+					});
+				})
 			};
 		}
 

@@ -56,10 +56,6 @@ import { YoutubeiExtractor } from "discord-player-youtubei"
 const player = useMainPlayer()
 const oauthTokens = getOauthTokens() // The tokens printed from `generateOauthTokens()
 
-/**
- * MAKE SURE YOU ARE NOT LOADING THE DEFAULT YOUTUBE EXTRACTOR IF YOU ARE USING THIS
- * await player.extractors.loadDefault((ext) => ext !== 'YouTubeExtractor');
- */
 player.extractors.register(YoutubeiExtractor, {
     authentication: oauthTokens
 })
@@ -69,10 +65,14 @@ player.extractors.register(YoutubeiExtractor, {
 
 ```ts
 interface YoutubeiOptions {
-    authentication?: OAuth2Tokens;
-    overrideDownloadOptions?: DownloadOptions;
-    createStream?: (q: string, extractor: BaseExtractor<object>) => Promise<string|Readable>;
-    signOutOnDeactive?: boolean;
+	// WARNING: USING RAW OAUTH2TOKENS IS DEPRICATED, USE A STRING INSTEAD!
+	authentication?: OAuth2Tokens | string;
+	overrideDownloadOptions?: DownloadOptions;
+	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
+	signOutOnDeactive?: boolean;
+	streamOptions?: {
+		useClient?: InnerTubeClient
+	}
 }
 ```
 

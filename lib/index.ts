@@ -1,4 +1,5 @@
 import Innertube from "youtubei.js"
+import { objectToToken } from "./common/tokenUtils"
 
 const exit = (message: any, clean: boolean) => {
     if(clean) {
@@ -26,7 +27,7 @@ export async function generateOauthTokens() {
         if(!data.credentials) exit("Something went wrong", false)
             
         console.log('Your cookies are printed down below')
-        console.log(data.credentials)
+        console.log(objectToToken(data.credentials))
         exit("Done Getting the credentials", true)
     })
 
@@ -35,3 +36,4 @@ export async function generateOauthTokens() {
 
 export * from "./Extractor/Youtube"
 export * from "./BridgeProvider/YoutubeiProvider"
+export * from "./common/tokenUtils"
