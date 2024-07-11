@@ -34,25 +34,18 @@ player.extractors.register(YoutubeiExtractor, {})
 
 ## Signing into YouTube
 
-With the power of youtubei.js, we can sign into YouTube through their YouTube TV API.
-
-```ts
-import { generateOauthTokens } from "discord-player-youtubei";
-
-(async () => {
-    await generateOauthTokens()
-})()
+First run the following command
+```bash
+$ npx --no dpy-generate-tokens
 ```
 
-*Oauth Tokens will be printed out shortly*
-
-These tokens can be used as an option for `YoutubeiExtractor`
+The token will be printed out shortly
 
 ```ts
 import { YoutubeiExtractor } from "discord-player-youtubei"
 
 const player = useMainPlayer()
-const oauthTokens = getOauthTokens() // The tokens printed from `generateOauthTokens()
+const oauthTokens = getOauthTokens() // The tokens printed from step above
 
 player.extractors.register(YoutubeiExtractor, {
     authentication: oauthTokens
