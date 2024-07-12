@@ -10,14 +10,13 @@ import {
 	Util,
 	GuildQueueHistory,
 } from "discord-player";
-import Innertube, { type InnerTubeClient, type OAuth2Tokens } from "youtubei.js";
+import Innertube, { UniversalCache, type InnerTubeClient, type OAuth2Tokens } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
 import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
 import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/parser/nodes";
 import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
-import { createInnertubeClient } from "../common/createInnertubeClient";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 
@@ -28,6 +27,10 @@ export interface YoutubeiOptions {
 	signOutOnDeactive?: boolean;
 	streamOptions?: {
 		useClient?: InnerTubeClient
+	};
+	cache?: {
+		cacheDir?: string;
+		enableCache?: boolean
 	}
 }
 
@@ -52,7 +55,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
 
-		this.innerTube = await createInnertubeClient(this.context.player);
+		this.innerTube = await Innertube.create({
+			cache: this.options.cache?.enableCache ? new UniversalCache(true, this.options.cache?.cacheDir || `${__dirname}/.dpy`) : undefined
+		})
 
 		if (this.options.authentication) {
 			try {

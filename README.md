@@ -56,14 +56,17 @@ player.extractors.register(YoutubeiExtractor, {
 
 ```ts
 interface YoutubeiOptions {
-	// WARNING: USING RAW OAUTH2TOKENS IS DEPRICATED, USE A STRING INSTEAD!
-	authentication?: OAuth2Tokens | string;
-	overrideDownloadOptions?: DownloadOptions;
-	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
-	signOutOnDeactive?: boolean;
-	streamOptions?: {
-		useClient?: InnerTubeClient
-	}
+    authentication?: OAuth2Tokens | string;
+    overrideDownloadOptions?: DownloadOptions;
+    createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
+    signOutOnDeactive?: boolean;
+    streamOptions?: {
+        useClient?: InnerTubeClient;
+    };
+    cache?: {
+        cacheDir?: string;
+        enableCache?: boolean;
+    };
 }
 ```
 
