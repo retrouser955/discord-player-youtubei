@@ -41,6 +41,8 @@ $ npx --no dpy-generate-tokens
 
 The token will be printed out shortly
 
+*In case of errors, you can directly run the `generateOauthTokens` function exported by discord-player-youtubei*
+
 ```ts
 import { YoutubeiExtractor } from "discord-player-youtubei"
 

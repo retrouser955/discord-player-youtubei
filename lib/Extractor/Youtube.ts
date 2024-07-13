@@ -19,6 +19,7 @@ import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
+import { existsSync } from "node:fs";
 
 export interface YoutubeiOptions {
 	authentication?: OAuth2Tokens | string;
@@ -54,16 +55,19 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
+		const endableCache = this.options.cache?.enableCache
+
+		if(endableCache) process.emitWarning("Default cache is deprecated and will be removed in the 1.2.x", 'DeprecationWarning')
 
 		this.innerTube = await Innertube.create({
-			cache: this.options.cache?.enableCache ? new UniversalCache(true, this.options.cache?.cacheDir || `${__dirname}/.dpy`) : undefined
+			cache: endableCache ? new UniversalCache(true, this.options.cache?.cacheDir || `${__dirname}/.dpy`) : undefined
 		})
 
 		if (this.options.authentication) {
 			try {
 				// this is really stupid but i don't wanna code for the day anymore so
 				if(typeof this.options.authentication !== "string") {
-					console.log("[DISCORD PLAYER YOUTUBEI WARNING] USING THE RAW OAUTH2 OBJECT IS DEPRICATED. GENERATE ANOTHER ONE USING THE generateOauth2Tokens FUNCTION")
+					process.emitWarning("Using the raw authentication object is deprecated. Generate the new format using `npx --no generate-dpy-tokens`")
 				}
 				const tokens = typeof this.options.authentication === "string" ? tokenToObject(this.options.authentication) : this.options.authentication
 
