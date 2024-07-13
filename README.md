@@ -36,7 +36,7 @@ player.extractors.register(YoutubeiExtractor, {})
 
 First run the following command
 ```bash
-$ npx --no dpy-generate-tokens
+$ npx --no discord-player-youtubei
 ```
 
 The token will be printed out shortly
