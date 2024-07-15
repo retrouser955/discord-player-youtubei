@@ -19,7 +19,7 @@ import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { existsSync } from "node:fs";
+import { fetch, Agent } from "undici";
 
 export interface YoutubeiOptions {
 	authentication?: OAuth2Tokens | string;

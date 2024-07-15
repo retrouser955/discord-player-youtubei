@@ -26,12 +26,7 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
     if(!id) id = query.url.split("/")[-1].split("?")[0]
     const videoInfo = await innerTube.getBasicInfo(id, context.useClient)
 
-    if(videoInfo.basic_info.is_family_safe) {
-        const format = videoInfo.chooseFormat(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-        return format.decipher(innerTube.session.player)
-    } else {
-        const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-        // @ts-expect-error
-        return Readable.fromWeb(download)
-    }
+    const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
+    // @ts-expect-error
+    return Readable.fromWeb(download)
 }
