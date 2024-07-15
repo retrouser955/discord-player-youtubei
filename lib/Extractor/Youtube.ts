@@ -153,6 +153,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							requestedBy: context.requestedBy,
 							url: `https://youtube.com/watch?v=${v.id}`,
 							raw: v,
+							playlist: pl,
 							source: "youtube",
 							queryType: "youtubeVideo",
 							metadata: v,
