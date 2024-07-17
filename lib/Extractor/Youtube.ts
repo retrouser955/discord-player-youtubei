@@ -143,7 +143,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					source: "youtube",
 				});
 
-				pl.tracks = (playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
+				// gather videos from all playlist pages and push them into one list
+				const allVideos = [...playlist.videos];
+				let currentPage = playlist;
+				while (currentPage.has_continuation) {
+					currentPage = await currentPage.getContinuation();
+					allVideos.push(...currentPage.videos);
+				}
+
+				pl.tracks = (allVideos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
 					(v) =>
 						new Track(this.context.player, {
 							title: v.title.text ?? "UNKNOWN TITLE",
