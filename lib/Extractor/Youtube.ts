@@ -121,11 +121,17 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		query = query.includes("youtube.com") ? query.replace(/(m(usic)?|gaming)\./, "") : query;
 		if (!query.includes("list=RD") && YouTubeExtractor.validateURL(query)) context.type = QueryType.YOUTUBE_VIDEO;
 
+		if(context.type === QueryType.YOUTUBE_PLAYLIST) {
+			const url = new URL(query)
+
+			if(url.searchParams.has("v") && url.searchParams.has("list")) context.type = QueryType.YOUTUBE_VIDEO
+		}
+
 		switch (context.type) {
 			case QueryType.YOUTUBE_PLAYLIST: {
 				const playlistUrl = new URL(query);
 				const plId = playlistUrl.searchParams.get("list")!;
-				const playlist = await this.innerTube.getPlaylist(plId);
+				let playlist = await this.innerTube.getPlaylist(plId);
 
 				const pl = new Playlist(this.context.player, {
 					title: playlist.info.title ?? "UNKNOWN PLAYLIST",
@@ -143,7 +149,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					source: "youtube",
 				});
 
-				pl.tracks = (playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
+				pl.tracks = []
+
+				let plTracks = (playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
 					(v) =>
 						new Track(this.context.player, {
 							title: v.title.text ?? "UNKNOWN TITLE",
@@ -161,7 +169,33 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 								return v;
 							},
 						})
-				);
+				)
+
+				while(playlist.has_continuation) {
+					playlist = await playlist.getContinuation()
+
+					plTracks.push(...(playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
+						(v) =>
+							new Track(this.context.player, {
+								title: v.title.text ?? "UNKNOWN TITLE",
+								duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
+								thumbnail: v.thumbnails[0]?.url,
+								author: v.author.name,
+								requestedBy: context.requestedBy,
+								url: `https://youtube.com/watch?v=${v.id}`,
+								raw: v,
+								playlist: pl,
+								source: "youtube",
+								queryType: "youtubeVideo",
+								metadata: v,
+								async requestMetadata() {
+									return v;
+								},
+							})
+					))
+				}
+
+				pl.tracks = plTracks
 
 				return {
 					playlist: pl,
