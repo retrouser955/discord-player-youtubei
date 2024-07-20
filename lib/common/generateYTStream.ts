@@ -23,7 +23,7 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
 
     let id = new URL(query.url).searchParams.get("v")
     // VIDEO DETECTED AS YT SHORTS OR youtu.be link
-    if(!id) id = query.url.split("/")[-1].split("?")[0]
+    if(!id) id = query.url.split("/").at(-1)?.split("?").at(0)!
     const videoInfo = await innerTube.getBasicInfo(id, context.useClient)
 
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
