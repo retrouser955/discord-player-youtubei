@@ -19,7 +19,6 @@ import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { fetch, Agent } from "undici";
 
 export interface YoutubeiOptions {
 	authentication?: OAuth2Tokens | string;
@@ -145,7 +144,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					tracks: [],
 					id: plId,
 					url: query,
-					rawPlaylist: playlist,
 					source: "youtube",
 				});
 
@@ -160,13 +158,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							author: v.author.name,
 							requestedBy: context.requestedBy,
 							url: `https://youtube.com/watch?v=${v.id}`,
-							raw: v,
+							raw: {
+								duration_ms: v.duration.seconds * 1000,
+								isLive: v.is_live
+							},
 							playlist: pl,
 							source: "youtube",
 							queryType: "youtubeVideo",
-							metadata: v,
 							async requestMetadata() {
-								return v;
+								return this.raw;
 							},
 						})
 				)
@@ -183,13 +183,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 								author: v.author.name,
 								requestedBy: context.requestedBy,
 								url: `https://youtube.com/watch?v=${v.id}`,
-								raw: v,
+								raw: {
+									duration_ms: v.duration.seconds * 1000,
+									isLive: v.is_live
+								},
 								playlist: pl,
 								source: "youtube",
 								queryType: "youtubeVideo",
-								metadata: v,
 								async requestMetadata() {
-									return v;
+									return this.raw;
 								},
 							})
 					))
@@ -222,12 +224,14 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
 							views: vid.basic_info.view_count,
 							duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
-							raw: vid,
+							raw: {
+								duration_ms: vid.basic_info.duration as number * 1000,
+								isLive: vid.basic_info.is_live
+							},
 							source: "youtube",
 							queryType: "youtubeVideo",
-							metadata: vid,
 							async requestMetadata() {
-								return vid;
+								return this.raw;
 							},
 						}),
 					],
@@ -255,13 +259,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			url: `https://youtube.com/watch?v=${vid.id}`,
 			views: parseInt(vid.view_count?.text ?? "0"),
 			duration: Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000)),
-			raw: vid,
+			raw: {
+				duration_ms: vid.duration.seconds * 1000,
+				isLive: vid.is_live
+			},
 			playlist: pl,
 			source: "youtube",
 			queryType: "youtubeVideo",
-			metadata: vid,
 			async requestMetadata() {
-				return vid;
+				return this.raw;
 			},
 		});
 
@@ -278,33 +284,17 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		track: Track<VideoInfo | Video | CompactVideo>,
 		history: GuildQueueHistory<unknown>
 	): Promise<ExtractorInfo> {
-		if (!YoutubeExtractor.validateURL(track.url)) return this.#emptyResponse();
+		let id = new URL(track.url).searchParams.get("v")
+		// VIDEO DETECTED AS YT SHORTS OR youtu.be link
+		if(!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
+		const videoInfo = await this.innerTube.getBasicInfo(id)
 
-		const video = await track.requestMetadata();
+		if(videoInfo.watch_next_feed) {
+			const recommended = (videoInfo.watch_next_feed as unknown as CompactVideo[]).filter(
+				(v) => v.type === "CompactVideo" && !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
+			)
 
-		if (!video) {
-			this.context.player.debug("UNEXPECTED! VIDEO METADATA WAS NOT FOUND. HAVE YOU BEEN TEMPERING?");
-
-			return {
-				playlist: null,
-				tracks: [],
-			};
-		}
-
-		// @ts-expect-error
-		const isVidInfo = typeof video?.getWatchNextContinuation === "function";
-		const rawVideo = isVidInfo
-			? (video as VideoInfo)
-			: await this.innerTube.getInfo((video as Video | CompactVideo | PlaylistVideo).id, "ANDROID");
-
-		if (rawVideo.watch_next_feed) {
-			this.context.player.debug("Unable to get next video. Falling back to `watch_next_feed`");
-
-			const recommended = (rawVideo.watch_next_feed as unknown as CompactVideo[]).filter(
-				(v) => !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`) && v.type === "CompactVideo"
-			);
-
-			if (!recommended) {
+			if(!recommended) {
 				this.context.player.debug("Unable to fetch recommendations");
 				return this.#emptyResponse();
 			}
@@ -318,12 +308,14 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					url: `https://youtube.com/watch?v=${v.id}`,
 					views: parseInt(v.view_count?.text ?? "0"),
 					duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
-					raw: v,
+					raw: {
+						duration_ms: v.duration.seconds * 1000,
+						isLive: v.is_live
+					},
 					source: "youtube",
 					queryType: "youtubeVideo",
-					metadata: v,
 					async requestMetadata() {
-						return v;
+						return this.raw;
 					},
 				});
 			});
@@ -334,7 +326,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			};
 		}
 
-		this.context.player.debug("Unable to fetch recommendations");
 		return this.#emptyResponse();
 	}
 
