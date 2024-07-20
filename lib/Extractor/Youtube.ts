@@ -281,52 +281,48 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	}
 
 	async getRelatedTracks(
-		track: Track<VideoInfo | Video | CompactVideo>,
+		track: Track<{ duration_ms: number, isLive: boolean }>,
 		history: GuildQueueHistory<unknown>
 	): Promise<ExtractorInfo> {
 		let id = new URL(track.url).searchParams.get("v")
 		// VIDEO DETECTED AS YT SHORTS OR youtu.be link
 		if(!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
-		const videoInfo = await this.innerTube.getBasicInfo(id)
+		const videoInfo = await this.innerTube.getInfo(id)
 
-		if(videoInfo.watch_next_feed) {
-			const recommended = (videoInfo.watch_next_feed as unknown as CompactVideo[]).filter(
-				(v) => v.type === "CompactVideo" && !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`)
-			)
+		const next = videoInfo.watch_next_feed!
 
-			if(!recommended) {
-				this.context.player.debug("Unable to fetch recommendations");
-				return this.#emptyResponse();
-			}
+		const recommended = (next as unknown as CompactVideo[]).filter(
+			(v) => !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`) && v.type === "CompactVideo"
+		)
 
-			const trackConstruct = recommended.map((v) => {
-				return new Track(this.context.player, {
-					title: v.title?.text ?? "UNKNOWN TITLE",
-					thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0]?.url,
-					author: v.author?.name ?? "UNKNOWN AUTHOR",
-					requestedBy: track.requestedBy,
-					url: `https://youtube.com/watch?v=${v.id}`,
-					views: parseInt(v.view_count?.text ?? "0"),
-					duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
-					raw: {
-						duration_ms: v.duration.seconds * 1000,
-						isLive: v.is_live
-					},
-					source: "youtube",
-					queryType: "youtubeVideo",
-					async requestMetadata() {
-						return this.raw;
-					},
-				});
-			});
-
-			return {
-				playlist: null,
-				tracks: trackConstruct,
-			};
+		if(!recommended) {
+			this.context.player.debug("Unable to fetch recommendations");
+			return this.#emptyResponse();
 		}
 
-		return this.#emptyResponse();
+		const trackConstruct = recommended.map((v) => {
+			return new Track(this.context.player, {
+				title: v.title?.text ?? "UNKNOWN TITLE",
+				thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0]?.url,
+				author: v.author?.name ?? "UNKNOWN AUTHOR",
+				requestedBy: track.requestedBy,
+				url: `https://youtube.com/watch?v=${v.id}`,
+				views: parseInt(v.view_count?.text ?? "0"),
+				duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
+				raw: v,
+				source: "youtube",
+				queryType: "youtubeVideo",
+				metadata: v,
+				async requestMetadata() {
+					return v;
+				},
+			});
+		});
+
+		return {
+			playlist: null,
+			tracks: trackConstruct
+		}
 	}
 
 	#emptyResponse() {
