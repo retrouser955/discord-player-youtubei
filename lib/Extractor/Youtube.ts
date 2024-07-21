@@ -10,28 +10,39 @@ import {
 	Util,
 	GuildQueueHistory,
 } from "discord-player";
-import Innertube, { UniversalCache, type InnerTubeClient, type OAuth2Tokens } from "youtubei.js";
+import Innertube, { type OAuth2Tokens, type InnerTubeClient } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
-import { YouTubeExtractor, YoutubeExtractor } from "@discord-player/extractor";
+import { YouTubeExtractor } from "@discord-player/extractor";
 import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/parser/nodes";
-import { type VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
+import { debugSignIn } from "../common/debugSignIn";
+import { getRandomOauthToken } from "../common/randomAuthToken";
+
+export interface RotatorShardOptions {
+	authentications: string[];
+	rotationStrategy: "shard";
+	currentShard: number;
+}
+
+export interface RotatorRandomOptions {
+	authentications: string[];
+	rotationStrategy: "random";
+}
+
+export type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 
 export interface YoutubeiOptions {
-	authentication?: OAuth2Tokens | string;
+	authentication?: string;
 	overrideDownloadOptions?: DownloadOptions;
 	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
 	streamOptions?: {
 		useClient?: InnerTubeClient
 	};
-	cache?: {
-		cacheDir?: string;
-		enableCache?: boolean
-	}
+	rotator?: RotatorConfig
 }
 
 export interface AsyncTrackingContext {
@@ -46,6 +57,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public priority = 2;
 	static ytContext = new AsyncLocalStorage<AsyncTrackingContext>()
 
+	rotatorOnEachReq = false
+	#oauthTokens: OAuth2Tokens[] = []
+
 	static getStreamingContext() {
 		const ctx = YoutubeiExtractor.ytContext.getStore()
 		if(!ctx) throw new Error("INVALID INVOKCATION")
@@ -54,31 +68,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
-		const endableCache = this.options.cache?.enableCache
 
-		if(endableCache) process.emitWarning("Default cache is deprecated and will be removed in the 1.2.x", 'DeprecationWarning')
-
-		this.innerTube = await Innertube.create({
-			cache: endableCache ? new UniversalCache(true, this.options.cache?.cacheDir || `${__dirname}/.dpy`) : undefined
-		})
-
-		if (this.options.authentication) {
-			try {
-				// this is really stupid but i don't wanna code for the day anymore so
-				if(typeof this.options.authentication !== "string") {
-					process.emitWarning("Using the raw authentication object is deprecated. Generate the new format using `npx --no generate-dpy-tokens`")
-				}
-				const tokens = typeof this.options.authentication === "string" ? tokenToObject(this.options.authentication) : this.options.authentication
-
-				await this.innerTube.session.signIn(tokens);
-
-				const info = await this.innerTube.account.getInfo()
-
-				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
-			} catch (error) {
-				this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`);
-			}
-		}
+		this.innerTube = await Innertube.create()
 
 		if (typeof this.options.createStream === "function") {
 			this._stream = this.options.createStream;
@@ -86,7 +77,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			this._stream = (q, _) => {
 				return YoutubeiExtractor.ytContext.run({
 					useClient: this.options.streamOptions?.useClient ?? "WEB"
-				}, () => {
+				}, async () => {
+					if(this.rotatorOnEachReq) await this.#rotateTokens()
 					return streamFromYT(q, this.innerTube, {
 						overrideDownloadOptions: this.options.overrideDownloadOptions,
 					});
@@ -95,6 +87,40 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		}
 
 		YoutubeiExtractor.instance = this;
+
+		if(this.options.rotator) {
+			if(this.options.rotator.rotationStrategy === "shard") {
+				const tokenToUse = (this.options.rotator.currentShard - 1) % this.options.rotator.authentications.length
+
+				this.context.player.debug(`Shard count is ${this.options.rotator.currentShard} thus using rotator.authentication[${tokenToUse}]`)
+
+				await this.#signIn(this.options.rotator.authentications[tokenToUse])
+
+				debugSignIn(this.innerTube, this.context.player.debug)
+
+				return
+			}
+
+			this.#oauthTokens = this.options.rotator.authentications.map(v => tokenToObject(v))
+			this.rotatorOnEachReq = true
+
+			return
+		}
+
+		if (this.options.authentication) {
+			try {
+				await this.#signIn(this.options.authentication)
+
+				debugSignIn(this.innerTube, this.context.player.debug)
+			} catch (error) {
+				this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`);
+			}
+		}
+	}
+
+	async #signIn(tokens: string) {
+		const tkn = tokenToObject(tokens)
+		await this.innerTube.session.signIn(tkn)
 	}
 
 	async deactivate(): Promise<void> {
@@ -115,10 +141,20 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         ] as SearchQueryType[]).some((r) => r === type);
 	}
 
+	async #rotateTokens() {
+		this.context.player.debug("Rotation strategy 'random' detected. Attempting to rotate")
+
+		const token = getRandomOauthToken(this.#oauthTokens)
+
+		await this.innerTube.session.signIn(token)
+	}
+
 	async handle(query: string, context: ExtractorSearchContext): Promise<ExtractorInfo> {
 		if (context.protocol === "ytsearch") context.type = QueryType.YOUTUBE_SEARCH;
 		query = query.includes("youtube.com") ? query.replace(/(m(usic)?|gaming)\./, "") : query;
 		if (!query.includes("list=RD") && YouTubeExtractor.validateURL(query)) context.type = QueryType.YOUTUBE_VIDEO;
+
+		if(this.rotatorOnEachReq) await this.#rotateTokens()
 
 		if(context.type === QueryType.YOUTUBE_PLAYLIST) {
 			const url = new URL(query)
@@ -160,7 +196,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							url: `https://youtube.com/watch?v=${v.id}`,
 							raw: {
 								duration_ms: v.duration.seconds * 1000,
-								isLive: v.is_live
+								live: v.is_live
 							},
 							playlist: pl,
 							source: "youtube",
@@ -185,7 +221,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 								url: `https://youtube.com/watch?v=${v.id}`,
 								raw: {
 									duration_ms: v.duration.seconds * 1000,
-									isLive: v.is_live
+									live: v.is_live
 								},
 								playlist: pl,
 								source: "youtube",
@@ -210,7 +246,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				// detected as yt shorts or youtu.be link
 				if(!videoId) videoId = query.split("/").at(-1)!.split("?")[0]
 
-				const vid = await this.innerTube.getInfo(videoId);
+				const vid = await this.innerTube.getBasicInfo(videoId);
 
 				return {
 					playlist: null,
@@ -226,7 +262,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
 							raw: {
 								duration_ms: vid.basic_info.duration as number * 1000,
-								isLive: vid.basic_info.is_live
+								live: vid.basic_info.is_live
 							},
 							source: "youtube",
 							queryType: "youtubeVideo",
@@ -261,7 +297,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			duration: Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000)),
 			raw: {
 				duration_ms: vid.duration.seconds * 1000,
-				isLive: vid.is_live
+				live: vid.is_live
 			},
 			playlist: pl,
 			source: "youtube",
@@ -281,12 +317,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	}
 
 	async getRelatedTracks(
-		track: Track<{ duration_ms: number, isLive: boolean }>,
+		track: Track<{ duration_ms: number, live: boolean }>,
 		history: GuildQueueHistory<unknown>
 	): Promise<ExtractorInfo> {
 		let id = new URL(track.url).searchParams.get("v")
 		// VIDEO DETECTED AS YT SHORTS OR youtu.be link
 		if(!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
+		if(this.rotatorOnEachReq) await this.#rotateTokens()
 		const videoInfo = await this.innerTube.getInfo(id)
 
 		const next = videoInfo.watch_next_feed!
