@@ -8,7 +8,7 @@ Below is a template of the rotator config
 player.extractors.register(YoutubeiExtractor, {
     rotator: {
         rotationStrategy: "shard",
-        authentication: ["array", "of", "your", "access", "tokens"],
+        authentications: ["array", "of", "your", "access", "tokens"],
         currentShard: 1
     }
 })
@@ -22,7 +22,7 @@ For example
 player.extractors.register(YoutubeiExtractor, {
     rotator: {
         rotationStrategy: "shard",
-        authentication: ["I", "have", "four", "tokens"],
+        authentications: ["I", "have", "four", "tokens"],
         currentShard: 5
     }
 })
@@ -38,7 +38,7 @@ The current shard has been set to 5 so the extractor will now use the authentica
 player.extractors.register(YoutubeiExtractor, {
     rotator: {
         rotationStrategy: "random",
-        authentication: ["array", "of", "your", "access", "tokens"],
+        authentications: ["array", "of", "your", "access", "tokens"],
     }
 })
 ```
