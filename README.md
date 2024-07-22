@@ -56,6 +56,10 @@ player.extractors.register(YoutubeiExtractor, {
 })
 ```
 
+## Rotating your token
+
+Since Youtube has a hard limt (which is not that strict), we can provide a rotator config when registering the extractor. View [Rotator]("./Rotator.md")
+
 ## Options for YoutubeiExtractor
 
 ```ts
