@@ -141,8 +141,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         ] as SearchQueryType[]).some((r) => r === type);
 	}
 
-	async bridge(track: Track, _: BaseExtractor | null): Promise<ExtractorStreamable | null> {
-		const query = this.createBridgeQuery(track) || `${track.author} - ${track.title} (official audio)`
+	async bridge(track: Track, ext: BaseExtractor | null): Promise<ExtractorStreamable | null> {
+		const query = ext?.createBridgeQuery(track) || `${track.author} - ${track.title} (official audio)`
 		
 		const youtubeTrack = await this.handle(query, {
 			type: QueryType.YOUTUBE_SEARCH,
