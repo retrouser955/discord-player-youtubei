@@ -17,7 +17,7 @@ $ yarn add discord-player-youtubei
 ```ts
 import { YoutubeiExtractor } from "discord-player-youtubei"
 
-const player = useMainPlayer()
+const player = useMainPlayer() // or new Player()
 
 player.extractors.register(YoutubeiExtractor, {})
 ```
@@ -27,10 +27,12 @@ player.extractors.register(YoutubeiExtractor, {})
 ```ts
 const { YoutubeiExtractor } = require("discord-player-youtubei")
 
-const player = useMainPlayer()
+const player = useMainPlayer() // or new Player()
 
 player.extractors.register(YoutubeiExtractor, {})
 ```
+
+*I have seem many people registering the extractor in their commands. DO NOT DO THIS*
 
 ## Signing into YouTube
 
@@ -57,38 +59,30 @@ player.extractors.register(YoutubeiExtractor, {
 ## Options for YoutubeiExtractor
 
 ```ts
+interface RotatorShardOptions {
+	authentications: string[];
+	rotationStrategy: "shard";
+	currentShard: number;
+}
+
+interface RotatorRandomOptions {
+	authentications: string[];
+	rotationStrategy: "random";
+}
+
+type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
+
 interface YoutubeiOptions {
-    authentication?: OAuth2Tokens | string;
-    overrideDownloadOptions?: DownloadOptions;
-    createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
-    signOutOnDeactive?: boolean;
-    streamOptions?: {
-        useClient?: InnerTubeClient;
-    };
-    cache?: {
-        cacheDir?: string;
-        enableCache?: boolean;
-    };
+	authentication?: string;
+	overrideDownloadOptions?: DownloadOptions;
+	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
+	signOutOnDeactive?: boolean;
+	streamOptions?: {
+		useClient?: InnerTubeClient
+	};
+	rotator?: RotatorConfig
 }
 ```
-
-## Using the bridge provider
-
-Discord Player Youtubei provides a function that is supported by most of the default discord-player extractors. Here is an example using SpotifyExtractor
-
-```ts
-import { YoutubeiExtractor, createYoutubeiStream } from "discord-player-youtubei"
-import { SpotifyExtractor } from "@discord-player/extractor"
-
-const player = useMainPlayer()
-
-await player.extractors.register(YoutubeiExtractor, {})
-await player.extractors.register(SpotifyExtractor, {
-    createStream: createYoutubeiStream
-})
-```
-
-Notice how we are registering the YoutubeiExtractor before the Spotify extractor. This is because the `createYoutubeiStream` uses the `YoutubeiExtractor.instance` property which is only available after discord-player internally calls `<YoutubeiExtractor>.activate()`.
 
 ### Notice Regarding YouTube Streaming
 

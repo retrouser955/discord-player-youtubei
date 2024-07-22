@@ -7,9 +7,9 @@
   "author": "retro_ig",
   "license": "Creative Commons",
   "devDependencies": {
-    "@discord-player/extractor": "^4.4.7",
+    "@discord-player/extractor": "^4.5.0",
     "@types/node": "^20.14.10",
-    "discord-player": "^6.6.10",
+    "discord-player": "^6.7.0",
     "discord.js": "^14.15.3",
     "tsup": "^8.1.0",
     "typescript": "^5.5.2"
@@ -21,7 +21,5 @@
   "scripts": {
     "build": "tsup"
   },
-  "bin": {
-    "discord-player-youtubei": "./bin/index.js"
-  }
+  "bin": "./bin/index.js"
 }

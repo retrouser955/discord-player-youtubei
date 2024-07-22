@@ -141,6 +141,19 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         ] as SearchQueryType[]).some((r) => r === type);
 	}
 
+	async bridge(track: Track, _: BaseExtractor | null): Promise<ExtractorStreamable | null> {
+		const query = this.createBridgeQuery(track) || `${track.author} - ${track.title} (official audio)`
+		
+		const youtubeTrack = await this.handle(query, {
+			type: QueryType.YOUTUBE_SEARCH,
+			requestedBy: track.requestedBy
+		})
+
+		if(youtubeTrack.tracks.length === 0) return null
+
+		return this.stream(youtubeTrack.tracks[0])
+	}
+
 	async #rotateTokens() {
 		this.context.player.debug("Rotation strategy 'random' detected. Attempting to rotate")
 
@@ -186,50 +199,62 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				pl.tracks = []
 
 				let plTracks = (playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
-					(v) =>
-						new Track(this.context.player, {
+					(v) => {
+						const duration = Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000))
+						const raw = {
+							duration_ms: v.duration.seconds * 1000,
+							live: v.is_live,
+							duration
+						}
+
+						return new Track(this.context.player, {
 							title: v.title.text ?? "UNKNOWN TITLE",
-							duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
+							duration: duration,
 							thumbnail: v.thumbnails[0]?.url,
 							author: v.author.name,
 							requestedBy: context.requestedBy,
 							url: `https://youtube.com/watch?v=${v.id}`,
-							raw: {
-								duration_ms: v.duration.seconds * 1000,
-								live: v.is_live
-							},
+							raw,
 							playlist: pl,
 							source: "youtube",
 							queryType: "youtubeVideo",
 							async requestMetadata() {
 								return this.raw;
 							},
+							metadata: raw
 						})
+					}
 				)
 
 				while(playlist.has_continuation) {
 					playlist = await playlist.getContinuation()
 
 					plTracks.push(...(playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
-						(v) =>
-							new Track(this.context.player, {
+						(v) => {
+							const duration = Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000))
+							const raw = {
+								duration_ms: v.duration.seconds * 1000,
+								live: v.is_live,
+								duration
+							}
+
+							return new Track(this.context.player, {
 								title: v.title.text ?? "UNKNOWN TITLE",
-								duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
+								duration,
 								thumbnail: v.thumbnails[0]?.url,
 								author: v.author.name,
 								requestedBy: context.requestedBy,
 								url: `https://youtube.com/watch?v=${v.id}`,
-								raw: {
-									duration_ms: v.duration.seconds * 1000,
-									live: v.is_live
-								},
+								raw,
 								playlist: pl,
 								source: "youtube",
 								queryType: "youtubeVideo",
 								async requestMetadata() {
 									return this.raw;
 								},
+								metadata: raw
 							})
+						}
 					))
 				}
 
@@ -247,6 +272,12 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				if(!videoId) videoId = query.split("/").at(-1)!.split("?")[0]
 
 				const vid = await this.innerTube.getBasicInfo(videoId);
+				const duration = Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000))
+				const raw = {
+					duration_ms: vid.basic_info.duration as number * 1000,
+					live: vid.basic_info.is_live,
+					duration
+				}
 
 				return {
 					playlist: null,
@@ -259,16 +290,14 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							requestedBy: context.requestedBy,
 							url: `https://youtube.com/watch?v=${vid.basic_info.id}`,
 							views: vid.basic_info.view_count,
-							duration: Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000)),
-							raw: {
-								duration_ms: vid.basic_info.duration as number * 1000,
-								live: vid.basic_info.is_live
-							},
+							duration,
+							raw,
 							source: "youtube",
 							queryType: "youtubeVideo",
 							async requestMetadata() {
 								return this.raw;
 							},
+							metadata: raw
 						}),
 					],
 				};
@@ -286,6 +315,12 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	}
 
 	buildTrack(vid: Video, context: ExtractorSearchContext, pl?: Playlist) {
+		const duration = Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000))
+		const raw = {
+			duration_ms: vid.duration.seconds * 1000,
+			live: vid.is_live
+		}
+
 		const track = new Track(this.context.player, {
 			title: vid.title.text ?? "UNKNOWN YOUTUBE VIDEO",
 			thumbnail: vid.best_thumbnail?.url ?? vid.thumbnails[0]?.url ?? "",
@@ -294,17 +329,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			requestedBy: context.requestedBy,
 			url: `https://youtube.com/watch?v=${vid.id}`,
 			views: parseInt(vid.view_count?.text ?? "0"),
-			duration: Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000)),
-			raw: {
-				duration_ms: vid.duration.seconds * 1000,
-				live: vid.is_live
-			},
+			duration,
+			raw,
 			playlist: pl,
 			source: "youtube",
 			queryType: "youtubeVideo",
 			async requestMetadata() {
 				return this.raw;
 			},
+			metadata: raw
 		});
 
 		track.extractor = this;
@@ -338,6 +371,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		}
 
 		const trackConstruct = recommended.map((v) => {
+			const duration = Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000))
+			const raw = {
+				live: v.is_live,
+				duration_ms: v.duration.seconds * 1000,
+				duration,
+			}
+
 			return new Track(this.context.player, {
 				title: v.title?.text ?? "UNKNOWN TITLE",
 				thumbnail: v.best_thumbnail?.url ?? v.thumbnails[0]?.url,
@@ -345,13 +385,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				requestedBy: track.requestedBy,
 				url: `https://youtube.com/watch?v=${v.id}`,
 				views: parseInt(v.view_count?.text ?? "0"),
-				duration: Util.buildTimeCode(Util.parseMS(v.duration.seconds * 1000)),
-				raw: v,
+				duration,
+				raw,
 				source: "youtube",
 				queryType: "youtubeVideo",
-				metadata: v,
+				metadata: raw,
 				async requestMetadata() {
-					return v;
+					return this.raw;
 				},
 			});
 		});

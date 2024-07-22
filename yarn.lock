@@ -12,9 +12,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@discord-player/extractor@npm:^4.4.7":
-  version: 4.4.7
-  resolution: "@discord-player/extractor@npm:4.4.7"
+"@discord-player/extractor@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "@discord-player/extractor@npm:4.5.0"
   dependencies:
     file-type: "npm:^16.5.4"
     genius-lyrics: "npm:^4.4.6"
@@ -24,7 +24,7 @@ __metadata:
     soundcloud.ts: "npm:^0.5.2"
     spotify-url-info: "npm:^3.2.6"
     youtube-sr: "npm:^4.3.9"
-  checksum: 10c0/54f58ccecc8ad1520aeb699cdf0f7825fbe3e71ef4af222072a763ffcb9d52084f579cbeba3aa64d47fed9925bc9eda7f71e14c93569f040fd793177f333aa1e
+  checksum: 10c0/7bc1cd65d825311da8c02018f4c0cf0c53cb0d3b1100019887c5668321071d252d237acb67eda0cae923ad06bc3cadc155559131397596ba764e89e734466fc4
   languageName: node
   linkType: hard
 
@@ -900,20 +900,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "discord-player-youtubei@workspace:."
   dependencies:
-    "@discord-player/extractor": "npm:^4.4.7"
+    "@discord-player/extractor": "npm:^4.5.0"
     "@types/node": "npm:^20.14.10"
-    discord-player: "npm:^6.6.10"
+    discord-player: "npm:^6.7.0"
     discord.js: "npm:^14.15.3"
     tsup: "npm:^8.1.0"
     typescript: "npm:^5.5.2"
     undici: "npm:^6.19.2"
     youtubei.js: "npm:^10.1.0"
+  bin:
+    discord-player-youtubei: ./bin/index.js
   languageName: unknown
   linkType: soft
 
-"discord-player@npm:^6.6.10":
-  version: 6.6.10
-  resolution: "discord-player@npm:6.6.10"
+"discord-player@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "discord-player@npm:6.7.0"
   dependencies:
     "@discord-player/equalizer": "npm:^0.2.3"
     "@discord-player/ffmpeg": "npm:^0.1.0"
@@ -923,8 +925,8 @@ __metadata:
     ip: "npm:^2.0.1"
     libsodium-wrappers: "npm:^0.7.13"
   peerDependencies:
-    "@discord-player/extractor": ^4.4.7
-  checksum: 10c0/67766b907e94f030b9e39639b046713075f2d303c077e761cf1e8ec76fb7e631d0ee50f89148f402166ad1deaacafd50d4bc80eb216c2850a4cd9ca32240a704
+    "@discord-player/extractor": ^4.5.0
+  checksum: 10c0/590e016b9b1365fd0bd95c90f75615201b3bc0e5f9871782eb92dbdc9a9e4f7b1c6bce9759f21e9a3aed9dc359724b3e539566f40d4a83f847130aae78d8e6be
   languageName: node
   linkType: hard
 
