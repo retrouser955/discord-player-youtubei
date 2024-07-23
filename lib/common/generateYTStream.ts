@@ -26,6 +26,8 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
     if(!id) id = query.url.split("/").at(-1)?.split("?").at(0)!
     const videoInfo = await innerTube.getBasicInfo(id, context.useClient)
 
+    if(videoInfo.basic_info.is_live && videoInfo.basic_info.is_family_safe) return videoInfo.streaming_data?.hls_manifest_url!
+
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
     // @ts-expect-error
     return Readable.fromWeb(download)

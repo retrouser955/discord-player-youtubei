@@ -18,7 +18,6 @@ import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/pa
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { debugSignIn } from "../common/debugSignIn";
 import { getRandomOauthToken } from "../common/randomAuthToken";
 
 export interface RotatorShardOptions {
@@ -96,7 +95,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 				await this.#signIn(this.options.rotator.authentications[tokenToUse])
 
-				debugSignIn(this.innerTube, this.context.player.debug)
+				const info = await this.innerTube.account.getInfo()
+
+				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
 
 				return
 			}
@@ -111,7 +112,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			try {
 				await this.#signIn(this.options.authentication)
 
-				debugSignIn(this.innerTube, this.context.player.debug)
+				const info = await this.innerTube.account.getInfo()
+
+				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
 			} catch (error) {
 				this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`);
 			}
