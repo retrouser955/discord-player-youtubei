@@ -89,7 +89,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		if(this.options.rotator) {
 			if(this.options.rotator.rotationStrategy === "shard") {
-				const tokenToUse = (this.options.rotator.currentShard - 1) % this.options.rotator.authentications.length
+				const tokenToUse = this.options.rotator.currentShard % this.options.rotator.authentications.length
 
 				this.context.player.debug(`Shard count is ${this.options.rotator.currentShard} thus using rotator.authentication[${tokenToUse}]`)
 
