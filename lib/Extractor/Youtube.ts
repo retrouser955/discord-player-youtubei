@@ -1,20 +1,31 @@
-import {
-	BaseExtractor,
+import type {
 	ExtractorStreamable,
-	Track,
 	SearchQueryType,
-	QueryType,
 	ExtractorInfo,
 	ExtractorSearchContext,
-	Playlist,
-	Util,
 	GuildQueueHistory,
 } from "discord-player";
-import Innertube, { type OAuth2Tokens, type InnerTubeClient } from "youtubei.js";
+
+import {
+	Util,
+	Track,
+	Playlist,
+	QueryType,
+	BaseExtractor
+} from "discord-player"
+
+import Innertube, { 
+	type OAuth2Tokens,
+	type InnerTubeClient
+} from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
-import { Readable } from "node:stream";
+import { type Readable } from "node:stream";
 import { YouTubeExtractor } from "@discord-player/extractor";
-import type { PlaylistVideo, CompactVideo, Video } from "youtubei.js/dist/src/parser/nodes";
+import type {
+	PlaylistVideo,
+	CompactVideo,
+	Video
+} from "youtubei.js/dist/src/parser/nodes";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
@@ -276,10 +287,14 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 				const vid = await this.innerTube.getBasicInfo(videoId);
 				const duration = Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000))
+
+				const uploadTime = vid.basic_info.start_timestamp
+
 				const raw = {
 					duration_ms: vid.basic_info.duration as number * 1000,
 					live: vid.basic_info.is_live,
-					duration
+					duration,
+					startTime: uploadTime
 				}
 
 				return {
@@ -319,6 +334,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 	buildTrack(vid: Video, context: ExtractorSearchContext, pl?: Playlist) {
 		const duration = Util.buildTimeCode(Util.parseMS(vid.duration.seconds * 1000))
+
 		const raw = {
 			duration_ms: vid.duration.seconds * 1000,
 			live: vid.is_live
@@ -331,7 +347,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			author: vid.author?.name ?? "UNKNOWN AUTHOR",
 			requestedBy: context.requestedBy,
 			url: `https://youtube.com/watch?v=${vid.id}`,
-			views: parseInt(vid.view_count?.text ?? "0"),
+			views: parseInt((vid.view_count?.text ?? "0").replaceAll(",", "")),
 			duration,
 			raw,
 			playlist: pl,
@@ -387,7 +403,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				author: v.author?.name ?? "UNKNOWN AUTHOR",
 				requestedBy: track.requestedBy,
 				url: `https://youtube.com/watch?v=${v.id}`,
-				views: parseInt(v.view_count?.text ?? "0"),
+				views: parseInt((v.view_count?.text ?? "0").replaceAll(",", "")),
 				duration,
 				raw,
 				source: "youtube",
