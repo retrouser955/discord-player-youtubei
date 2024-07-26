@@ -4,7 +4,7 @@ import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type { DownloadOptions } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
-import { Readable, Duplex } from "stream";
+import { PassThrough } from "stream";
 import { Utils } from "youtubei.js";
 
 export interface YTStreamingOptions {
@@ -31,7 +31,7 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
 
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
     
-    const duplexStream = new Duplex()
+    const duplexStream = new PassThrough()
 
     for await (const chunk of Utils.streamToIterable(download)) {
         duplexStream.write(chunk)
