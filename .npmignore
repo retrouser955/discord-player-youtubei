@@ -4,3 +4,5 @@ LEGAL.md
 lib/
 tsconfig.json
 tsup.config.ts
+CHANGELOG.md
+Rotator.md

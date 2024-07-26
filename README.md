@@ -32,7 +32,7 @@ const player = useMainPlayer() // or new Player()
 player.extractors.register(YoutubeiExtractor, {})
 ```
 
-*I have seem many people registering the extractor in their commands. DO NOT DO THIS*
+*I have seen many people registering the extractor in their commands. DO NOT DO THIS*
 
 ## Signing into YouTube
 
@@ -87,6 +87,10 @@ interface YoutubeiOptions {
 	rotator?: RotatorConfig
 }
 ```
+
+### Want to support us?
+
+Just star this repo!
 
 ### Notice Regarding YouTube Streaming
 

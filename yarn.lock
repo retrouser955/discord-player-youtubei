@@ -912,7 +912,7 @@ __metadata:
     tsup: "npm:^8.1.0"
     typescript: "npm:^5.5.2"
     undici: "npm:^6.19.2"
-    youtubei.js: "npm:^10.1.0"
+    youtubei.js: "npm:^10.2.0"
   bin:
     discord-player-youtubei: ./bin/index.js
   languageName: unknown
@@ -2771,13 +2771,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^10.1.0":
-  version: 10.1.0
-  resolution: "youtubei.js@npm:10.1.0"
+"youtubei.js@npm:^10.2.0":
+  version: 10.2.0
+  resolution: "youtubei.js@npm:10.2.0"
   dependencies:
     jintr: "npm:^2.0.0"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/82674274ae966bdf029586198af97eccb45e17fa833b00acaaed972b1b56d77e695a176ec1915cee7b3eec13aec21721345114c6889bb335f017df7b19b42cc8
+  checksum: 10c0/e04fec225846ba183263c2718b2af4e9bc7dda4c5ef1cd3bf8cde57d8a74341c377db98bf95ea55ae784f6032ca81ae813daa01736e068addd8edff15f2a703a
   languageName: node
   linkType: hard
