@@ -4,7 +4,8 @@ import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type { DownloadOptions } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
-import { Readable } from "stream";
+import { Readable, Duplex } from "stream";
+import { Utils } from "youtubei.js";
 
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;
@@ -29,6 +30,12 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
     if(videoInfo.basic_info.is_live && videoInfo.basic_info.is_family_safe) return videoInfo.streaming_data?.hls_manifest_url!
 
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
-    // @ts-expect-error
-    return Readable.fromWeb(download)
+    
+    const duplexStream = new Duplex()
+
+    for await (const chunk of Utils.streamToIterable(download)) {
+        duplexStream.write(chunk)
+    }
+
+    return duplexStream
 }

@@ -165,6 +165,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		if(youtubeTrack.tracks.length === 0) return null
 
+		track.setMetadata({
+			bridge: youtubeTrack.tracks[0]
+		})
+
 		return this.stream(youtubeTrack.tracks[0])
 	}
 
