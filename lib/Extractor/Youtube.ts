@@ -14,12 +14,12 @@ import {
 	BaseExtractor
 } from "discord-player"
 
-import Innertube, { 
+import Innertube, {
 	type OAuth2Tokens,
 	type InnerTubeClient
 } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
-import { type Readable } from "node:stream";
+import { Readable } from "node:stream";
 import { YouTubeExtractor } from "@discord-player/extractor";
 import type {
 	PlaylistVideo,
@@ -52,7 +52,8 @@ export interface YoutubeiOptions {
 	streamOptions?: {
 		useClient?: InnerTubeClient
 	};
-	rotator?: RotatorConfig
+	rotator?: RotatorConfig;
+	overrideBridgeMode?: "ytmusic" | "yt"
 }
 
 export interface AsyncTrackingContext {
@@ -72,7 +73,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 	static getStreamingContext() {
 		const ctx = YoutubeiExtractor.ytContext.getStore()
-		if(!ctx) throw new Error("INVALID INVOKCATION")
+		if (!ctx) throw new Error("INVALID INVOKCATION")
 		return ctx
 	}
 
@@ -88,7 +89,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				return YoutubeiExtractor.ytContext.run({
 					useClient: this.options.streamOptions?.useClient ?? "WEB"
 				}, async () => {
-					if(this.rotatorOnEachReq) await this.#rotateTokens()
+					if (this.rotatorOnEachReq) await this.#rotateTokens()
 					return streamFromYT(q, this.innerTube, {
 						overrideDownloadOptions: this.options.overrideDownloadOptions,
 					});
@@ -98,8 +99,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		YoutubeiExtractor.instance = this;
 
-		if(this.options.rotator) {
-			if(this.options.rotator.rotationStrategy === "shard") {
+		if (this.options.rotator) {
+			if (this.options.rotator.rotationStrategy === "shard") {
 				const tokenToUse = this.options.rotator.currentShard % this.options.rotator.authentications.length
 
 				this.context.player.debug(`Shard count is ${this.options.rotator.currentShard} thus using rotator.authentication[${tokenToUse}]`)
@@ -146,24 +147,79 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		if (typeof query !== "string") return false;
 		// prettier-ignore
 		return ([
-            QueryType.YOUTUBE,
-            QueryType.YOUTUBE_PLAYLIST,
-            QueryType.YOUTUBE_SEARCH,
-            QueryType.YOUTUBE_VIDEO,
-            QueryType.AUTO,
-            QueryType.AUTO_SEARCH
-        ] as SearchQueryType[]).some((r) => r === type);
+			QueryType.YOUTUBE,
+			QueryType.YOUTUBE_PLAYLIST,
+			QueryType.YOUTUBE_SEARCH,
+			QueryType.YOUTUBE_VIDEO,
+			QueryType.AUTO,
+			QueryType.AUTO_SEARCH
+		] as SearchQueryType[]).some((r) => r === type);
 	}
 
 	async bridge(track: Track, ext: BaseExtractor | null): Promise<ExtractorStreamable | null> {
 		const query = ext?.createBridgeQuery(track) || `${track.author} - ${track.title} (official audio)`
-		
+		let protocol: YoutubeiOptions['overrideBridgeMode']
+
+		if (this.options.overrideBridgeMode) {
+			protocol = this.options.overrideBridgeMode
+		} else {
+			if (this.innerTube.session.logged_in) protocol = "ytmusic"
+			else protocol = "yt"
+		}
+
+		switch (protocol) {
+			case "ytmusic": {
+				try {
+					let stream = await this.bridgeFromYTMusic(query)
+
+					if(!stream) {
+						this.context.player.debug("Unable to bridge from Youtube music. Falling back to default behavior")
+						stream = await this.bridgeFromYT(query, track)
+					}
+
+					return stream
+				} catch (error) {
+					this.context.player.debug("Unable to bridge from youtube music due to an error. Falling back to default behavior\n\n" + error)
+					const stream = await this.bridgeFromYT(query, track)
+					return stream
+				}
+			}
+			default: {
+				const stream = await this.bridgeFromYT(query, track)
+
+				return stream
+			}
+		}
+	}
+
+	async bridgeFromYTMusic(query: string): Promise<ExtractorStreamable | null> {
+		const musicSearch = await this.innerTube.music.search(query, {
+			type: "song",
+		})
+
+		if (!musicSearch.songs) return null
+		if (!musicSearch.songs.contents || musicSearch.songs.contents.length === 0) return null
+		if (!musicSearch.songs.contents[0].id) return null
+
+		const info = await this.innerTube.music.getInfo(musicSearch.songs.contents[0].id)
+
+		const webStream = await info.download({
+			type: "audio",
+			quality: "best",
+			format: "mp4"
+		})
+
+		// @ts-ignore
+		return Readable.fromWeb(webStream)
+	}
+
+	async bridgeFromYT(query: string, track: Track): Promise<ExtractorStreamable | null> {
 		const youtubeTrack = await this.handle(query, {
 			type: QueryType.YOUTUBE_SEARCH,
 			requestedBy: track.requestedBy
 		})
 
-		if(youtubeTrack.tracks.length === 0) return null
+		if (youtubeTrack.tracks.length === 0) return null
 
 		track.setMetadata({
 			bridge: youtubeTrack.tracks[0]
@@ -185,12 +241,12 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		query = query.includes("youtube.com") ? query.replace(/(m(usic)?|gaming)\./, "") : query;
 		if (!query.includes("list=RD") && YouTubeExtractor.validateURL(query)) context.type = QueryType.YOUTUBE_VIDEO;
 
-		if(this.rotatorOnEachReq) await this.#rotateTokens()
+		if (this.rotatorOnEachReq) await this.#rotateTokens()
 
-		if(context.type === QueryType.YOUTUBE_PLAYLIST) {
+		if (context.type === QueryType.YOUTUBE_PLAYLIST) {
 			const url = new URL(query)
 
-			if(url.searchParams.has("v") && url.searchParams.has("list")) context.type = QueryType.YOUTUBE_VIDEO
+			if (url.searchParams.has("v") && url.searchParams.has("list")) context.type = QueryType.YOUTUBE_VIDEO
 		}
 
 		switch (context.type) {
@@ -244,7 +300,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 					}
 				)
 
-				while(playlist.has_continuation) {
+				while (playlist.has_continuation) {
 					playlist = await playlist.getContinuation()
 
 					plTracks.push(...(playlist.videos.filter((v) => v.type === "PlaylistVideo") as PlaylistVideo[]).map(
@@ -287,7 +343,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				let videoId = new URL(query).searchParams.get("v");
 
 				// detected as yt shorts or youtu.be link
-				if(!videoId) videoId = query.split("/").at(-1)!.split("?")[0]
+				if (!videoId) videoId = query.split("/").at(-1)!.split("?")[0]
 
 				const vid = await this.innerTube.getBasicInfo(videoId);
 				const duration = Util.buildTimeCode(Util.parseMS((vid.basic_info.duration ?? 0) * 1000))
@@ -378,8 +434,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	): Promise<ExtractorInfo> {
 		let id = new URL(track.url).searchParams.get("v")
 		// VIDEO DETECTED AS YT SHORTS OR youtu.be link
-		if(!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
-		if(this.rotatorOnEachReq) await this.#rotateTokens()
+		if (!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
+		if (this.rotatorOnEachReq) await this.#rotateTokens()
 		const videoInfo = await this.innerTube.getInfo(id)
 
 		const next = videoInfo.watch_next_feed!
@@ -388,7 +444,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			(v) => !history.tracks.some((x) => x.url === `https://youtube.com/watch?v=${v.id}`) && v.type === "CompactVideo"
 		)
 
-		if(!recommended) {
+		if (!recommended) {
 			this.context.player.debug("Unable to fetch recommendations");
 			return this.#emptyResponse();
 		}
