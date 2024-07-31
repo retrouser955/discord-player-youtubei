@@ -170,7 +170,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		switch (protocol) {
 			case "ytmusic": {
 				try {
-					let stream = await this.bridgeFromYTMusic(query)
+					let stream = await this.bridgeFromYTMusic(query, track)
 
 					if(!stream) {
 						this.context.player.debug("Unable to bridge from Youtube music. Falling back to default behavior")
@@ -192,7 +192,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		}
 	}
 
-	async bridgeFromYTMusic(query: string): Promise<ExtractorStreamable | null> {
+	async bridgeFromYTMusic(query: string, track: Track): Promise<ExtractorStreamable | null> {
 		const musicSearch = await this.innerTube.music.search(query, {
 			type: "song",
 		})
@@ -202,6 +202,20 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		if (!musicSearch.songs.contents[0].id) return null
 
 		const info = await this.innerTube.music.getInfo(musicSearch.songs.contents[0].id)
+
+		const metadata = new Track(this.context.player, {
+			title: info.basic_info.title ?? "UNKNOWN TITLE",
+			duration: Util.buildTimeCode(Util.parseMS((info.basic_info.duration || 0) * 1000)),
+			author: info.basic_info.author ?? "UNKNOWN AUTHOR",
+			description: info.basic_info.description,
+			views: info.basic_info.view_count,
+			thumbnail: info.basic_info.thumbnail?.at(0)?.url,
+			url: `https://youtube.com/watch?v=${info.basic_info.id}&dpymeta=ytmusic`,
+			source: "youtube",
+			queryType: "youtubeVideo"
+		})
+
+		track.setMetadata(metadata)
 
 		const webStream = await info.download({
 			type: "audio",

@@ -34,6 +34,12 @@ player.extractors.register(YoutubeiExtractor, {})
 
 *I have seen many people registering the extractor in their commands. DO NOT DO THIS*
 
+## How Discord Player Youtubei handles bridging
+
+As of `1.2.1`, discord-player-youtubei will detect if you are signed in or not and will use YouTube music streaming system. If this is not available, the extractor will use normal YouTube.
+
+You can override this behavior using the `overrideBridgeMode` option. See the extractor options below for more information regarding the types
+
 ## Signing into YouTube
 
 First run the following command
@@ -84,7 +90,8 @@ interface YoutubeiOptions {
 	streamOptions?: {
 		useClient?: InnerTubeClient
 	};
-	rotator?: RotatorConfig
+	rotator?: RotatorConfig;
+	overrideBridgeMode?: "ytmusic" | "yt"
 }
 ```
 

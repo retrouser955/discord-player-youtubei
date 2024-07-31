@@ -8,7 +8,7 @@ const exit = (message: any, clean: boolean) => {
     }
 
     throw new Error(message)
-} 
+}
 
 export async function generateOauthTokens() {
     const youtube = await Innertube.create()
