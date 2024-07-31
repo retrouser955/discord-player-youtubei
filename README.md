@@ -68,6 +68,40 @@ Since Youtube has a hard limt (which is not that strict), we can provide a rotat
 
 ## Types
 
+#### RotatorShardOptions
+
+| name | type |
+| ---- | ---- |
+| authentications | Array of string |
+| rotationStrategy | "shard" |
+| currentShard | number |
+
+#### RotatorRandomOptions
+
+| name | type |
+| ---- | ---- |
+| authentications | Array of string |
+| rotationStrategy | "random" |
+
+#### RotatorConfig
+
+```ts
+type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
+```
+
+#### YoutubeiOptions
+
+| name | type | description |
+| ---- | ---- | ----------- |
+| authentication | string | [The auth token](#signing-into-youtube) |
+| overrideDownloadOptions | [DownloadOptions](https://github.com/LuanRT/YouTube.js/blob/main/src/types/FormatUtils.ts#L29) | Override the default download options |
+| createStream | fn ([q](https://discord-player.js.org/docs/discord-player/class/Track), [ext](https://discord-player.js.org/docs/discord-player/class/BaseExtractor)): Promise<string\|Readable> | Override the streaming function |
+| signOutOnDeactive | boolean | Revoke the tokens after deactivation |
+| rotator | [RotatorConfig](#rotatorconfig) | The config of the rotator |
+| overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
+
+## Raw Types
+
 ```ts
 interface RotatorShardOptions {
 	authentications: string[];
@@ -97,9 +131,9 @@ interface YoutubeiOptions {
 
 ## Functions
 
-| class | function | params | static |
-| ----- | -------- | ------ | ------ |
-| YoutubeiExtractor | setClientMode | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/README.md#getbasicinfovideo_id-client) | true |
+| class | function | params | static | description |
+| ----- | -------- | ------ | ------ | ----------- |
+| YoutubeiExtractor | setClientMode | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/src/Innertube.ts#L49) | true | Set the innertube client on the fly |
 
 ### Want to support us?
 
