@@ -37,4 +37,3 @@ export async function generateOauthTokens() {
 export * from "./Extractor/Youtube"
 export * from "./common/tokenUtils"
 export * from "./common/getInstance"
-export * from "./util/getHomepage"

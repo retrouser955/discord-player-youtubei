@@ -66,7 +66,7 @@ player.extractors.register(YoutubeiExtractor, {
 
 Since Youtube has a hard limt (which is not that strict), we can provide a rotator config when registering the extractor. View [Rotator](./Rotator.md)
 
-## Options for YoutubeiExtractor
+## Types
 
 ```ts
 interface RotatorShardOptions {
@@ -94,6 +94,12 @@ interface YoutubeiOptions {
 	overrideBridgeMode?: "ytmusic" | "yt"
 }
 ```
+
+## Functions
+
+| class | function | params | static |
+| ----- | -------- | ------ | ------ |
+| YoutubeiExtractor | setClientMode | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/README.md#getbasicinfovideo_id-client) | true |
 
 ### Want to support us?
 

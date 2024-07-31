@@ -4,7 +4,7 @@ import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type { DownloadOptions } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
-import { PassThrough, Readable } from "stream";
+import { Readable } from "stream";
 
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;

@@ -71,6 +71,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	rotatorOnEachReq = false
 	#oauthTokens: OAuth2Tokens[] = []
 
+	static setClientMode(client: InnerTubeClient) {
+		if(!this.instance) throw new Error("Cannot find Youtubei's instance")
+
+		if(!this.instance.options.streamOptions) this.instance.options.streamOptions = { useClient: client }
+		else this.instance.options.streamOptions.useClient = client
+	}
+
 	static getStreamingContext() {
 		const ctx = YoutubeiExtractor.ytContext.getStore()
 		if (!ctx) throw new Error("INVALID INVOKCATION")
