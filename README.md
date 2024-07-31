@@ -92,7 +92,7 @@ type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 #### StreamOptions
 
 | name | type | description | required |
-| ---- | ---- | ----------- |
+| ---- | ---- | ----------- | -------- |
 | useClient | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/src/Innertube.ts#L49) | Which client to get the stream from | false |
 
 #### YoutubeiOptions
