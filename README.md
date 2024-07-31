@@ -70,24 +70,30 @@ Since Youtube has a hard limt (which is not that strict), we can provide a rotat
 
 #### RotatorShardOptions
 
-| name | type |
-| ---- | ---- |
-| authentications | Array of string |
-| rotationStrategy | "shard" |
-| currentShard | number |
+| name | type | required |
+| ---- | ---- | -------- |
+| authentications | Array of string | true |
+| rotationStrategy | "shard" | true |
+| currentShard | number | true |
 
 #### RotatorRandomOptions
 
-| name | type |
-| ---- | ---- |
-| authentications | Array of string |
-| rotationStrategy | "random" |
+| name | type | required |
+| ---- | ---- | -------- |
+| authentications | Array of string | true |
+| rotationStrategy | "random" | true |
 
 #### RotatorConfig
 
 ```ts
 type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 ```
+
+#### StreamOptions
+
+| name | type | description | required |
+| ---- | ---- | ----------- |
+| useClient | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/src/Innertube.ts#L49) | Which client to get the stream from | false |
 
 #### YoutubeiOptions
 
@@ -99,6 +105,7 @@ type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 | signOutOnDeactive | boolean | Revoke the tokens after deactivation |
 | rotator | [RotatorConfig](#rotatorconfig) | The config of the rotator |
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
+| streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 
 ## Raw Types
 

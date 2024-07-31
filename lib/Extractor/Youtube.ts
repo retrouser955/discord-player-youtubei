@@ -44,14 +44,16 @@ export interface RotatorRandomOptions {
 
 export type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 
+export interface StreamOptions {
+	useClient?: InnerTubeClient
+}
+
 export interface YoutubeiOptions {
 	authentication?: string;
 	overrideDownloadOptions?: DownloadOptions;
 	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
-	streamOptions?: {
-		useClient?: InnerTubeClient
-	};
+	streamOptions?: StreamOptions;
 	rotator?: RotatorConfig;
 	overrideBridgeMode?: "ytmusic" | "yt"
 }
