@@ -91,7 +91,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		this.protocols = ["ytsearch", "youtube"];
 
 		this.innerTube = await Innertube.create({
-			retrieve_player: this.options.disablePlayer || true
+			retrieve_player: this.options.disablePlayer == undefined ? true : !this.options.disablePlayer
 		})
 
 		if (typeof this.options.createStream === "function") {
