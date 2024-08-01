@@ -106,6 +106,7 @@ type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 | rotator | [RotatorConfig](#rotatorconfig) | The config of the rotator |
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
+| disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
 
 ## Raw Types
 

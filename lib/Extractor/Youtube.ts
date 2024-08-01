@@ -55,7 +55,8 @@ export interface YoutubeiOptions {
 	signOutOnDeactive?: boolean;
 	streamOptions?: StreamOptions;
 	rotator?: RotatorConfig;
-	overrideBridgeMode?: "ytmusic" | "yt"
+	overrideBridgeMode?: "ytmusic" | "yt";
+	disablePlayer?: boolean;
 }
 
 export interface AsyncTrackingContext {
@@ -89,7 +90,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
 
-		this.innerTube = await Innertube.create()
+		this.innerTube = await Innertube.create({
+			retrieve_player: this.options.disablePlayer || true
+		})
 
 		if (typeof this.options.createStream === "function") {
 			this._stream = this.options.createStream;
