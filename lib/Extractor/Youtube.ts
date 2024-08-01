@@ -219,7 +219,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			title: info.basic_info.title ?? "UNKNOWN TITLE",
 			duration: Util.buildTimeCode(Util.parseMS((info.basic_info.duration || 0) * 1000)),
 			author: info.basic_info.author ?? "UNKNOWN AUTHOR",
-			description: info.basic_info.description,
 			views: info.basic_info.view_count,
 			thumbnail: info.basic_info.thumbnail?.at(0)?.url,
 			url: `https://youtube.com/watch?v=${info.basic_info.id}&dpymeta=ytmusic`,
