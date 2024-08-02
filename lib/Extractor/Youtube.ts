@@ -30,6 +30,7 @@ import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { getRandomOauthToken } from "../common/randomAuthToken";
+import { createReadableFromWeb } from "../common/webToReadable";
 
 export interface RotatorShardOptions {
 	authentications: string[];
@@ -234,8 +235,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			format: "mp4"
 		})
 
-		// @ts-ignore
-		return Readable.fromWeb(webStream)
+		return createReadableFromWeb(webStream)
 	}
 
 	async bridgeFromYT(query: string, track: Track): Promise<ExtractorStreamable | null> {

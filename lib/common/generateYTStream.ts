@@ -5,6 +5,7 @@ import type { DownloadOptions } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
 import { Readable } from "stream";
+import { createReadableFromWeb } from "./webToReadable";
 
 export interface YTStreamingOptions {
     extractor?: BaseExtractor<object>;
@@ -30,8 +31,7 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
 
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
     
-    // @ts-ignore
-    const stream = Readable.fromWeb(download)
+    const stream = createReadableFromWeb(download)
 
     return stream
 }
