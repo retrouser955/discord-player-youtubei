@@ -170,7 +170,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	}
 
 	async bridge(track: Track, ext: BaseExtractor | null): Promise<ExtractorStreamable | null> {
-		const query = ext?.createBridgeQuery(track) || `${track.author} - ${track.title} (official audio)`
+		if(ext?.identifier === this.identifier) return this.stream(track)
+
 		let protocol: YoutubeiOptions['overrideBridgeMode']
 
 		if (this.options.overrideBridgeMode) {
@@ -179,6 +180,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			if (this.innerTube.session.logged_in) protocol = "ytmusic"
 			else protocol = "yt"
 		}
+
+		const query = ext?.createBridgeQuery(track) || `${track.author} - ${track.title}${protocol === "yt" ? " (official audio)" : ""}`
 
 		switch (protocol) {
 			case "ytmusic": {
