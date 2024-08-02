@@ -1,15 +1,12 @@
-import { Readable } from "stream"
+import { PassThrough } from "stream"
+import { Utils } from "youtubei.js"
 
-export function createReadableFromWeb(readStream: ReadableStream<Uint8Array>) {
-    const reader = readStream.getReader()
+export async function createReadableFromWeb(readStream: ReadableStream<Uint8Array>) {
+    const readable = new PassThrough();
 
-    const readable = new Readable({
-        read() {
-            reader.read()
-                .then(({ done, value }) => this.push(done ? value : Buffer.from(value)))
-                .catch(err => this.destroy(err))
-        }
-    })
+    for await (const chunk of Utils.streamToIterable(readStream)) {
+        readable.write(chunk)
+    }
 
     return readable
 }
