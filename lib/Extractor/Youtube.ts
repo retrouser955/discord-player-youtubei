@@ -58,6 +58,7 @@ export interface YoutubeiOptions {
 	rotator?: RotatorConfig;
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
+	ignoreSignInErrors?: boolean;
 }
 
 export interface AsyncTrackingContext {
@@ -141,7 +142,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
 			} catch (error) {
-				this.context.player.debug(`Unable to sign into Innertube:\n\n${error}`);
+				if(this.options.ignoreSignInErrors) process.emitWarning(`Unable to sign into YouTube\n\n${error}`);
+				else throw error
 			}
 		}
 	}

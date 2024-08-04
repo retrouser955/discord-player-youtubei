@@ -55,6 +55,12 @@ The token will be printed out shortly
 import { YoutubeiExtractor } from "discord-player-youtubei"
 
 const player = useMainPlayer()
+/**
+ * getOauthTokens is not a real function exported by discord-player-youtubei.
+ * It is simply a placeholder for the actual oauth tokens
+ * 
+ * Do not just put in access token. Put in the entire string.
+ */
 const oauthTokens = getOauthTokens() // The tokens printed from step above
 
 player.extractors.register(YoutubeiExtractor, {
@@ -142,6 +148,12 @@ interface YoutubeiOptions {
 | class | function | params | static | description |
 | ----- | -------- | ------ | ------ | ----------- |
 | YoutubeiExtractor | setClientMode | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/src/Innertube.ts#L49) | true | Set the innertube client on the fly |
+
+## Something isn't working?
+
+Try installing an alpha or a beta build using `npm install discord-player-youtubei@alpha` or `npm install discord-player-youtubei@beta`. If this still does not work or you installed a version that is lower than the main version, feel free to open an issue on our [GitHub page](https://github.com/retrouser955/discord-player-youtubei/issues)
+
+If you know how to fix it, please clone this repository and send us a pull request. As this is an open source project, any contributions are welcome!
 
 ### Want to support us?
 
