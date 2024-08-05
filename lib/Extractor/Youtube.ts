@@ -229,7 +229,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			thumbnail: info.basic_info.thumbnail?.at(0)?.url,
 			url: `https://youtube.com/watch?v=${info.basic_info.id}&dpymeta=ytmusic`,
 			source: "youtube",
-			queryType: "youtubeVideo"
+			queryType: "youtubeVideo",
+			live: false
 		})
 
 		track.setMetadata(metadata)
@@ -325,7 +326,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							async requestMetadata() {
 								return this.raw;
 							},
-							metadata: raw
+							metadata: raw,
+							live: v.is_live
 						})
 					}
 				)
@@ -356,7 +358,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 								async requestMetadata() {
 									return this.raw;
 								},
-								metadata: raw
+								metadata: raw,
+								live: v.is_live
 							})
 						}
 					))
@@ -405,7 +408,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 							async requestMetadata() {
 								return this.raw;
 							},
-							metadata: raw
+							metadata: raw,
+							live: vid.basic_info.is_live
 						}),
 					],
 				};
@@ -446,7 +450,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			async requestMetadata() {
 				return this.raw;
 			},
-			metadata: raw
+			metadata: raw,
+			live: vid.is_live
 		});
 
 		track.extractor = this;
@@ -502,6 +507,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				async requestMetadata() {
 					return this.raw;
 				},
+				live: v.is_live
 			});
 		});
 
