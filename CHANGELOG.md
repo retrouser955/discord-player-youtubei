@@ -12,7 +12,6 @@
 
 ## Features
 
-* Added the ability to [rotate authentication tokens](./Rotator.md)
 * Added the ability to bridge from YouTube Music
 
 ## Internal Changes

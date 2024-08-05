@@ -32,19 +32,6 @@ import { tokenToObject } from "../common/tokenUtils";
 import { getRandomOauthToken } from "../common/randomAuthToken";
 import { createReadableFromWeb } from "../common/webToReadable";
 
-export interface RotatorShardOptions {
-	authentications: string[];
-	rotationStrategy: "shard";
-	currentShard: number;
-}
-
-export interface RotatorRandomOptions {
-	authentications: string[];
-	rotationStrategy: "random";
-}
-
-export type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
-
 export interface StreamOptions {
 	useClient?: InnerTubeClient
 }
@@ -55,7 +42,6 @@ export interface YoutubeiOptions {
 	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
 	streamOptions?: StreamOptions;
-	rotator?: RotatorConfig;
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
 	ignoreSignInErrors?: boolean;
@@ -72,9 +58,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public static instance?: YoutubeiExtractor;
 	public priority = 2;
 	static ytContext = new AsyncLocalStorage<AsyncTrackingContext>()
-
-	rotatorOnEachReq = false
-	#oauthTokens: OAuth2Tokens[] = []
 
 	static setClientMode(client: InnerTubeClient) {
 		if(!this.instance) throw new Error("Cannot find Youtubei's instance")
@@ -103,7 +86,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				return YoutubeiExtractor.ytContext.run({
 					useClient: this.options.streamOptions?.useClient ?? "WEB"
 				}, async () => {
-					if (this.rotatorOnEachReq) await this.#rotateTokens()
 					return streamFromYT(q, this.innerTube, {
 						overrideDownloadOptions: this.options.overrideDownloadOptions,
 					});
@@ -113,30 +95,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		YoutubeiExtractor.instance = this;
 
-		if (this.options.rotator) {
-			if (this.options.rotator.rotationStrategy === "shard") {
-				const tokenToUse = this.options.rotator.currentShard % this.options.rotator.authentications.length
-
-				this.context.player.debug(`Shard count is ${this.options.rotator.currentShard} thus using rotator.authentication[${tokenToUse}]`)
-
-				await this.#signIn(this.options.rotator.authentications[tokenToUse])
-
-				const info = await this.innerTube.account.getInfo()
-
-				this.context.player.debug(info.contents?.contents ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}` : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`)
-
-				return
-			}
-
-			this.#oauthTokens = this.options.rotator.authentications.map(v => tokenToObject(v))
-			this.rotatorOnEachReq = true
-
-			return
-		}
-
 		if (this.options.authentication) {
 			try {
-				await this.#signIn(this.options.authentication)
+				await this.signIn(this.options.authentication)
 
 				const info = await this.innerTube.account.getInfo()
 
@@ -148,7 +109,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		}
 	}
 
-	async #signIn(tokens: string) {
+	async signIn(tokens: string) {
 		const tkn = tokenToObject(tokens)
 		await this.innerTube.session.signIn(tkn)
 	}
@@ -259,20 +220,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		return this.stream(youtubeTrack.tracks[0])
 	}
 
-	async #rotateTokens() {
-		this.context.player.debug("Rotation strategy 'random' detected. Attempting to rotate")
-
-		const token = getRandomOauthToken(this.#oauthTokens)
-
-		await this.innerTube.session.signIn(token)
-	}
-
 	async handle(query: string, context: ExtractorSearchContext): Promise<ExtractorInfo> {
 		if (context.protocol === "ytsearch") context.type = QueryType.YOUTUBE_SEARCH;
 		query = query.includes("youtube.com") ? query.replace(/(m(usic)?|gaming)\./, "") : query;
 		if (!query.includes("list=RD") && YouTubeExtractor.validateURL(query)) context.type = QueryType.YOUTUBE_VIDEO;
-
-		if (this.rotatorOnEachReq) await this.#rotateTokens()
 
 		if (context.type === QueryType.YOUTUBE_PLAYLIST) {
 			const url = new URL(query)
@@ -470,7 +421,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		let id = new URL(track.url).searchParams.get("v")
 		// VIDEO DETECTED AS YT SHORTS OR youtu.be link
 		if (!id) id = track.url.split("/").at(-1)?.split("?").at(0)!
-		if (this.rotatorOnEachReq) await this.#rotateTokens()
+
 		const videoInfo = await this.innerTube.getInfo(id)
 
 		const next = videoInfo.watch_next_feed!

@@ -920,7 +920,6 @@ __metadata:
     discord.js: "npm:^14.15.3"
     tsup: "npm:^8.1.0"
     typescript: "npm:^5.5.2"
-    undici: "npm:^6.19.2"
     youtubei.js: "npm:^10.3.0"
   bin:
     discord-player-youtubei: ./bin/index.js
@@ -2618,7 +2617,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^6.11.1, undici@npm:^6.17.0, undici@npm:^6.19.2":
+"undici@npm:^6.11.1, undici@npm:^6.17.0":
   version: 6.19.5
   resolution: "undici@npm:6.19.5"
   checksum: 10c0/ee2c0a62f3e4333bad8b20e8218c8dea4a5b4f5c8589a92897a7aeb5b321f4118bd5eea2591a4add90b6c7d8049eabd8020725b44f9a1ba0fa1f92a71ed14b14

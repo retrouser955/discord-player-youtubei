@@ -68,32 +68,7 @@ player.extractors.register(YoutubeiExtractor, {
 })
 ```
 
-## Rotating your token
-
-Since Youtube has a hard limt (which is not that strict), we can provide a rotator config when registering the extractor. View [Rotator](./Rotator.md)
-
 ## Types
-
-#### RotatorShardOptions
-
-| name | type | required |
-| ---- | ---- | -------- |
-| authentications | Array of string | true |
-| rotationStrategy | "shard" | true |
-| currentShard | number | true |
-
-#### RotatorRandomOptions
-
-| name | type | required |
-| ---- | ---- | -------- |
-| authentications | Array of string | true |
-| rotationStrategy | "random" | true |
-
-#### RotatorConfig
-
-```ts
-type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
-```
 
 #### StreamOptions
 
@@ -109,7 +84,6 @@ type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 | overrideDownloadOptions | [DownloadOptions](https://github.com/LuanRT/YouTube.js/blob/main/src/types/FormatUtils.ts#L29) | Override the default download options |
 | createStream | fn ([q](https://discord-player.js.org/docs/discord-player/class/Track), [ext](https://discord-player.js.org/docs/discord-player/class/BaseExtractor)): Promise<string\|Readable> | Override the streaming function |
 | signOutOnDeactive | boolean | Revoke the tokens after deactivation |
-| rotator | [RotatorConfig](#rotatorconfig) | The config of the rotator |
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 | disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
@@ -117,19 +91,6 @@ type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
 ## Raw Types
 
 ```ts
-interface RotatorShardOptions {
-	authentications: string[];
-	rotationStrategy: "shard";
-	currentShard: number;
-}
-
-interface RotatorRandomOptions {
-	authentications: string[];
-	rotationStrategy: "random";
-}
-
-type RotatorConfig = RotatorShardOptions | RotatorRandomOptions
-
 interface YoutubeiOptions {
 	authentication?: string;
 	overrideDownloadOptions?: DownloadOptions;
@@ -138,7 +99,6 @@ interface YoutubeiOptions {
 	streamOptions?: {
 		useClient?: InnerTubeClient
 	};
-	rotator?: RotatorConfig;
 	overrideBridgeMode?: "ytmusic" | "yt"
 }
 ```
