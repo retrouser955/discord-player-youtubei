@@ -918,6 +918,7 @@ __metadata:
     "@types/node": "npm:^22.0.3"
     discord-player: "npm:^6.7.0"
     discord.js: "npm:^14.15.3"
+    tiny-typed-emitter: "npm:^2.1.0"
     tsup: "npm:^8.1.0"
     typescript: "npm:^5.5.2"
     youtubei.js: "npm:^10.3.0"
@@ -2458,6 +2459,13 @@ __metadata:
   dependencies:
     any-promise: "npm:^1.0.0"
   checksum: 10c0/f375aeb2b05c100a456a30bc3ed07ef03a39cbdefe02e0403fb714b8c7e57eeaad1a2f5c4ecfb9ce554ce3db9c2b024eba144843cd9e344566d9fcee73b04767
+  languageName: node
+  linkType: hard
+
+"tiny-typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-typed-emitter@npm:2.1.0"
+  checksum: 10c0/522bed4c579ee7ee16548540cb693a3d098b137496110f5a74bff970b54187e6b7343a359b703e33f77c5b4b90ec6cebc0d0ec3dbdf1bd418723c5c3ce36d8a2
   languageName: node
   linkType: hard
 
