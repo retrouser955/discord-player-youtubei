@@ -1,4 +1,3 @@
-import type Innertube from "youtubei.js";
 import { YoutubeiExtractor } from "../../Extractor/Youtube";
 import { LiveChat } from "./LiveChat";
 
