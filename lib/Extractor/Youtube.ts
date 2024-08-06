@@ -84,7 +84,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		} else {
 			this._stream = (q, _) => {
 				return YoutubeiExtractor.ytContext.run({
-					useClient: this.options.streamOptions?.useClient ?? "WEB"
+					useClient: this.options.streamOptions?.useClient ?? "ANDROID"
 				}, async () => {
 					return streamFromYT(q, this.innerTube, {
 						overrideDownloadOptions: this.options.overrideDownloadOptions,
