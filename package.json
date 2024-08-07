@@ -1,6 +1,6 @@
 {
   "name": "discord-player-youtubei",
-  "version": "1.2.5-beta.7",
+  "version": "1.2.5-beta.8",
   "description": "An unofficial package to test the use of youtubei in discord-player v6.",
   "main": "dist/index.js",
   "repository": "https://github.com/retrouser955/discord-player-youtubei",
@@ -23,10 +23,5 @@
     "prepare": "npm run build"
   },
   "bin": "./bin/index.js",
-  "packageManager": "yarn@4.3.1",
-  "exports": {
-    "utils": {
-      "default": "./dist/utils/index.js"
-    }
-  }
+  "packageManager": "yarn@4.3.1"
 }

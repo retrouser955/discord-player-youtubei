@@ -15,7 +15,6 @@ import {
 } from "discord-player"
 
 import Innertube, {
-	type OAuth2Tokens,
 	type InnerTubeClient
 } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
