@@ -13,7 +13,8 @@
 ## Features
 
 * Added the ability to bridge from YouTube Music
+* Added [live chat](./docs/GET_LIVE_CHAT.md)
 
 ## Internal Changes
 
-* Upgraded youtubei.js to latest (10.2.0)
+* Upgraded youtubei.js to latest (^10.2.0)
