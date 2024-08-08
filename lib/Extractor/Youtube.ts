@@ -203,7 +203,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 			format: "mp4"
 		})
 
-		return createReadableFromWeb(webStream)
+		return createReadableFromWeb(webStream, this.options.streamOptions?.highWaterMark)
 	}
 
 	async bridgeFromYT(query: string, track: Track): Promise<ExtractorStreamable | null> {

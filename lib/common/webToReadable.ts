@@ -6,11 +6,14 @@ export async function createReadableFromWeb(readStream: ReadableStream<Uint8Arra
         highWaterMark,
     });
 
-    for await (const chunk of Utils.streamToIterable(readStream)) {
-        if(!readable.write(chunk)) {
-            await new Promise((res) => readable.on("drain", res))
+    // run out of order
+    (async () => {
+        for await (const chunk of Utils.streamToIterable(readStream)) {
+            const shouldWrite = readable.write(chunk)
+    
+            if(!shouldWrite) await new Promise(res => readable.on("drain", () => res(null)))
         }
-    }
+    })()
 
     return readable
 }
