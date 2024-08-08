@@ -28,11 +28,11 @@ import type {
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { getRandomOauthToken } from "../common/randomAuthToken";
 import { createReadableFromWeb } from "../common/webToReadable";
 
 export interface StreamOptions {
 	useClient?: InnerTubeClient
+	highWaterMark?: number
 }
 
 export interface YoutubeiOptions {
@@ -48,6 +48,7 @@ export interface YoutubeiOptions {
 
 export interface AsyncTrackingContext {
 	useClient: InnerTubeClient
+	highWaterMark?: number
 }
 
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
@@ -83,7 +84,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		} else {
 			this._stream = (q, _) => {
 				return YoutubeiExtractor.ytContext.run({
-					useClient: this.options.streamOptions?.useClient ?? "ANDROID"
+					useClient: this.options.streamOptions?.useClient ?? "ANDROID",
+					highWaterMark: this.options.streamOptions?.highWaterMark
 				}, async () => {
 					return streamFromYT(q, this.innerTube, {
 						overrideDownloadOptions: this.options.overrideDownloadOptions,

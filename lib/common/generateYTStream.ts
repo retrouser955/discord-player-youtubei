@@ -30,7 +30,7 @@ export async function streamFromYT(query: Track, innerTube: Innertube, options: 
 
     const download = await videoInfo.download(options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS)
     
-    const stream = createReadableFromWeb(download)
+    const stream = createReadableFromWeb(download, context.highWaterMark)
 
     return stream
 }
