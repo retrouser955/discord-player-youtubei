@@ -75,6 +75,7 @@ player.extractors.register(YoutubeiExtractor, {
 | name | type | description | required |
 | ---- | ---- | ----------- | -------- |
 | useClient | [InnerTubeClient](https://github.com/LuanRT/YouTube.js/blob/main/src/Innertube.ts#L49) | Which client to get the stream from | false |
+| highWaterMark | number | How many bytes the stream can hold. The more bytes allocated, the smoother the stream at the cost of more memory usage | false |
 
 #### YoutubeiOptions
 
