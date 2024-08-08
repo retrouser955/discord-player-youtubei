@@ -9,11 +9,18 @@ export async function createReadableFromWeb(readStream: ReadableStream<Uint8Arra
     // run out of order
     (async () => {
         for await (const chunk of Utils.streamToIterable(readStream)) {
+            if(readable.destroyed) continue;
+
             const shouldWrite = readable.write(chunk)
     
             if(!shouldWrite) await new Promise(res => readable.on("drain", () => res(null)))
         }
     })()
+
+    readable._destroy = () => {
+        readable.destroyed = true
+        readable.destroy()
+    };
 
     return readable
 }
