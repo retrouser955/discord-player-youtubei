@@ -13,7 +13,7 @@ export async function createReadableFromWeb(readStream: ReadableStream<Uint8Arra
 
             const shouldWrite = readable.write(chunk)
     
-            if(!shouldWrite) await new Promise(res => readable.on("drain", () => res(null)))
+            if(!shouldWrite) await new Promise(res => readable.once("drain", () => res(null)))
         }
     })()
 
