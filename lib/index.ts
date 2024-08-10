@@ -11,7 +11,9 @@ const exit = (message: any, clean: boolean) => {
 }
 
 export async function generateOauthTokens() {
-    const youtube = await Innertube.create()
+    const youtube = await Innertube.create({
+        retrieve_player: false
+    })
 
     youtube.session.on("auth-pending", (data) => {
         const { verification_url: verify, user_code } = data
