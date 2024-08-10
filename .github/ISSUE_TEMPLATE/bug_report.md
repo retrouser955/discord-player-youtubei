@@ -6,7 +6,7 @@ labels: bug
 ### Before you report a bug ...
 - [ ] I have checked that I am on the latest version of discord-player-youtubei
 - [ ] I have checked that I am on the latest version of discord-player
-- [ ] I have checked existing issues to see if there is a duplicate
+- [ ] I have checked existing issues to see if this is a duplicate report
 
 ### Description of the bug
 <!-- What is not working? Provide clear details of the bug including error stacks and your own code -->
