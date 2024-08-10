@@ -5,7 +5,6 @@ labels: bug
 ---
 ### Before you report a bug ...
 - [ ] I have checked that I am on the latest version of discord-player-youtubei
-- [ ] I have checked that I am on the latest version of discord-player
 - [ ] I have checked existing issues to see if this is a duplicate report
 
 ### Description of the bug
@@ -19,7 +18,6 @@ labels: bug
 
 ### Versioning
 discord-player: x.x.x
-discord-player-youtubei: x.x.x
 node.js: x.x.x
 
 ### Others
