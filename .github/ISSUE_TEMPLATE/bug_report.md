@@ -3,6 +3,10 @@ name: Bug Report
 about: Something isn't working
 labels: bug
 ---
+### Before you report a bug ...
+- [ ] I have checked that I am on the latest version of discord-player-youtubei
+- [ ] I have checked that I am on the latest version of discord-player
+- [ ] I have checked existing issues to see if there is a duplicate
 
 ### Description of the bug
 <!-- What is not working? Provide clear details of the bug including error stacks and your own code -->
