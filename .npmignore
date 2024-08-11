@@ -6,4 +6,4 @@ tsconfig.json
 tsup.config.ts
 CHANGELOG.md
 Rotator.md
-./docs
+docs
