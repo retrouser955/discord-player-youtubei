@@ -29,6 +29,7 @@ import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
+import { GeneratorReturnData } from "../utils";
 
 export interface StreamOptions {
 	useClient?: InnerTubeClient
@@ -58,6 +59,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public static instance?: YoutubeiExtractor;
 	public priority = 2;
 	static ytContext = new AsyncLocalStorage<AsyncTrackingContext>()
+
+	static setTrustedTokens(tokens: GeneratorReturnData) {
+		// TODO: IMPLEMENT PO TOKEN SETTING AFTER YOUTUBEI.JS 10.4.0
+	}
 
 	static setClientMode(client: InnerTubeClient) {
 		if(!this.instance) throw new Error("Cannot find Youtubei's instance")

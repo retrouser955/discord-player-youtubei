@@ -11,6 +11,7 @@
     "@types/node": "^22.0.3",
     "discord-player": "^6.7.0",
     "discord.js": "^14.15.3",
+    "puppeteer": "^23.0.2",
     "tsup": "^8.1.0",
     "typescript": "^5.5.2"
   },

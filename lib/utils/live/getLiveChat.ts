@@ -26,6 +26,8 @@ export async function getLiveChat(videoUrl: string, ext?: YoutubeiExtractor) {
 
     const info = await innertube.getInfo(videoId)
 
+    if(!info.basic_info.is_live) return null
+
     const chat = info.getLiveChat()
 
     chat.start()
