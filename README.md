@@ -88,6 +88,7 @@ player.extractors.register(YoutubeiExtractor, {
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 | disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
+| innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) without retrieve_player | Options passed to <Innertube>.create() |
 
 ## Raw Types
 
@@ -112,7 +113,7 @@ interface YoutubeiOptions {
 
 ## Something isn't working?
 
-Try installing an alpha or a beta build using `npm install discord-player-youtubei@alpha` or `npm install discord-player-youtubei@beta`. If this still does not work or you installed a version that is lower than the main version, feel free to open an issue on our [GitHub page](https://github.com/retrouser955/discord-player-youtubei/issues)
+Try installing an alpha or a beta build using `npm install discord-player-youtubei@alpha` or `npm install discord-player-youtubei@beta`. If no beta has been released, you can test the edge version by installing directly from github using `npm install github:retrouser955/discord-player-youtubei --save` If this still does not work or you installed a version that is lower than the main version, feel free to open an issue on our [GitHub page](https://github.com/retrouser955/discord-player-youtubei/issues)
 
 If you know how to fix it, please clone this repository and send us a pull request. As this is an open source project, any contributions are welcome!
 

@@ -15,6 +15,7 @@ import {
 } from "discord-player"
 
 import Innertube, {
+	InnertubeConfig,
 	type InnerTubeClient
 } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
@@ -27,13 +28,25 @@ import type {
 } from "youtubei.js/dist/src/parser/nodes";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { tokenToObject } from "../common/tokenUtils";
+import { objectToToken, tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
 import { GeneratorReturnData } from "../utils";
+import { getInnertube, refreshInnertube } from "../common/innertubeManager";
+import { writeFileSync } from "node:fs";
 
 export interface StreamOptions {
 	useClient?: InnerTubeClient
 	highWaterMark?: number
+}
+
+export interface RefreshInnertubeOptions {
+	filePath: string;
+	interval?: number;
+}
+
+export interface TrustedTokenConfig {
+	poToken: string;
+	visitorData: string;
 }
 
 export interface YoutubeiOptions {
@@ -45,6 +58,9 @@ export interface YoutubeiOptions {
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
 	ignoreSignInErrors?: boolean;
+	innertubeConfigRaw?: Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">;
+	innertubeRefreshTokenConfig?: RefreshInnertubeOptions;
+	trustedTokens?: TrustedTokenConfig
 }
 
 export interface AsyncTrackingContext {
@@ -80,9 +96,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
 
-		this.innerTube = await Innertube.create({
-			retrieve_player: this.options.disablePlayer == undefined ? true : !this.options.disablePlayer
-		})
+		this.innerTube = await getInnertube(this.options.innertubeConfigRaw, this.options.disablePlayer)
 
 		if (typeof this.options.createStream === "function") {
 			this._stream = this.options.createStream;
@@ -112,6 +126,22 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 				if(this.options.ignoreSignInErrors) process.emitWarning(`Unable to sign into YouTube\n\n${error}`);
 				else throw error
 			}
+		}
+
+		if(this.options.innertubeRefreshTokenConfig) {
+			if(!this.innerTube.session.logged_in) throw new Error("Cannot refresh tokens without signing in")
+
+			if(!this.options.innertubeRefreshTokenConfig.interval) this.options.innertubeRefreshTokenConfig.interval = 3.6e+6
+
+			const interval = setInterval(async () => {
+				const isRefreshable = await refreshInnertube(this.innerTube.session.oauth.oauth2_tokens!, (tokens) => {
+					writeFileSync(this.options.innertubeRefreshTokenConfig!.filePath, objectToToken(tokens))
+				})
+
+				if(!isRefreshable) return clearInterval(interval)
+
+				this.innerTube = isRefreshable
+			}, this.options.innertubeRefreshTokenConfig.interval)
 		}
 	}
 
