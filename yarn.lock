@@ -1191,7 +1191,7 @@ __metadata:
     tiny-typed-emitter: "npm:^2.1.0"
     tsup: "npm:^8.1.0"
     typescript: "npm:^5.5.2"
-    youtubei.js: "npm:^10.3.0"
+    youtubei.js: "https://github.com/luanRT/youtube.js"
   bin:
     discord-player-youtubei: ./bin/index.js
   languageName: unknown
@@ -3575,14 +3575,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^10.3.0":
+"youtubei.js@https://github.com/luanRT/youtube.js":
   version: 10.3.0
-  resolution: "youtubei.js@npm:10.3.0"
+  resolution: "youtubei.js@https://github.com/luanRT/youtube.js.git#commit=4b60b97132b0ee42b41838f3336c582a7f7f7aec"
   dependencies:
     jintr: "npm:^2.1.1"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/7b635f7bf5e8837d1dd22b9009a168044a9fdf53725e35df2cfd09d83f203ed040223af3c10b516c2c6c330909d31407483195418ce883c564b1b52e3e3dd7b6
+  checksum: 10c0/3ebf1485dd40e23e248f89c9299b0dff6c97060c6e0aa4d10997cb18a67eae70566906b65d86d95ac1ed7f85fa6c7c3538cea5034fbbfd491a4caa0d24ffb848
   languageName: node
   linkType: hard
 

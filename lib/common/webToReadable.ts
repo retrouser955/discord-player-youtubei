@@ -28,6 +28,7 @@ export async function createReadableFromWeb(readStream: ReadableStream<Uint8Arra
     })()
 
     readable._destroy = () => {
+        readStream.cancel()
         readable.destroyed = true
         readable.destroy()
     };

@@ -15,8 +15,9 @@ import {
 } from "discord-player"
 
 import Innertube, {
-	InnertubeConfig,
-	type InnerTubeClient
+	type InnertubeConfig,
+	type InnerTubeClient,
+	Session
 } from "youtubei.js";
 import { type DownloadOptions } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
@@ -30,8 +31,7 @@ import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
-import { GeneratorReturnData } from "../utils";
-import { getInnertube } from "../common/innertubeManager";
+import { type GeneratorReturnData } from "../utils";
 
 export interface StreamOptions {
 	useClient?: InnerTubeClient
@@ -43,10 +43,7 @@ export interface RefreshInnertubeOptions {
 	interval?: number;
 }
 
-export interface TrustedTokenConfig {
-	poToken: string;
-	visitorData: string;
-}
+export type TrustedTokenConfig = GeneratorReturnData 
 
 export interface YoutubeiOptions {
 	authentication?: string;
@@ -74,8 +71,24 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	public priority = 2;
 	static ytContext = new AsyncLocalStorage<AsyncTrackingContext>()
 
-	setTrustedTokens(tokens: GeneratorReturnData) {
-		// TODO: IMPLEMENT PO TOKEN SETTING AFTER YOUTUBEI.JS 10.4.0
+	setTrustedTokens(tokens: TrustedTokenConfig) {
+		if(!this.options.streamOptions?.useClient || (["ANDROID", "IOS"] as InnerTubeClient[]).includes(this.options.streamOptions.useClient)) process.emitWarning("Warning: Using poTokens and default \"ANDROID\" client which are not compatible")
+
+		this.innerTube.session.context.client.visitorData = tokens.visitorData
+
+		const clonedInnertube = new Session(
+			this.innerTube.session.context,
+			this.innerTube.session.key,
+			this.innerTube.session.api_version,
+			this.innerTube.session.account_index,
+			this.innerTube.session.player,
+			undefined,
+			this.innerTube.session.http.fetch,
+			this.innerTube.session.cache,
+			tokens.poToken
+		)
+
+		this.innerTube = new Innertube(clonedInnertube)
 	}
 
 	setInnertube(tube: Innertube) {
@@ -101,7 +114,19 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 	async activate(): Promise<void> {
 		this.protocols = ["ytsearch", "youtube"];
 
-		this.innerTube = await getInnertube(this.options.innertubeConfigRaw, this.options.disablePlayer)
+		if(this.options.trustedTokens && !this.options.streamOptions?.useClient) process.emitWarning("Warning: Using poTokens and default \"ANDROID\" client which are not compatible")
+
+		const INNERTUBE_OPTIONS: InnertubeConfig = {
+			retrieve_player: this.options.disablePlayer === true ? false : true,
+			...(this.options.innertubeConfigRaw)
+		}
+
+		if(this.options.trustedTokens) {
+			INNERTUBE_OPTIONS.po_token = this.options.trustedTokens.poToken
+			INNERTUBE_OPTIONS.visitor_data = this.options.trustedTokens.visitorData
+		}
+
+		this.innerTube = await Innertube.create(INNERTUBE_OPTIONS)
 
 		if (typeof this.options.createStream === "function") {
 			this._stream = this.options.createStream;

@@ -1,4 +1,4 @@
-import { GeneratorOptions, GeneratorReturnData, generateTrustedToken } from "./generatePoToken";
+import { type GeneratorOptions, type GeneratorReturnData, generateTrustedToken } from "./generatePoToken";
 
 export interface IGeneratorOptions {
     interval?: number;
