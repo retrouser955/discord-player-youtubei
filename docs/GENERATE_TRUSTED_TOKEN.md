@@ -54,8 +54,13 @@ const cronJob = generateTrustedTokenInterval({
         const instance = YoutubeiExtractor.getInstance() // gets the current instance of YoutubeiExtractor
 
         instance.setTrustedTokens(tokens) // set the trusted tokens for the current instance
+    },
+    onError: (err) => {
+        console.log(err)
     }
 })
 
 cronJob.background() // place it in the background of your process. NOTE: This will not turn it async. To make it async, use the `(async () => {})()` trick
 ```
+
+By default, the function will run once a week. To modify this, you can set the `interval` to a number in milliseconds
