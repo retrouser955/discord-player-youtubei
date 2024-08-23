@@ -89,6 +89,18 @@ player.extractors.register(YoutubeiExtractor, {
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 | disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
 | innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) without retrieve_player | Options passed to <Innertube>.create() |
+| trustedTokens | [TrustedTokenConfig](#trustedtokenconfig) | The trusted tokens passed to YouTube to avoid bans |
+| cookie | string | The cookies passed to innertube similar to ytdl cookies |
+
+### TrustedTokenConfig
+
+*Rename of `GeneratorReturnData`*  
+*All properties are required*
+
+| name | type | description |
+| ---- | ---- | ----------- |
+| visitorData | string | The visitor data of the PoToken |
+| poToken | string | The trusted token of the YouTube client |
 
 ## Raw Types
 
@@ -98,10 +110,13 @@ interface YoutubeiOptions {
 	overrideDownloadOptions?: DownloadOptions;
 	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
 	signOutOnDeactive?: boolean;
-	streamOptions?: {
-		useClient?: InnerTubeClient
-	};
-	overrideBridgeMode?: "ytmusic" | "yt"
+	streamOptions?: StreamOptions;
+	overrideBridgeMode?: "ytmusic" | "yt";
+	disablePlayer?: boolean;
+	ignoreSignInErrors?: boolean;
+	innertubeConfigRaw?: Omit<Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">, "cookie">;
+	trustedTokens?: TrustedTokenConfig;
+	cookie?: string;
 }
 ```
 

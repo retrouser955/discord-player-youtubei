@@ -54,8 +54,9 @@ export interface YoutubeiOptions {
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
 	ignoreSignInErrors?: boolean;
-	innertubeConfigRaw?: Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">;
-	trustedTokens?: TrustedTokenConfig
+	innertubeConfigRaw?: Omit<Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">, "cookie">;
+	trustedTokens?: TrustedTokenConfig;
+	cookie?: string;
 }
 
 export interface AsyncTrackingContext {
@@ -118,7 +119,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		const INNERTUBE_OPTIONS: InnertubeConfig = {
 			retrieve_player: this.options.disablePlayer === true ? false : true,
-			...(this.options.innertubeConfigRaw)
+			...(this.options.innertubeConfigRaw),
+			cookie: this.options.cookie
 		}
 
 		if(this.options.trustedTokens) {
