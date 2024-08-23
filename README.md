@@ -2,6 +2,8 @@
 
 This is a preview the v7 version of the YouTube system that discord-player will be using made backwards compatiable with v6.
 
+* Warning: the documentation on GitHub is for the edge version of this package. Refer to [this](#something-isnt-working) for more information
+
 ## Installation
 
 ```bash
