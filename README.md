@@ -90,7 +90,7 @@ player.extractors.register(YoutubeiExtractor, {
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 | disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
-| innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) without retrieve_player | Options passed to <Innertube>.create() |
+| innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) | Options passed to <Innertube>.create() |
 | trustedTokens | [TrustedTokenConfig](#trustedtokenconfig) | The trusted tokens passed to YouTube to avoid bans |
 | cookie | string | The cookies passed to innertube similar to ytdl cookies |
 

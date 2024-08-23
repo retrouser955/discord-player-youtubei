@@ -54,7 +54,7 @@ export interface YoutubeiOptions {
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
 	ignoreSignInErrors?: boolean;
-	innertubeConfigRaw?: Omit<Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">, "cookie">;
+	innertubeConfigRaw?: InnertubeConfig;
 	trustedTokens?: TrustedTokenConfig;
 	cookie?: string;
 }
