@@ -60,7 +60,11 @@ const cronJob = generateTrustedTokenInterval({
     }
 })
 
-cronJob.background() // place it in the background of your process. NOTE: This will not turn it async. To make it async, use the `(async () => {})()` trick
+cronJob.background() // place it in the background of your process.
 ```
 
 By default, the function will run once a week. To modify this, you can set the `interval` to a number in milliseconds
+
+# Best Practices
+
+Since it is running puppeteer, it will be very CPU and RAM heavy. Thus, it is recommended to run this process inside a worker
