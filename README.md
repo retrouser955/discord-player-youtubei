@@ -96,7 +96,7 @@ player.extractors.register(YoutubeiExtractor, {
 
 ### TrustedTokenConfig
 
-*Rename of `GeneratorReturnData`*  
+*Rename of [`GeneratorReturnData`](./docs/GENERATE_TRUSTED_TOKEN.md#generatorreturndata)*  
 *All properties are required*
 
 | name | type | description |

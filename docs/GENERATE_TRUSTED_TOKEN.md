@@ -49,6 +49,9 @@ await player.extractors.register(YoutubeiExtractor, {
     trustedTokens: tokens
 })
 
+// By default, the function will run once a week. To modify this, you can set the `interval` to a number in milliseconds
+// Keep in mind, this is NOT a silver bullet.
+// Use a package like [node-cron](https://www.npmjs.com/package/node-cron) to properly schedule your PoToken generation crons.
 const cronJob = generateTrustedTokenInterval({
     onGenerate: (tokens) => {
         const instance = YoutubeiExtractor.getInstance() // gets the current instance of YoutubeiExtractor
@@ -63,8 +66,29 @@ const cronJob = generateTrustedTokenInterval({
 cronJob.background() // place it in the background of your process.
 ```
 
-By default, the function will run once a week. To modify this, you can set the `interval` to a number in milliseconds
+You can also directly set the PoToken while the process is running like this
+
+```ts
+import { YoutubeiExtractor } from "discord-player-youtubei"
+
+const currentInstance = YoutubeiExtractor.getInstance();
+
+const tokens = await generateTrustedToken()
+
+currentInstance.setTrustedTokens(tokens)
+```
+
+This will clone the current YouTube session with the new trusted poToken
 
 # Best Practices
 
 Since it is running puppeteer, it will be very CPU and RAM heavy. Thus, it is recommended to run this process inside a worker
+
+# Types
+
+## GeneratorReturnData
+
+| name | type | description | required |
+| ---- | ---- | ----------- | -------- |
+| visitorData | string | The visitor data that YouTube returns | true |
+| poToken | string | The current trusted token of YouTube | true |

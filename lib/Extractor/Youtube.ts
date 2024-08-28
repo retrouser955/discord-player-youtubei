@@ -15,11 +15,9 @@ import {
 } from "discord-player"
 
 import Innertube, {
-	type InnertubeConfig,
-	type InnerTubeClient,
 	Session
 } from "youtubei.js";
-import { type DownloadOptions } from "youtubei.js/dist/src/types";
+import { type DownloadOptions, InnerTubeConfig, InnerTubeClient } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
 import { YouTubeExtractor } from "@discord-player/extractor";
 import type {
@@ -54,7 +52,7 @@ export interface YoutubeiOptions {
 	overrideBridgeMode?: "ytmusic" | "yt";
 	disablePlayer?: boolean;
 	ignoreSignInErrors?: boolean;
-	innertubeConfigRaw?: InnertubeConfig;
+	innertubeConfigRaw?: InnerTubeConfig;
 	trustedTokens?: TrustedTokenConfig;
 	cookie?: string;
 }
@@ -117,7 +115,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 		if(this.options.trustedTokens && !this.options.streamOptions?.useClient) process.emitWarning("Warning: Using poTokens and default \"ANDROID\" client which are not compatible")
 
-		const INNERTUBE_OPTIONS: InnertubeConfig = {
+		const INNERTUBE_OPTIONS: InnerTubeConfig = {
 			retrieve_player: this.options.disablePlayer === true ? false : true,
 			...(this.options.innertubeConfigRaw),
 			cookie: this.options.cookie
