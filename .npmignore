@@ -7,3 +7,4 @@ tsup.config.ts
 CHANGELOG.md
 Rotator.md
 docs
+examples/

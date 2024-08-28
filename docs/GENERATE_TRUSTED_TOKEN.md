@@ -82,7 +82,7 @@ This will clone the current YouTube session with the new trusted poToken
 
 # Best Practices
 
-Since it is running puppeteer, it will be very CPU and RAM heavy. Thus, it is recommended to run this process inside a worker
+Since it is running puppeteer, it will be very CPU and RAM heavy. Thus, it is recommended to run this process inside a worker. Refer to [this example](../examples/trustedToken/) for more info.
 
 # Types
 
