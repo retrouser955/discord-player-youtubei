@@ -31,6 +31,9 @@ import { tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
 import { type GeneratorReturnData } from "../utils";
 
+import { YoutubeMusicExtractor } from "./YoutubeMusic";
+import { isYoutubeMusic } from "../common/isYoutubeMusic";
+
 export interface StreamOptions {
 	useClient?: InnerTubeClient
 	highWaterMark?: number
@@ -171,6 +174,11 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
 	async validate(query: string, type?: SearchQueryType | null | undefined): Promise<boolean> {
 		if (typeof query !== "string") return false;
+		const isMusicExtractorRegistered = this.context.player.extractors.get(YoutubeMusicExtractor.identifier) !== undefined
+
+		// pass the session to youtube music extractor instead
+		if(isMusicExtractorRegistered && isYoutubeMusic(query)) return false
+
 		// prettier-ignore
 		return ([
 			QueryType.YOUTUBE,
