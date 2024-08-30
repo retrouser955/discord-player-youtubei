@@ -133,7 +133,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 		} else {
 			this._stream = (q, _) => {
 				return YoutubeiExtractor.ytContext.run({
-					useClient: this.options.streamOptions?.useClient ?? "ANDROID",
+					useClient: this.options.streamOptions?.useClient ?? "IOS",
 					highWaterMark: this.options.streamOptions?.highWaterMark
 				}, async () => {
 					return streamFromYT(q, this.innerTube, {
