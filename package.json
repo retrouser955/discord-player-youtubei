@@ -11,6 +11,7 @@
     "@types/node": "^22.0.3",
     "discord-player": "^6.7.0",
     "discord.js": "^14.15.3",
+    "prettier": "^3.3.3",
     "puppeteer": "^23.0.2",
     "tsup": "^8.2.4",
     "typescript": "^5.5.2"
@@ -21,7 +22,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "format": "prettier --write \"{lib,examples,bin}/**/*.{js,ts}\""
   },
   "bin": "./bin/index.js",
   "packageManager": "yarn@4.3.1"

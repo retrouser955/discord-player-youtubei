@@ -1,6 +1,6 @@
-const { generateTrustedToken } = require("../../dist/index.js")
-const { parentPort } = require("node:worker_threads")
+const { generateTrustedToken } = require("../../dist/index.js");
+const { parentPort } = require("node:worker_threads");
 
 generateTrustedToken().then((v) => {
-    parentPort.postMessage(v)
-})
+  parentPort.postMessage(v);
+});

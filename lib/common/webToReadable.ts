@@ -1,37 +1,40 @@
-import { PassThrough } from "stream"
-import { Utils } from "youtubei.js"
+import { PassThrough } from "stream";
+import { Utils } from "youtubei.js";
 
-export async function createReadableFromWeb(readStream: ReadableStream<Uint8Array>, highWaterMark = 1024 * 512) {
-    const readable = new PassThrough({
-        highWaterMark,
-    });
+export async function createReadableFromWeb(
+  readStream: ReadableStream<Uint8Array>,
+  highWaterMark = 1024 * 512,
+) {
+  const readable = new PassThrough({
+    highWaterMark,
+  });
 
-    // run out of order
-    (async () => {
-        let shouldListen = true
+  // run out of order
+  (async () => {
+    let shouldListen = true;
 
-        for await (const chunk of Utils.streamToIterable(readStream)) {
-            if(readable.destroyed) continue;
+    for await (const chunk of Utils.streamToIterable(readStream)) {
+      if (readable.destroyed) continue;
 
-            const shouldWrite = readable.write(chunk)
-    
-            if(!shouldWrite && shouldListen) {
-                shouldListen = false
-                await new Promise<void>(res => {
-                    readable.once("drain", () => {
-                        shouldListen = true
-                        res()
-                    })
-                })
-            }
-        }
-    })()
+      const shouldWrite = readable.write(chunk);
 
-    readable._destroy = () => {
-        readStream.cancel()
-        readable.destroyed = true
-        readable.destroy()
-    };
+      if (!shouldWrite && shouldListen) {
+        shouldListen = false;
+        await new Promise<void>((res) => {
+          readable.once("drain", () => {
+            shouldListen = true;
+            res();
+          });
+        });
+      }
+    }
+  })();
 
-    return readable
+  readable._destroy = () => {
+    readStream.cancel();
+    readable.destroyed = true;
+    readable.destroy();
+  };
+
+  return readable;
 }

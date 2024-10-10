@@ -1,5 +1,5 @@
-import { YoutubeiExtractor } from "../Extractor/Youtube"
+import { YoutubeiExtractor } from "../Extractor/Youtube";
 
 export function getYoutubeiInstance() {
-    return YoutubeiExtractor.instance?.innerTube
+  return YoutubeiExtractor.instance?.innerTube;
 }
