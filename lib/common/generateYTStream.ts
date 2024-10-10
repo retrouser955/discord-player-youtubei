@@ -63,7 +63,7 @@ export function createWebReadableStream(
 
             const readable = chunks.body;
 
-            if (!readable || chunks.ok)
+            if (!readable || !chunks.ok)
               throw new Error(`Downloading of ${url} failed.`);
 
             for await (const chunk of Utils.streamToIterable(readable)) {
