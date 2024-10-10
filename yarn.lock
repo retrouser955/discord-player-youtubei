@@ -601,12 +601,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.0.3":
+"@types/node@npm:*":
   version: 22.6.1
   resolution: "@types/node@npm:22.6.1"
   dependencies:
     undici-types: "npm:~6.19.2"
   checksum: 10c0/79fdb14f268070eb21d25f3e81811b73c10dfcc65a638a6546fd97aa3e7dfe473f31a547fd21c43b8559a435b6ab26057066a47b5453bd1b1cdffe14430ac399
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^22.7.5":
+  version: 22.7.5
+  resolution: "@types/node@npm:22.7.5"
+  dependencies:
+    undici-types: "npm:~6.19.2"
+  checksum: 10c0/cf11f74f1a26053ec58066616e3a8685b6bcd7259bc569738b8f752009f9f0f7f85a1b2d24908e5b0f752482d1e8b6babdf1fbb25758711ec7bb9500bfcd6e60
   languageName: node
   linkType: hard
 
@@ -1147,7 +1156,7 @@ __metadata:
   resolution: "discord-player-youtubei@workspace:."
   dependencies:
     "@discord-player/extractor": "npm:^4.5.0"
-    "@types/node": "npm:^22.0.3"
+    "@types/node": "npm:^22.7.5"
     discord-player: "npm:^6.7.0"
     discord.js: "npm:^14.15.3"
     prettier: "npm:^3.3.3"
@@ -1155,6 +1164,7 @@ __metadata:
     tiny-typed-emitter: "npm:^2.1.0"
     tsup: "npm:^8.2.4"
     typescript: "npm:^5.5.2"
+    undici: "npm:^6.20.0"
     youtubei.js: "npm:^10.5.0"
   bin:
     discord-player-youtubei: ./bin/index.js
@@ -3265,6 +3275,13 @@ __metadata:
   dependencies:
     "@fastify/busboy": "npm:^2.0.0"
   checksum: 10c0/08d0f2596553aa0a54ca6e8e9c7f45aef7d042c60918564e3a142d449eda165a80196f6ef19ea2ef2e6446959e293095d8e40af1236f0d67223b06afac5ecad7
+  languageName: node
+  linkType: hard
+
+"undici@npm:^6.20.0":
+  version: 6.20.0
+  resolution: "undici@npm:6.20.0"
+  checksum: 10c0/b74a6e4dcdfc3a6e7f5eab77c24f598c5a8664091797dc4940f86e1ed27e5dc9bef390aa1ecf53f20c7ec0e8809bc3d1518a8c3c560fa5972a6a325d628765be
   languageName: node
   linkType: hard
 

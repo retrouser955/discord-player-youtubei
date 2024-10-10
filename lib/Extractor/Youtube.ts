@@ -14,7 +14,8 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { Session } from "youtubei.js";
+import Innertube, { Platform, Session } from "youtubei.js";
+import { Agent } from "undici"
 import {
   type DownloadOptions,
   InnerTubeConfig,
@@ -148,7 +149,21 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       INNERTUBE_OPTIONS.visitor_data = this.options.trustedTokens.visitorData;
     }
 
-    this.innerTube = await Innertube.create(INNERTUBE_OPTIONS);
+    this.innerTube = await Innertube.create({
+      ...INNERTUBE_OPTIONS,
+      fetch: (input, init) => {
+        const rotator = this.context.player.routePlanner?.getIP()
+        this.context.player.debug("[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE " + rotator?.ip)
+        return Platform.shim.fetch(input, {
+          ...init,
+          // @ts-ignore
+          dispatcher: new Agent({
+            localAddress: rotator?.ip,
+            autoSelectFamily: true
+          })
+        })
+      }
+    });
 
     if (typeof this.options.createStream === "function") {
       this._stream = this.options.createStream;
