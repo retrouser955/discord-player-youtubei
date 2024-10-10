@@ -1157,7 +1157,7 @@ __metadata:
   dependencies:
     "@discord-player/extractor": "npm:^4.5.0"
     "@types/node": "npm:^22.7.5"
-    discord-player: "npm:^6.7.0"
+    discord-player: "npm:^6.7.1"
     discord.js: "npm:^14.15.3"
     prettier: "npm:^3.3.3"
     puppeteer: "npm:^23.0.2"
@@ -1171,7 +1171,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"discord-player@npm:^6.7.0":
+"discord-player@npm:^6.7.1":
   version: 6.7.1
   resolution: "discord-player@npm:6.7.1"
   dependencies:

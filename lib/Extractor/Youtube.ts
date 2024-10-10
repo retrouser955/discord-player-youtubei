@@ -15,7 +15,7 @@ import {
 } from "discord-player";
 
 import Innertube, { Platform, Session } from "youtubei.js";
-import { Agent } from "undici"
+import { Agent } from "undici";
 import {
   type DownloadOptions,
   InnerTubeConfig,
@@ -31,7 +31,7 @@ import type {
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { createReadableFromWeb } from "../common/webToReadable"
+import { createReadableFromWeb } from "../common/webToReadable";
 
 export interface StreamOptions {
   useClient?: InnerTubeClient;
@@ -44,8 +44,8 @@ export interface RefreshInnertubeOptions {
 }
 
 export type TrustedTokenConfig = {
-	poToken: string,
-	visitorData: string
+  poToken: string;
+  visitorData: string;
 };
 
 export interface YoutubeiOptions {
@@ -152,17 +152,20 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     this.innerTube = await Innertube.create({
       ...INNERTUBE_OPTIONS,
       fetch: (input, init) => {
-        const rotator = this.context.player.routePlanner?.getIP()
-        this.context.player.debug("[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE " + rotator?.ip)
+        const rotator = this.context.player.routePlanner?.getIP();
+        this.context.player.debug(
+          "[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE " +
+            rotator?.ip,
+        );
         return Platform.shim.fetch(input, {
           ...init,
           // @ts-ignore
           dispatcher: new Agent({
             localAddress: rotator?.ip,
-            autoSelectFamily: true
-          })
-        })
-      }
+            autoSelectFamily: true,
+          }),
+        });
+      },
     });
 
     if (typeof this.options.createStream === "function") {

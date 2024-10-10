@@ -9,7 +9,7 @@
   "devDependencies": {
     "@discord-player/extractor": "^4.5.0",
     "@types/node": "^22.7.5",
-    "discord-player": "^6.7.0",
+    "discord-player": "^6.7.1",
     "discord.js": "^14.15.3",
     "prettier": "^3.3.3",
     "puppeteer": "^23.0.2",
