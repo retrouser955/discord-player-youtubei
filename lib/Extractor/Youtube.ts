@@ -30,8 +30,7 @@ import type {
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { createReadableFromWeb } from "../common/webToReadable";
-import { type GeneratorReturnData } from "../utils";
+import { createReadableFromWeb } from "../common/webToReadable"
 
 export interface StreamOptions {
   useClient?: InnerTubeClient;
@@ -43,7 +42,10 @@ export interface RefreshInnertubeOptions {
   interval?: number;
 }
 
-export type TrustedTokenConfig = GeneratorReturnData;
+export type TrustedTokenConfig = {
+	poToken: string,
+	visitorData: string
+};
 
 export interface YoutubeiOptions {
   authentication?: string;
