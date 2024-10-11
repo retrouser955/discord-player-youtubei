@@ -54,7 +54,7 @@ export function createWebReadableStream(
         return new Promise(async (resolve, reject) => {
           abort = new AbortController();
           try {
-            const chunks = await innertube.session.http.fetch_function(url, {
+            const chunks = await innertube.actions.session.http.fetch_function(`${url}&range=${start}-${end}`, {
               headers: {
                 ...Constants.STREAM_HEADERS,
               },
@@ -118,7 +118,7 @@ export async function streamFromYT(
       options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
     );
     const download = createWebReadableStream(
-      downloadURL.url!,
+      `${downloadURL.url!}&cpn=${videoInfo.cpn}`,
       downloadURL.content_length!,
       innerTube,
     );
