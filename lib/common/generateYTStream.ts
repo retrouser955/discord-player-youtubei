@@ -55,7 +55,7 @@ export function createWebReadableStream(
           abort = new AbortController();
           try {
             const chunks = await innertube.actions.session.http.fetch_function(
-              `${url}&range=${start}-${end}`,
+              `${url}&range=${start}-${end || ""}`,
               {
                 headers: {
                   ...Constants.STREAM_HEADERS,
