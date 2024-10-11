@@ -12,7 +12,7 @@ export const Errors = {
 } as const;
 
 const YOUTUBE_REGEX =
-  /https:\/\/(www\.)?youtu(\.be\/[A-Za-z0-9]{11}(.+)?|be\.com\/watch\?v=[A-Za-z0-9]{11}(&.+)?)/gm;
+  /^(https:\/\/(www\.)?youtu(\.be\/[A-Za-z0-9]{11}(.+)?|be\.com\/watch\?v=[A-Za-z0-9]{11}(&.+)?))/gm;
 
 export function validateURL(url: string) {
   try {
@@ -45,7 +45,7 @@ export async function stream(
 
   const fmt = info.chooseFormat(
     options || {
-      format: "m4a",
+      format: "mp4",
       quality: "best",
       type: "audio",
     },
