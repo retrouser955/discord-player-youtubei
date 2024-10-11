@@ -54,12 +54,15 @@ export function createWebReadableStream(
         return new Promise(async (resolve, reject) => {
           abort = new AbortController();
           try {
-            const chunks = await innertube.actions.session.http.fetch_function(`${url}&range=${start}-${end}`, {
-              headers: {
-                ...Constants.STREAM_HEADERS,
+            const chunks = await innertube.actions.session.http.fetch_function(
+              `${url}&range=${start}-${end}`,
+              {
+                headers: {
+                  ...Constants.STREAM_HEADERS,
+                },
+                signal: abort.signal,
               },
-              signal: abort.signal,
-            });
+            );
 
             const readable = chunks.body;
 
