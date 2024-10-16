@@ -1,7 +1,7 @@
 import { PassThrough } from "stream";
 import { Utils } from "youtubei.js";
 
-export async function createReadableFromWeb(
+export function createReadableFromWeb(
   readStream: ReadableStream<Uint8Array>,
   highWaterMark = 1024 * 512,
 ) {
