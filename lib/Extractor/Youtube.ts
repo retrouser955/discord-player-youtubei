@@ -32,6 +32,7 @@ import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
+import { type PoTokenResult } from "bgutils-js";
 
 export interface StreamOptions {
   useClient?: InnerTubeClient;
@@ -82,36 +83,22 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public priority = 2;
   static ytContext = new AsyncLocalStorage<AsyncTrackingContext>();
 
-  setTrustedTokens(tokens: TrustedTokenConfig) {
-    if (
-      !this.options.streamOptions?.useClient ||
-      (["ANDROID", "IOS"] as InnerTubeClient[]).includes(
-        this.options.streamOptions.useClient,
-      )
-    )
-      process.emitWarning(
-        'Warning: Using poTokens and default "ANDROID" client which are not compatible',
-      );
-
-    this.innerTube.session.context.client.visitorData = tokens.visitorData;
-
-    const clonedInnertube = new Session(
-      this.innerTube.session.context,
-      this.innerTube.session.key,
-      this.innerTube.session.api_version,
-      this.innerTube.session.account_index,
-      this.innerTube.session.player,
-      undefined,
-      this.innerTube.session.http.fetch,
-      this.innerTube.session.cache,
-      tokens.poToken,
-    );
-
-    this.innerTube = new Innertube(clonedInnertube);
-  }
-
   setInnertube(tube: Innertube) {
     this.innerTube = tube;
+  }
+
+  async setPoToken(token: PoTokenResult, visitorData: string) {
+    const oauthKeys = this.innerTube.session.oauth.oauth2_tokens;
+    const newTube = await Innertube.create({
+      visitor_data: visitorData,
+      po_token: token.poToken,
+      generate_session_locally: true,
+    });
+
+    if (oauthKeys) await newTube.session.signIn(oauthKeys);
+
+    this.innerTube = newTube;
+    this.debug("YOUTUBEI POTOKEN: SET");
   }
 
   static getInstance() {
