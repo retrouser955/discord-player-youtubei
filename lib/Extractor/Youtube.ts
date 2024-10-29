@@ -14,7 +14,7 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { Platform, Session } from "youtubei.js";
+import Innertube, { Platform, Session, YTNodes } from "youtubei.js";
 import { Agent } from "undici";
 import {
   type DownloadOptions,
@@ -183,7 +183,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         this.context.player.debug(
           info.contents?.contents
-            ? `Signed into YouTube using the name: ${info.contents.contents[0]?.account_name?.text ?? "UNKNOWN ACCOUNT"}`
+            ? `Signed into YouTube using the name: ${info.contents.contents[0].is(YTNodes.AccountItem) ? (info.contents.contents[0].as(YTNodes.AccountItem).account_name.text ?? "UNKNOWN ACCOUNT") : "UNKNOWN ACCOUNT"}`
             : `Signed into YouTube using the client name: ${this.innerTube.session.client_name}@${this.innerTube.session.client_version}`,
         );
       } catch (error) {

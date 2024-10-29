@@ -1,6 +1,6 @@
 import Innertube from "youtubei.js";
 import { BG, type PoTokenResult, type BgConfig } from "bgutils-js";
-import { JSDOM } from "jsdom";
+import { Window } from "happy-dom";
 
 const HARD_CODED_REQ_KEY = "O43z0dpjhgX20SCx4KAo";
 
@@ -15,7 +15,7 @@ export async function poTokenExtraction(
   if (!visitorData)
     throw new Error("Innertube instance does not contain visitor data");
 
-  const { window } = new JSDOM();
+  const window = new Window();
   // spooky 👻
   Object.assign(globalThis, {
     document: window.document,
