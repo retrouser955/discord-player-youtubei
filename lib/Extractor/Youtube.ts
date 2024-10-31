@@ -49,6 +49,10 @@ export type TrustedTokenConfig = {
   visitorData: string;
 };
 
+export type QueryBridgeModes = Partial<
+  Record<SearchQueryType, "yt" | "ytmusic">
+> & { default?: "yt" | "ytmusic" };
+
 export interface YoutubeiOptions {
   authentication?: string;
   overrideDownloadOptions?: DownloadOptions;
@@ -58,7 +62,7 @@ export interface YoutubeiOptions {
   ) => Promise<string | Readable>;
   signOutOnDeactive?: boolean;
   streamOptions?: StreamOptions;
-  overrideBridgeMode?: "ytmusic" | "yt";
+  overrideBridgeMode?: "ytmusic" | "yt" | QueryBridgeModes;
   disablePlayer?: boolean;
   ignoreSignInErrors?: boolean;
   innertubeConfigRaw?: InnerTubeConfig;
@@ -230,8 +234,15 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     let protocol: YoutubeiOptions["overrideBridgeMode"];
 
     if (this.options.overrideBridgeMode) {
-      protocol = this.options.overrideBridgeMode;
-    } else {
+      if (typeof this.options.overrideBridgeMode === "string") {
+        protocol = this.options.overrideBridgeMode;
+      } else if (track.queryType) {
+        const opts = this.options.overrideBridgeMode as QueryBridgeModes;
+        protocol = opts[track.queryType] ?? opts.default;
+      }
+    }
+
+    if (!protocol) {
       if (this.innerTube.session.logged_in) protocol = "ytmusic";
       else protocol = "yt";
     }
@@ -258,14 +269,11 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             "Unable to bridge from youtube music due to an error. Falling back to default behavior\n\n" +
               error,
           );
-          const stream = await this.bridgeFromYT(query, track);
-          return stream;
+          return await this.bridgeFromYT(query, track);
         }
       }
       default: {
-        const stream = await this.bridgeFromYT(query, track);
-
-        return stream;
+        return await this.bridgeFromYT(query, track);
       }
     }
   }
