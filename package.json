@@ -12,16 +12,15 @@
   "devDependencies": {
     "@discord-player/extractor": "^4.5.0",
     "@types/node": "^22.7.5",
+    "bgutils-js": "^3.1.0",
     "discord-player": "^6.7.1",
     "discord.js": "^14.16.3",
-    "googlevideo": "^1.1.0",
+    "happy-dom": "^15.7.4",
     "prettier": "^3.3.3",
     "tsup": "^8.2.4",
     "typescript": "^5.5.2"
   },
   "dependencies": {
-    "bgutils-js": "^3.1.0",
-    "happy-dom": "^15.7.4",
     "tiny-typed-emitter": "^2.1.0",
     "undici": "^6.20.0",
     "youtubei.js": "^11.0.1"
