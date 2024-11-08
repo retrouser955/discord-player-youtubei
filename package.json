@@ -14,6 +14,7 @@
     "@types/node": "^22.7.5",
     "discord-player": "^6.7.1",
     "discord.js": "^14.16.3",
+    "googlevideo": "^1.1.0",
     "prettier": "^3.3.3",
     "tsup": "^8.2.4",
     "typescript": "^5.5.2"
@@ -26,10 +27,14 @@
     "youtubei.js": "^11.0.1"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "npm run format && tsup",
     "prepare": "npm run build",
     "format": "prettier --write \"{lib,examples,bin}/**/*.{js,ts}\""
   },
   "bin": "bin/index.js",
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.3.1",
+  "exports": {
+    ".": "./dist/index.js",
+    "./experimental": "./dist/experimental/index.js"
+  }
 }

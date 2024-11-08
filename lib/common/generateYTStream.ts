@@ -21,7 +21,7 @@ export interface YTStreamingOptions {
   overrideDownloadOptions?: DownloadOptions;
 }
 
-const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
+export const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
   quality: "best",
   format: "mp4",
   type: "audio",
