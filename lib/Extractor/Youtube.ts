@@ -15,7 +15,7 @@ import {
 } from "discord-player";
 
 import Innertube, { Platform, YTNodes } from "youtubei.js";
-import { Agent } from "undici";
+import { Agent, ProxyAgent } from "undici";
 import {
   type DownloadOptions,
   InnerTubeConfig,
@@ -68,6 +68,7 @@ export interface YoutubeiOptions {
   innertubeConfigRaw?: InnerTubeConfig;
   trustedTokens?: TrustedTokenConfig;
   cookie?: string;
+  proxy?: ProxyAgent;
 }
 
 export interface AsyncTrackingContext {
@@ -147,23 +148,29 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
           ...init
         }
 
-        try {
-          const rotator = this.context.player.routePlanner?.getIP();
-          
-          if(rotator?.ip) {
-            this.context.player.debug(
-              `[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE ${rotator.ip}`
-            );
-            // @ts-expect-error
-            requestInit.dispatcher = new Agent({
-              localAddress: rotator.ip,
-            })
+        if(!this.options.proxy) {
+          try {
+            const rotator = this.context.player.routePlanner?.getIP();
+            
+            if(rotator?.ip) {
+              this.context.player.debug(
+                `[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE ${rotator.ip}`
+              );
+              // @ts-expect-error
+              requestInit.dispatcher = new Agent({
+                localAddress: rotator.ip,
+              })
+            }
+          } catch {
+            // noop
           }
-        } catch {
-          // noop
+  
+          return Platform.shim.fetch(input, requestInit);
+        } else {
+          // @ts-expect-error
+          requestInit.dispatcher = this.options.proxy;
+          return Platform.shim.fetch(input, requestInit);
         }
-
-        return Platform.shim.fetch(input, requestInit);
       },
     });
 
