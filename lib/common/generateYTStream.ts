@@ -2,8 +2,7 @@ import type Innertube from "youtubei.js/agnostic";
 import {
   Constants,
   Platform,
-  Utils,
-  Constants as YoutubeiConsts,
+  Utils
 } from "youtubei.js";
 import type { BaseExtractor, Track } from "discord-player";
 import type { OAuth2Tokens } from "youtubei.js/agnostic";

@@ -15,7 +15,7 @@ import {
 } from "discord-player";
 
 import Innertube, { Platform, YTNodes } from "youtubei.js";
-import { Agent } from "undici";
+import { Agent, ProxyAgent } from "undici";
 import {
   type DownloadOptions,
   InnerTubeConfig,
@@ -33,6 +33,9 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { createReadableFromWeb } from "../common/webToReadable";
 import { type PoTokenResult } from "bgutils-js";
+import { defaultFetch } from "../utils";
+import peerDownloader from "../common/peerDownloader";
+import { extractVideoId } from "../common/extractVideoID";
 
 export interface StreamOptions {
   useClient?: InnerTubeClient;
@@ -42,6 +45,11 @@ export interface StreamOptions {
 export interface RefreshInnertubeOptions {
   filePath: string;
   interval?: number;
+}
+
+export interface PeerInfo {
+  url: string,
+  parse?: (url: string, id: string) => string
 }
 
 export type TrustedTokenConfig = {
@@ -68,6 +76,8 @@ export interface YoutubeiOptions {
   innertubeConfigRaw?: InnerTubeConfig;
   trustedTokens?: TrustedTokenConfig;
   cookie?: string;
+  proxy?: ProxyAgent;
+  peers?: PeerInfo[]
 }
 
 export interface AsyncTrackingContext {
@@ -142,29 +152,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     this.innerTube = await Innertube.create({
       ...INNERTUBE_OPTIONS,
-      fetch: (input, init) => {
-        let requestInit: globalThis.RequestInit = {
-          ...init,
-        };
-
-        try {
-          const rotator = this.context.player.routePlanner?.getIP();
-
-          if (rotator?.ip) {
-            this.context.player.debug(
-              `[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE ${rotator.ip}`,
-            );
-            // @ts-expect-error
-            requestInit.dispatcher = new Agent({
-              localAddress: rotator.ip,
-            });
-          }
-        } catch {
-          // noop
-        }
-
-        return Platform.shim.fetch(input, requestInit);
-      },
+      fetch: (input, init) => defaultFetch(this.context.player, input, init, this.options.proxy)
     });
 
     if (typeof this.options.createStream === "function") {
@@ -177,6 +165,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             highWaterMark: this.options.streamOptions?.highWaterMark,
           },
           async () => {
+            if(this.options.peers && this.options.peers.length > 0) {
+              return peerDownloader(extractVideoId(q.url), this.options.peers[Math.round(Math.random() * (this.options.peers.length - 1))])
+            }
             return streamFromYT(q, this.innerTube, {
               overrideDownloadOptions: this.options.overrideDownloadOptions,
             });
