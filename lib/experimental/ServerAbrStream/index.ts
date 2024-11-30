@@ -4,9 +4,10 @@ import { extractVideoId } from "../../common/extractVideoID";
 import type { Format } from "googlevideo";
 import { PassThrough } from "stream";
 
-export function getGoogleVideoOrThrow() {
+export async function getGoogleVideoOrThrow() {
   try {
-    return (require("googlevideo") as typeof import("googlevideo")).default;
+    return ((await import("googlevideo")) as typeof import("googlevideo"))
+      .default;
   } catch {
     throw new Error(
       'Unable to find googlevideo. Please install it via "npm install googlevideo"',
@@ -20,7 +21,7 @@ export async function createServerAbrStream(
   onError?: (err: Error) => any,
 ) {
   const innertube = ext.innerTube;
-  const { ServerAbrStream } = getGoogleVideoOrThrow();
+  const { ServerAbrStream } = await getGoogleVideoOrThrow();
   if (!innertube.session.player)
     throw new Error("ServerAbrStream does not work without a valid player.");
   const videoInfo = await innertube.getBasicInfo(

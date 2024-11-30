@@ -14,8 +14,8 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { Platform, YTNodes } from "youtubei.js";
-import { Agent, ProxyAgent } from "undici";
+import Innertube, { YTNodes } from "youtubei.js";
+import type { ProxyAgent } from "undici";
 import {
   type DownloadOptions,
   InnerTubeConfig,
@@ -48,8 +48,8 @@ export interface RefreshInnertubeOptions {
 }
 
 export interface PeerInfo {
-  url: string,
-  parse?: (url: string, id: string) => string
+  url: string;
+  parse?: (url: string, id: string) => string;
 }
 
 export type TrustedTokenConfig = {
@@ -66,7 +66,7 @@ export interface YoutubeiOptions {
   overrideDownloadOptions?: DownloadOptions;
   createStream?: (
     q: Track,
-    extractor: BaseExtractor<object>,
+    extractor: YoutubeiExtractor,
   ) => Promise<string | Readable>;
   signOutOnDeactive?: boolean;
   streamOptions?: StreamOptions;
@@ -77,7 +77,7 @@ export interface YoutubeiOptions {
   trustedTokens?: TrustedTokenConfig;
   cookie?: string;
   proxy?: ProxyAgent;
-  peers?: PeerInfo[]
+  peers?: PeerInfo[];
 }
 
 export interface AsyncTrackingContext {
@@ -152,7 +152,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     this.innerTube = await Innertube.create({
       ...INNERTUBE_OPTIONS,
-      fetch: (input, init) => defaultFetch(this.context.player, input, init, this.options.proxy)
+      fetch: (input, init) =>
+        defaultFetch(this.context.player, input, init, this.options.proxy),
     });
 
     if (typeof this.options.createStream === "function") {
@@ -165,8 +166,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
             highWaterMark: this.options.streamOptions?.highWaterMark,
           },
           async () => {
-            if(this.options.peers && this.options.peers.length > 0) {
-              return peerDownloader(extractVideoId(q.url), this.options.peers[Math.round(Math.random() * (this.options.peers.length - 1))])
+            if (this.options.peers && this.options.peers.length > 0) {
+              return peerDownloader(
+                extractVideoId(q.url),
+                this.options.peers[
+                  Math.round(Math.random() * (this.options.peers.length - 1))
+                ],
+              );
             }
             return streamFromYT(q, this.innerTube, {
               overrideDownloadOptions: this.options.overrideDownloadOptions,
