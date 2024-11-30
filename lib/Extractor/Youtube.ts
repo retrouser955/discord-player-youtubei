@@ -81,7 +81,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public innerTube!: Innertube;
   public _stream!: (
     q: Track,
-    extractor: BaseExtractor<object>,
+    extractor: YoutubeiExtractor,
   ) => Promise<ExtractorStreamable>;
   public static instance?: YoutubeiExtractor;
   public priority = 2;
@@ -144,20 +144,20 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       ...INNERTUBE_OPTIONS,
       fetch: (input, init) => {
         let requestInit: globalThis.RequestInit = {
-          ...init
-        }
+          ...init,
+        };
 
         try {
           const rotator = this.context.player.routePlanner?.getIP();
-          
-          if(rotator?.ip) {
+
+          if (rotator?.ip) {
             this.context.player.debug(
-              `[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE ${rotator.ip}`
+              `[EXT: discord-player-youtubei] APPLYING IP ROTATION CONFIG. ATTEMPTING TO USE ${rotator.ip}`,
             );
             // @ts-expect-error
             requestInit.dispatcher = new Agent({
               localAddress: rotator.ip,
-            })
+            });
           }
         } catch {
           // noop

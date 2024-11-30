@@ -904,6 +904,7 @@ __metadata:
     bgutils-js: "npm:^3.1.0"
     discord-player: "npm:^6.7.1"
     discord.js: "npm:^14.16.3"
+    googlevideo: "npm:^2.0.0"
     happy-dom: "npm:^15.7.4"
     prettier: "npm:^3.3.3"
     tiny-typed-emitter: "npm:^2.1.0"
@@ -1307,6 +1308,15 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10c0/19a9759ea77b8e3ca0a43c2f07ecddc2ad46216b786bb8f993c445aee80d345925a21e5280c7b7c6c59e860a0154b84e4b2b60321fea92cd3c56b4a7489f160e
+  languageName: node
+  linkType: hard
+
+"googlevideo@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "googlevideo@npm:2.0.0"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.0.0"
+  checksum: 10c0/3aa79a0c1fb2e3cfe52dd9554f6d3cad37ac75f84a2985e18cfe57902419fc3a2e92e3eb968926ca68ae4136f5f7035b55ccd64c35a935847d17f4e5b62ffe66
   languageName: node
   linkType: hard
 
