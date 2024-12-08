@@ -36,8 +36,15 @@ import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
 
-const validPathDomains = /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
-const validQueryDomains = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'gaming.youtube.com']);
+const validPathDomains =
+  /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
+const validQueryDomains = new Set([
+  "youtube.com",
+  "www.youtube.com",
+  "m.youtube.com",
+  "music.youtube.com",
+  "gaming.youtube.com",
+]);
 const idRegex = /^[a-zA-Z0-9-_]{11}$/;
 
 export interface StreamOptions {
@@ -173,7 +180,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
               return peerDownloader(
                 extractVideoId(q.url),
                 this.options.peers[
-                Math.round(Math.random() * (this.options.peers.length - 1))
+                  Math.round(Math.random() * (this.options.peers.length - 1))
                 ],
               );
             }
@@ -275,7 +282,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         } catch (error) {
           this.context.player.debug(
             "Unable to bridge from youtube music due to an error. Falling back to default behavior\n\n" +
-            error,
+              error,
           );
           return await this.bridgeFromYT(query, track);
         }
@@ -644,29 +651,32 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
   public static validateURL(link: string) {
     try {
-        YoutubeiExtractor.parseURL(link);
-        return true;
+      YoutubeiExtractor.parseURL(link);
+      return true;
     } catch {
-        return false;
+      return false;
     }
   }
 
   // stolen from  YoutubeExtractor
   public static parseURL(link: string) {
     const parsed = new URL(link.trim());
-    let id = parsed.searchParams.get('v');
+    let id = parsed.searchParams.get("v");
     if (validPathDomains.test(link.trim()) && !id) {
-      const paths = parsed.pathname.split('/');
-      id = parsed.host === 'youtu.be' ? paths[1] : paths[2];
+      const paths = parsed.pathname.split("/");
+      id = parsed.host === "youtu.be" ? paths[1] : paths[2];
     } else if (parsed.hostname && !validQueryDomains.has(parsed.hostname)) {
-      throw Error('Not a YouTube domain');
+      throw Error("Not a YouTube domain");
     }
     if (!id) {
       throw Error(`No video id found: "${link}"`);
     }
     id = id.substring(0, 11);
     if (!this.validateId(id)) {
-      throw TypeError(`Video id (${id}) does not match expected ` + `format (${idRegex.toString()})`);
+      throw TypeError(
+        `Video id (${id}) does not match expected ` +
+          `format (${idRegex.toString()})`,
+      );
     }
     return id;
   }
