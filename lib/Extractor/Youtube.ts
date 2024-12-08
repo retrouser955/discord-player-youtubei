@@ -22,7 +22,6 @@ import {
   InnerTubeClient,
 } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
-import { YouTubeExtractor } from "@discord-player/extractor";
 import type {
   PlaylistVideo,
   CompactVideo,
@@ -36,6 +35,10 @@ import { type PoTokenResult } from "bgutils-js";
 import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
+
+const validPathDomains = /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
+const validQueryDomains = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'gaming.youtube.com']);
+const idRegex = /^[a-zA-Z0-9-_]{11}$/;
 
 export interface StreamOptions {
   useClient?: InnerTubeClient;
@@ -170,7 +173,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
               return peerDownloader(
                 extractVideoId(q.url),
                 this.options.peers[
-                  Math.round(Math.random() * (this.options.peers.length - 1))
+                Math.round(Math.random() * (this.options.peers.length - 1))
                 ],
               );
             }
@@ -221,13 +224,13 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     if (typeof query !== "string") return false;
     // prettier-ignore
     return ([
-			QueryType.YOUTUBE,
-			QueryType.YOUTUBE_PLAYLIST,
-			QueryType.YOUTUBE_SEARCH,
-			QueryType.YOUTUBE_VIDEO,
-			QueryType.AUTO,
-			QueryType.AUTO_SEARCH
-		] as SearchQueryType[]).some((r) => r === type);
+      QueryType.YOUTUBE,
+      QueryType.YOUTUBE_PLAYLIST,
+      QueryType.YOUTUBE_SEARCH,
+      QueryType.YOUTUBE_VIDEO,
+      QueryType.AUTO,
+      QueryType.AUTO_SEARCH
+    ] as SearchQueryType[]).some((r) => r === type);
   }
 
   async bridge(
@@ -272,7 +275,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         } catch (error) {
           this.context.player.debug(
             "Unable to bridge from youtube music due to an error. Falling back to default behavior\n\n" +
-              error,
+            error,
           );
           return await this.bridgeFromYT(query, track);
         }
@@ -355,7 +358,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     query = query.includes("youtube.com")
       ? query.replace(/(m(usic)?|gaming)\./, "")
       : query;
-    if (!query.includes("list=RD") && YouTubeExtractor.validateURL(query))
+    if (!query.includes("list=RD") && YoutubeiExtractor.validateURL(query))
       context.type = QueryType.YOUTUBE_VIDEO;
 
     if (context.type === QueryType.YOUTUBE_PLAYLIST) {
@@ -637,5 +640,38 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       playlist: null,
       tracks: [],
     };
+  }
+
+  public static validateURL(link: string) {
+    try {
+        YoutubeiExtractor.parseURL(link);
+        return true;
+    } catch {
+        return false;
+    }
+  }
+
+  // stolen from  YoutubeExtractor
+  public static parseURL(link: string) {
+    const parsed = new URL(link.trim());
+    let id = parsed.searchParams.get('v');
+    if (validPathDomains.test(link.trim()) && !id) {
+      const paths = parsed.pathname.split('/');
+      id = parsed.host === 'youtu.be' ? paths[1] : paths[2];
+    } else if (parsed.hostname && !validQueryDomains.has(parsed.hostname)) {
+      throw Error('Not a YouTube domain');
+    }
+    if (!id) {
+      throw Error(`No video id found: "${link}"`);
+    }
+    id = id.substring(0, 11);
+    if (!this.validateId(id)) {
+      throw TypeError(`Video id (${id}) does not match expected ` + `format (${idRegex.toString()})`);
+    }
+    return id;
+  }
+
+  public static validateId(id: string) {
+    return idRegex.test(id.trim());
   }
 }
