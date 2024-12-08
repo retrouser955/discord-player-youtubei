@@ -905,13 +905,13 @@ __metadata:
     discord-player: "npm:^6.7.1"
     discord.js: "npm:^14.16.3"
     googlevideo: "npm:^2.0.0"
-    happy-dom: "npm:^15.7.4"
+    happy-dom: "npm:^15.11.7"
     prettier: "npm:^3.3.3"
     tiny-typed-emitter: "npm:^2.1.0"
     tsup: "npm:^8.2.4"
     typescript: "npm:^5.5.2"
-    undici: "npm:^7.0.0"
-    youtubei.js: "npm:^11.0.1"
+    undici: "npm:^7.1.0"
+    youtubei.js: "npm:^12.0.0"
   bin:
     discord-player-youtubei: bin/index.js
   languageName: unknown
@@ -1327,14 +1327,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"happy-dom@npm:^15.7.4":
-  version: 15.7.4
-  resolution: "happy-dom@npm:15.7.4"
+"happy-dom@npm:^15.11.7":
+  version: 15.11.7
+  resolution: "happy-dom@npm:15.11.7"
   dependencies:
     entities: "npm:^4.5.0"
     webidl-conversions: "npm:^7.0.0"
     whatwg-mimetype: "npm:^3.0.0"
-  checksum: 10c0/406b6b86d52e5dc7bc2fbf0d1c0507a2d954f35dc0af5230f933ad1542646260cb46c1a763d064da0bcf1fbe806efbf10e28bad1c6865c7cde125269358047c0
+  checksum: 10c0/22b08cac20192b08edf2e9c857ceeda8333a3301c4b5965a9550787b00db60d6d107c726390bd45a35305cd12ab086abd656bf957a408be0fcdc9fcd389f1973
   languageName: node
   linkType: hard
 
@@ -1525,12 +1525,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jintr@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "jintr@npm:3.0.2"
+"jintr@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "jintr@npm:3.1.0"
   dependencies:
     acorn: "npm:^8.8.0"
-  checksum: 10c0/264922d87747cd2f6b23b91a529ae5492ca375520c0ecb180d43f360d01f83bba46bb9c2cdff0e39e322b34f91533c710b153fde8f47a311ff1b175d023da90d
+  checksum: 10c0/49fea8c87dcc54ced0fe0265c6c7c36edf16656d3a0ee27717ffc1c790a3b20c5f890f4b5b59abdad4e02cf5a7de03e6e4fea2ca82dbf02eed8027fa25436a42
   languageName: node
   linkType: hard
 
@@ -2569,10 +2569,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "undici@npm:7.0.0"
-  checksum: 10c0/6d91d5ea5f858ac9ea8b8e28722167dcb4606dc8f3886b6768de94de96fb0817a7fec974ecbc51c1fec03131e2cc44df49a2ab966f5d2d191f32163776f36d91
+"undici@npm:^7.1.0":
+  version: 7.1.0
+  resolution: "undici@npm:7.1.0"
+  checksum: 10c0/6fd0a63ca5e585128d67324e29cc49c903bf1752fd3b6f318627bb3765326df6f80c02f9c6fb2636ce3934706920c0b7fe4fe8ae19afe0a698f9ffbd7ef57548
   languageName: node
   linkType: hard
 
@@ -2737,14 +2737,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^11.0.1":
-  version: 11.0.1
-  resolution: "youtubei.js@npm:11.0.1"
+"youtubei.js@npm:^12.0.0":
+  version: 12.0.0
+  resolution: "youtubei.js@npm:12.0.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
-    jintr: "npm:^3.0.2"
+    jintr: "npm:^3.1.0"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/1a1fca8d811157f549062fb8d420d1bd190b6f98daef3056d4ac2b4857a8619b71baa0fd585a00160b437ad16300382e7da208faf41834c4be6c34c7d488d55b
+  checksum: 10c0/ad2db2fb4643ffd0bb789d542cad0daa08207dd4d8646932b5546945709497e43bbfde6dc230f558f1a55c0a19d7ac171b1251951a01493f8168c9c3c608985f
   languageName: node
   linkType: hard
