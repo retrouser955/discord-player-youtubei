@@ -911,7 +911,7 @@ __metadata:
     tsup: "npm:^8.2.4"
     typescript: "npm:^5.5.2"
     undici: "npm:^7.1.0"
-    youtubei.js: "npm:^12.0.0"
+    youtubei.js: "npm:^12.2.0"
   bin:
     discord-player-youtubei: bin/index.js
   languageName: unknown
@@ -1525,12 +1525,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jintr@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "jintr@npm:3.1.0"
+"jintr@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "jintr@npm:3.2.0"
   dependencies:
     acorn: "npm:^8.8.0"
-  checksum: 10c0/49fea8c87dcc54ced0fe0265c6c7c36edf16656d3a0ee27717ffc1c790a3b20c5f890f4b5b59abdad4e02cf5a7de03e6e4fea2ca82dbf02eed8027fa25436a42
+  checksum: 10c0/6b68bca3c18b45100b97d0710079c33fe7bb3a1ca32dec2be2d5b0c392b7c3f9b9c3db85f2abf2a1cfe8c79397efebc1508c11a2251de47fc2665d9b76f3f30a
   languageName: node
   linkType: hard
 
@@ -2737,14 +2737,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^12.0.0":
-  version: 12.0.0
-  resolution: "youtubei.js@npm:12.0.0"
+"youtubei.js@npm:^12.2.0":
+  version: 12.2.0
+  resolution: "youtubei.js@npm:12.2.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
-    jintr: "npm:^3.1.0"
+    jintr: "npm:^3.2.0"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/ad2db2fb4643ffd0bb789d542cad0daa08207dd4d8646932b5546945709497e43bbfde6dc230f558f1a55c0a19d7ac171b1251951a01493f8168c9c3c608985f
+  checksum: 10c0/5d93a4cec858ea808c99bcbcf139f44e7f14dadde93f1ae20437371e0d26ef615ecfbbe284a0c8cd9fb4bc015fbdb1ca9bc785665f3d1cb5794f3b311a5f07d9
   languageName: node
   linkType: hard
