@@ -368,18 +368,64 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     if (!query.includes("list=RD") && YoutubeiExtractor.validateURL(query))
       context.type = QueryType.YOUTUBE_VIDEO;
 
-    if (context.type === QueryType.YOUTUBE_PLAYLIST) {
-      const url = new URL(query);
-
-      if (url.searchParams.has("v") && url.searchParams.has("list"))
-        context.type = QueryType.YOUTUBE_VIDEO;
-    }
-
     switch (context.type) {
       case QueryType.YOUTUBE_PLAYLIST: {
+        let playlist;
         const playlistUrl = new URL(query);
         const plId = playlistUrl.searchParams.get("list")!;
-        let playlist = await this.innerTube.getPlaylist(plId);
+        const videoId = playlistUrl.searchParams.get("v")!;
+
+        if (videoId && plId) {
+          const endpoint = new YTNodes.NavigationEndpoint({
+            continuationCommand: {
+              videoId: videoId,
+              playlistId: plId,
+            },
+          });
+          const mixVidInfo = await this.innerTube.getInfo(endpoint);
+          if (!mixVidInfo?.playlist)
+            throw new Error("Mix playlist not found or invalid");
+
+          playlist = {
+            info: {
+              title: mixVidInfo.playlist.title?.toString() ?? "UNKNOWN TITLE",
+              thumbnails:
+                (mixVidInfo.playlist.contents?.[0] as any)?.thumbnail ?? [],
+              description: "",
+              author: {
+                name:
+                  mixVidInfo.playlist.author?.toString() ?? "UNKNOWN AUTHOR",
+                url: "",
+              },
+            },
+            channels: [
+              {
+                author: {
+                  name:
+                    mixVidInfo.playlist.author?.toString() ?? "UNKNOWN AUTHOR",
+                  url: "",
+                },
+              },
+            ],
+            videos: mixVidInfo.playlist.contents.map((item: any) => ({
+              type: "PlaylistVideo",
+              id: item.video_id,
+              title: { text: item.title?.toString() ?? "UNKNOWN TITLE" },
+              duration: { seconds: item.duration?.seconds ?? 0 },
+              thumbnails:
+                item.thumbnail?.map((t: { url: string }) => ({ url: t.url })) ??
+                [],
+              author: { name: item.author ?? "UNKNOWN AUTHOR", url: "" },
+              is_live: false,
+            })),
+            has_continuation: false,
+            async getContinuation() {
+              throw new Error("Mixes do not support continuation");
+            },
+          };
+        } else {
+          playlist = await this.innerTube.getPlaylist(plId);
+        }
 
         const pl = new Playlist(this.context.player, {
           title: playlist.info.title ?? "UNKNOWN PLAYLIST",
