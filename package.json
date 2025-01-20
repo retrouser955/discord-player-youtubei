@@ -34,10 +34,22 @@
   "bin": "bin/index.js",
   "packageManager": "yarn@4.3.1",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
     "./experimental": {
       "types": "./dist/experimental/index.d.ts",
-      "default": "./dist/experimental/index.js"
+      "import": "./dist/experimental/index.mjs",
+      "require": "./dist/experimental/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "experimental": [
+        "./dist/experimental/index.d.ts"
+      ]
     }
   }
 }
