@@ -44,6 +44,9 @@ You can override this behavior using the `overrideBridgeMode` option. See the ex
 
 ## Signing into YouTube
 
+> [!WARNING]
+> Recent developments have lead to the follow piece of code not working as intended. Please use cookies instead.
+
 First run the following command
 ```bash
 $ npx --no discord-player-youtubei
@@ -93,6 +96,8 @@ player.extractors.register(YoutubeiExtractor, {
 | innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) | Options passed to <Innertube>.create() |
 | trustedTokens | [TrustedTokenConfig](#trustedtokenconfig) | The trusted tokens passed to YouTube to avoid bans |
 | cookie | string | The cookies passed to innertube similar to ytdl cookies |
+| proxy | [ProxyAgent](https://undici.nodejs.org/#/docs/api/ProxyAgent.md) | Define a proxy to route all the requests |
+| peers | [PeerInfo](#peerinfo) | Stream from peers allowing to bypass some IP block |
 
 ### TrustedTokenConfig
 
@@ -104,21 +109,72 @@ player.extractors.register(YoutubeiExtractor, {
 | visitorData | string | The visitor data of the PoToken |
 | poToken | string | The trusted token of the YouTube client |
 
+### PeerInfo
+
+| name | type | description |
+| ---- | ---- | ----------- |
+| url | string | The base URL of the peer |
+| parse | [`ParserFunction`](#parserfunction)? | Parse the URL for the peer for streaming |
+
+### ParserFunction
+
+RAW: `(url: string, id: string) => string`
+
+#### Parameters
+
+| name | index | type | description |
+| ---- | ----- | ---- | ----------- |
+| url | 0 | string | The base URL of the peer |
+| id | 1 | string | The YouTube video ID |
+
+#### Return
+
+The function must return a `string` that is a URL that returns an audio stream when requested
+
 ## Raw Types
 
 ```ts
-interface YoutubeiOptions {
-	authentication?: string;
-	overrideDownloadOptions?: DownloadOptions;
-	createStream?: (q: Track, extractor: BaseExtractor<object>) => Promise<string | Readable>;
-	signOutOnDeactive?: boolean;
-	streamOptions?: StreamOptions;
-	overrideBridgeMode?: "ytmusic" | "yt";
-	disablePlayer?: boolean;
-	ignoreSignInErrors?: boolean;
-	innertubeConfigRaw?: Omit<Omit<Omit<InnertubeConfig, "retrieve_player">, "visitor_data">, "cookie">;
-	trustedTokens?: TrustedTokenConfig;
-	cookie?: string;
+export interface StreamOptions {
+  useClient?: InnerTubeClient;
+  highWaterMark?: number;
+}
+
+export interface RefreshInnertubeOptions {
+  filePath: string;
+  interval?: number;
+}
+
+export interface PeerInfo {
+  url: string;
+  parse?: (url: string, id: string) => string;
+}
+
+export type TrustedTokenConfig = {
+  poToken: string;
+  visitorData: string;
+};
+
+export type QueryBridgeModes = Partial<
+  Record<SearchQueryType, "yt" | "ytmusic">
+> & { default?: "yt" | "ytmusic" };
+
+export interface YoutubeiOptions {
+  authentication?: string;
+  overrideDownloadOptions?: DownloadOptions;
+  createStream?: (
+    q: Track,
+    extractor: YoutubeiExtractor,
+  ) => Promise<string | Readable>;
+  signOutOnDeactive?: boolean;
+  streamOptions?: StreamOptions;
+  overrideBridgeMode?: "ytmusic" | "yt" | QueryBridgeModes;
+  disablePlayer?: boolean;
+  ignoreSignInErrors?: boolean;
+  innertubeConfigRaw?: InnerTubeConfig;
+  trustedTokens?: TrustedTokenConfig;
+  cookie?: string;
+  proxy?: ProxyAgent;
+  peers?: PeerInfo[];
 }
 ```
 

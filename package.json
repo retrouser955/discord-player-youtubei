@@ -10,10 +10,10 @@
   "author": "retro_ig",
   "license": "Creative Commons",
   "devDependencies": {
-    "@discord-player/extractor": "^4.5.0",
+    "@discord-player/extractor": "^7.1.0",
     "@types/node": "^22.7.5",
     "bgutils-js": "^3.1.0",
-    "discord-player": "^6.7.1",
+    "discord-player": "^7.1.0",
     "discord.js": "^14.16.3",
     "googlevideo": "^2.0.0",
     "happy-dom": "^15.11.7",

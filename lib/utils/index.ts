@@ -1,5 +1,5 @@
 import type { Player } from "discord-player";
-import { Agent, type ProxyAgent } from "undici";
+import { type ProxyAgent } from "undici";
 import { Platform } from "youtubei.js";
 
 export * from "./live/getLiveChat";
@@ -27,20 +27,6 @@ export function defaultFetch(
 
     return Platform.shim.fetch(input, requestInit);
   } else {
-    try {
-      const rotator = player.routePlanner?.getIP();
-      if (rotator?.ip) {
-        const dispatch = new Agent({
-          localAddress: rotator.ip,
-        });
-
-        // @ts-expect-error
-        requestInit.dispatcher = dispatch;
-      }
-    } catch {
-      // noop
-    }
-
     return Platform.shim.fetch(input, requestInit);
   }
 }
