@@ -1238,7 +1238,7 @@ __metadata:
     tsup: "npm:^8.2.4"
     typescript: "npm:^5.5.2"
     undici: "npm:^7.1.0"
-    youtubei.js: "npm:^12.2.0"
+    youtubei.js: "npm:^13.0.0"
   bin:
     discord-player-youtubei: bin/index.js
   languageName: unknown
@@ -3288,14 +3288,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^12.2.0":
-  version: 12.2.0
-  resolution: "youtubei.js@npm:12.2.0"
+"youtubei.js@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "youtubei.js@npm:13.0.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
     jintr: "npm:^3.2.0"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/5d93a4cec858ea808c99bcbcf139f44e7f14dadde93f1ae20437371e0d26ef615ecfbbe284a0c8cd9fb4bc015fbdb1ca9bc785665f3d1cb5794f3b311a5f07d9
+  checksum: 10c0/cd9ee8ffb94de0a2124e10dd9b96d7899037ba57875bfaa9aafaa765eaaa8f91f97252b5c243dae63cb8b3e09dbede1f9d0977cf35e547fb3e6954dd3cf067b0
   languageName: node
   linkType: hard
