@@ -387,8 +387,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
           if (
             this.options.streamOptions?.slicePlaylist &&
-            mixVidInfo?.playlist?.current_index &&
-            !plId.startsWith("RD")
+            mixVidInfo?.playlist?.current_index
           )
             mixVidInfo.playlist.contents.splice(
               0,
