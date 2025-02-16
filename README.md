@@ -1,6 +1,6 @@
 # Discord Player YouTubei
 
-This is a preview the v7 version of the YouTube system that discord-player will be using made backwards compatiable with v6.
+This is a preview the v7 version of the YouTube system that discord-player will be using made backwards compatible with v6.
 
 * Warning: the documentation on GitHub is for the edge version of this package. Refer to [this](#something-isnt-working) for more information
 
@@ -45,9 +45,9 @@ You can override this behavior using the `overrideBridgeMode` option. See the ex
 ## Signing into YouTube
 
 > [!WARNING]
-> Recent developments have lead to the follow piece of code not working as intended. Please use cookies instead.
+> Recent developments have lead to the following piece of code not working as intended. Please use cookies instead.
 
-First run the following command
+First this command
 ```bash
 $ npx --no discord-player-youtubei
 ```
@@ -92,7 +92,7 @@ player.extractors.register(YoutubeiExtractor, {
 | signOutOnDeactive | boolean | Revoke the tokens after deactivation |
 | overrideBridgeMode | "ytmusic" or "yt" | Override the bridging behavior |
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
-| disablePlayer | boolean | Disable the JavaScript player. Use ANDORID client for streaming when using this |
+| disablePlayer | boolean | Disable the JavaScript player. Use ANDROID client for streaming when using this |
 | innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) | Options passed to <Innertube>.create() |
 | trustedTokens | [TrustedTokenConfig](#trustedtokenconfig) | The trusted tokens passed to YouTube to avoid bans |
 | cookie | string | The cookies passed to innertube similar to ytdl cookies |
