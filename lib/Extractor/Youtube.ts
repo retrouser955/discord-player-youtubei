@@ -50,7 +50,6 @@ const idRegex = /^[a-zA-Z0-9-_]{11}$/;
 export interface StreamOptions {
   useClient?: InnerTubeClient;
   highWaterMark?: number;
-  slicePlaylist?: boolean;
 }
 
 export interface RefreshInnertubeOptions {
@@ -89,6 +88,7 @@ export interface YoutubeiOptions {
   cookie?: string;
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
+  slicePlaylist?: boolean;
 }
 
 export interface AsyncTrackingContext {
@@ -385,10 +385,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
           if (!mixVidInfo?.playlist)
             throw new Error("Mix playlist not found or invalid");
 
-          if (
-            this.options.streamOptions?.slicePlaylist &&
-            mixVidInfo?.playlist?.current_index
-          )
+          if (this.options.slicePlaylist && mixVidInfo?.playlist?.current_index)
             mixVidInfo.playlist.contents.splice(
               0,
               mixVidInfo.playlist.current_index,
