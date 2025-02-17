@@ -35,6 +35,7 @@ import { type PoTokenResult } from "bgutils-js";
 import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
+import { createServerAbrStream } from "../ServerAbr/CreateServerAbrStream";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -89,6 +90,7 @@ export interface YoutubeiOptions {
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
   slicePlaylist?: boolean;
+  useServerAbrStream?: boolean;
 }
 
 export interface AsyncTrackingContext {
@@ -114,10 +116,19 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
   async setPoToken(token: PoTokenResult, visitorData: string) {
     const oauthKeys = this.innerTube.session.oauth.oauth2_tokens;
+    const INNERTUBE_OPTIONS: InnerTubeConfig = {
+      retrieve_player: this.options.disablePlayer === true ? false : true,
+      ...this.options.innertubeConfigRaw,
+      cookie: this.options.cookie,
+    };
+    INNERTUBE_OPTIONS.po_token = token.poToken;
+    INNERTUBE_OPTIONS.visitor_data = visitorData;
+
     const newTube = await Innertube.create({
       visitor_data: visitorData,
       po_token: token.poToken,
       generate_session_locally: true,
+      ...INNERTUBE_OPTIONS
     });
 
     if (oauthKeys) await newTube.session.signIn(oauthKeys);
@@ -185,6 +196,11 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                 ],
               );
             }
+
+            if(this.options.useServerAbrStream) {
+              return createServerAbrStream(q, this.innerTube, this)
+            }
+
             return streamFromYT(q, this.innerTube, {
               overrideDownloadOptions: this.options.overrideDownloadOptions,
             });
