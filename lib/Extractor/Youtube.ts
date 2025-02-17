@@ -89,6 +89,7 @@ export interface YoutubeiOptions {
   cookie?: string;
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
+  slicePlaylist?: boolean;
   useServerAbrStream?: boolean;
 }
 
@@ -381,8 +382,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     query = query.includes("youtube.com")
       ? query.replace(/(m(usic)?|gaming)\./, "")
       : query;
-    if (!query.includes("list=RD") && YoutubeiExtractor.validateURL(query))
-      context.type = QueryType.YOUTUBE_VIDEO;
 
     switch (context.type) {
       case QueryType.YOUTUBE_PLAYLIST: {
@@ -401,6 +400,12 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
           const mixVidInfo = await this.innerTube.getInfo(endpoint);
           if (!mixVidInfo?.playlist)
             throw new Error("Mix playlist not found or invalid");
+
+          if (this.options.slicePlaylist && mixVidInfo?.playlist?.current_index)
+            mixVidInfo.playlist.contents.splice(
+              0,
+              mixVidInfo.playlist.current_index,
+            );
 
           playlist = {
             info: {
