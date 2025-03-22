@@ -1,6 +1,6 @@
 export function extractVideoId(vid: string) {
   const YOUTUBE_REGEX =
-    /^https:\/\/(www\.)?youtu(\.be\/[A-Za-z0-9]{11}(.+)?|be\.com\/watch\?v=[A-Za-z0-9]{11}(&.+)?)/;
+    /^https:\/\/(www\.)?youtu(\.be\/.{11}(.+)?|be\.com\/watch\?v=.{11}(&.+)?)/;
   if (!YOUTUBE_REGEX.test(vid)) throw new Error("Invalid youtube url");
 
   let id = new URL(vid).searchParams.get("v");

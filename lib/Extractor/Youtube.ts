@@ -129,7 +129,9 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   async #createWithToken() {
     const token = await generateToken(this.innerTube);
     this.innerTube = await Innertube.create({
+      retrieve_player: this.options.disablePlayer === true ? false : true,
       ...this.options.innertubeConfigRaw,
+      cookie: this.options.cookie,
       cache: new UniversalCache(false),
       generate_session_locally: true,
       visitor_data: token.visitorData,
