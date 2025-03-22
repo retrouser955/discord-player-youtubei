@@ -135,7 +135,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       visitor_data: token.visitorData,
       po_token: token.poToken,
       fetch: (input, init) =>
-        defaultFetch(this.context.player, input, init, this.options.proxy)
+        defaultFetch(this.context.player, input, init, this.options.proxy),
     });
   }
 
