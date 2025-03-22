@@ -14,7 +14,7 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { YTNodes } from "youtubei.js";
+import Innertube, { UniversalCache, YTNodes } from "youtubei.js";
 import type { ProxyAgent } from "undici";
 import {
   type DownloadOptions,
@@ -36,6 +36,7 @@ import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
 import { createServerAbrStream } from "../ServerAbr/CreateServerAbrStream";
+import { generateToken } from "../token/tokenGenerator";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -85,12 +86,12 @@ export interface YoutubeiOptions {
   disablePlayer?: boolean;
   ignoreSignInErrors?: boolean;
   innertubeConfigRaw?: InnerTubeConfig;
-  trustedTokens?: TrustedTokenConfig;
   cookie?: string;
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
   slicePlaylist?: boolean;
   useServerAbrStream?: boolean;
+  generateWithPoToken?: boolean;
 }
 
 export interface AsyncTrackingContext {
@@ -109,32 +110,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public static instance?: YoutubeiExtractor;
   public priority = 2;
   static ytContext = new AsyncLocalStorage<AsyncTrackingContext>();
+  private interval?: NodeJS.Timeout;
 
   setInnertube(tube: Innertube) {
     this.innerTube = tube;
-  }
-
-  async setPoToken(token: PoTokenResult, visitorData: string) {
-    const oauthKeys = this.innerTube.session.oauth.oauth2_tokens;
-    const INNERTUBE_OPTIONS: InnerTubeConfig = {
-      retrieve_player: this.options.disablePlayer === true ? false : true,
-      ...this.options.innertubeConfigRaw,
-      cookie: this.options.cookie,
-    };
-    INNERTUBE_OPTIONS.po_token = token.poToken;
-    INNERTUBE_OPTIONS.visitor_data = visitorData;
-
-    const newTube = await Innertube.create({
-      visitor_data: visitorData,
-      po_token: token.poToken,
-      generate_session_locally: true,
-      ...INNERTUBE_OPTIONS
-    });
-
-    if (oauthKeys) await newTube.session.signIn(oauthKeys);
-
-    this.innerTube = newTube;
-    this.debug("YOUTUBEI POTOKEN: SET");
   }
 
   static getInstance() {
@@ -147,6 +126,17 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     this.options.streamOptions.useClient = client;
   }
 
+  async #createWithToken() {
+    const token = await generateToken(this.innerTube);
+    this.innerTube = await Innertube.create({
+      ...this.options.innertubeConfigRaw,
+      cache: new UniversalCache(false),
+      generate_session_locally: true,
+      visitor_data: token.visitorData,
+      po_token: token.poToken,
+    });
+  }
+
   static getStreamingContext() {
     const ctx = YoutubeiExtractor.ytContext.getStore();
     if (!ctx) throw new Error("INVALID INVOKCATION");
@@ -156,27 +146,27 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   async activate(): Promise<void> {
     this.protocols = ["ytsearch", "youtube"];
 
-    if (this.options.trustedTokens && !this.options.streamOptions?.useClient)
-      process.emitWarning(
-        'Warning: Using poTokens and default "ANDROID" client which are not compatible',
-      );
-
     const INNERTUBE_OPTIONS: InnerTubeConfig = {
       retrieve_player: this.options.disablePlayer === true ? false : true,
       ...this.options.innertubeConfigRaw,
       cookie: this.options.cookie,
     };
 
-    if (this.options.trustedTokens) {
-      INNERTUBE_OPTIONS.po_token = this.options.trustedTokens.poToken;
-      INNERTUBE_OPTIONS.visitor_data = this.options.trustedTokens.visitorData;
-    }
-
     this.innerTube = await Innertube.create({
       ...INNERTUBE_OPTIONS,
       fetch: (input, init) =>
         defaultFetch(this.context.player, input, init, this.options.proxy),
+      cache: this.options.generateWithPoToken
+        ? new UniversalCache(false)
+        : undefined,
+      // OVERRIDE AS STREAMING DOES NOT WORK WITH LOCALLY GENERATED TOKENS
+      generate_session_locally: false,
     });
+
+    if (this.options.generateWithPoToken) {
+      await this.#createWithToken();
+      this.interval = setInterval(this.#createWithToken, 6.048e8).unref();
+    }
 
     if (typeof this.options.createStream === "function") {
       this._stream = this.options.createStream;
@@ -197,8 +187,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
               );
             }
 
-            if(this.options.useServerAbrStream) {
-              return createServerAbrStream(q, this.innerTube, this)
+            if (this.options.useServerAbrStream) {
+              return createServerAbrStream(q, this.innerTube, this);
             }
 
             return streamFromYT(q, this.innerTube, {
@@ -237,6 +227,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
   async deactivate(): Promise<void> {
     this.protocols = [];
+    if (this.interval) clearInterval(this.interval);
     if (this.options.signOutOnDeactive && this.innerTube.session.logged_in)
       await this.innerTube.session.signOut();
   }

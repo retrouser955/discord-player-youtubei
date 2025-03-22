@@ -1,6 +1,6 @@
 {
   "name": "discord-player-youtubei",
-  "version": "1.4.2",
+  "version": "1.4.3-beta.0",
   "description": "An unofficial package to test the use of youtubei in discord-player v6.",
   "main": "dist/index.js",
   "repository": {
@@ -11,20 +11,21 @@
   "license": "Creative Commons",
   "devDependencies": {
     "@discord-player/extractor": "^7.1.0",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.7.5",
     "bgutils-js": "^3.1.0",
     "discord-player": "^7.1.0",
     "discord.js": "^14.16.3",
     "googlevideo": "^2.0.0",
-    "happy-dom": "^15.11.7",
     "prettier": "^3.3.3",
     "tsup": "^8.2.4",
     "typescript": "^5.5.2"
   },
   "dependencies": {
+    "jsdom": "^26.0.0",
     "tiny-typed-emitter": "^2.1.0",
     "undici": "^7.1.0",
-    "youtubei.js": "^13.0.0"
+    "youtubei.js": "^13.2.0"
   },
   "scripts": {
     "build": "npm run format && tsup",
@@ -38,18 +39,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./experimental": {
-      "types": "./dist/experimental/index.d.ts",
-      "import": "./dist/experimental/index.mjs",
-      "require": "./dist/experimental/index.js"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "experimental": [
-        "./dist/experimental/index.d.ts"
-      ]
     }
   }
 }
