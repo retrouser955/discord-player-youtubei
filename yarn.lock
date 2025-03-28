@@ -1376,7 +1376,7 @@ __metadata:
     bgutils-js: "npm:^3.1.0"
     discord-player: "npm:^7.1.0"
     discord.js: "npm:^14.16.3"
-    googlevideo: "npm:^2.0.0"
+    googlevideo: "npm:^3.0.0"
     jsdom: "npm:^26.0.0"
     prettier: "npm:^3.3.3"
     tiny-typed-emitter: "npm:^2.1.0"
@@ -1964,12 +1964,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"googlevideo@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "googlevideo@npm:2.0.0"
+"googlevideo@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "googlevideo@npm:3.0.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
-  checksum: 10c0/3aa79a0c1fb2e3cfe52dd9554f6d3cad37ac75f84a2985e18cfe57902419fc3a2e92e3eb968926ca68ae4136f5f7035b55ccd64c35a935847d17f4e5b62ffe66
+  checksum: 10c0/949b37b11a73aae087974dc02724ec4c83ece8bf488f6364aebab51b81fce6cdf267544a968c6fbf22c56e5a4968cbf567146181f1ce1895f935987e7f868048
   languageName: node
   linkType: hard
 
@@ -2225,12 +2225,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jintr@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "jintr@npm:3.2.1"
+"jintr@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "jintr@npm:3.3.0"
   dependencies:
     acorn: "npm:^8.8.0"
-  checksum: 10c0/4c07da2d76e70277deda3a416a3911d7fca8d450d6de3fb685369adfb2e40da3bbe3f2226f61110a30f06850a02a1e22a3c3cd2ed1c9d444a26bc806caecea32
+  checksum: 10c0/88a62d4748c85fddb8bb4284066fcaeb77c4ecfa9bd3f93ccdcc2ebc2e701e86d2c8d1a079026044b0aca8be451c121da4c95b494bfbaf8540ef9128fa2d1f0b
   languageName: node
   linkType: hard
 
@@ -3763,13 +3763,13 @@ __metadata:
   linkType: hard
 
 "youtubei.js@npm:^13.2.0":
-  version: 13.2.0
-  resolution: "youtubei.js@npm:13.2.0"
+  version: 13.3.0
+  resolution: "youtubei.js@npm:13.3.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
-    jintr: "npm:^3.2.1"
+    jintr: "npm:^3.3.0"
     tslib: "npm:^2.5.0"
     undici: "npm:^5.19.1"
-  checksum: 10c0/94c439b217567f88de0254a8b9d024bc5af084a1b2d0ba7edd545ee1733f34ab52d6332cd398ea50ec4a07ef14c7fe576ffe628ce47d8bb38ba830ac32817795
+  checksum: 10c0/5611fcc2400549f3d75cee0f6afbcaacc3759532814943db76d9b8fc8f18ab380c7fa71088b965bf53a065062d9bb4fec66457bec585da45a97685c8cebd5dc9
   languageName: node
   linkType: hard

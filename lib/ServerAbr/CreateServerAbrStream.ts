@@ -84,7 +84,6 @@ export async function createServerAbrStream(
     audioFormats: [selectedFormat],
     videoFormats: [],
     clientAbrState: {
-      // @ts-expect-error
       enabledTrackTypesBitfield: 1,
       playerTimeMs: 0,
     },
