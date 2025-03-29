@@ -9,6 +9,7 @@ import type {
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
 import { createReadableFromWeb } from "./webToReadable";
+import { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YTStreamingOptions {
   extractor?: BaseExtractor<object>;
@@ -26,8 +27,9 @@ export function createWebReadableStream(
   url: string,
   size: number,
   innertube: Innertube,
+  videoInfo: VideoInfo,
 ) {
-  let [start, end] = [0, 1048576 * 10];
+  let [start, end] = [0, size || 1048576 * 10];
   let isEnded = false;
 
   let abort: AbortController;
@@ -44,36 +46,59 @@ export function createWebReadableStream(
 
         if (end >= size) {
           isEnded = true;
+          end = size;
         }
 
         return new Promise(async (resolve, reject) => {
           abort = new AbortController();
-          try {
-            const chunks = await innertube.actions.session.http.fetch_function(
-              `${url}&range=${start}-${end || ""}`,
-              {
-                headers: {
-                  ...Constants.STREAM_HEADERS,
-                },
-                signal: abort.signal,
-              },
-            );
+          let fetchUrl = "";
 
-            const readable = chunks.body;
+          const fallback = [
+            function () {
+              fetchUrl = `${url}&cpn=${videoInfo.cpn}&range=${start}-${end || ""}`;
+              start += end;
+            },
+            function () {
+              const fmtVideo = videoInfo.chooseFormat({
+                ...DEFAULT_DOWNLOAD_OPTIONS,
+                type: "video+audio",
+              });
+              fetchUrl = fmtVideo.url!;
+            },
+          ];
 
-            if (!readable || !chunks.ok)
-              throw new Error(`Downloading of ${url} failed.`);
+          for (
+            let fallbackIndex = 0;
+            fallbackIndex < fallback.length;
+            fallbackIndex++
+          ) {
+            try {
+              fallback[fallbackIndex]();
+              const chunks =
+                await innertube.actions.session.http.fetch_function(fetchUrl, {
+                  headers: {
+                    ...Constants.STREAM_HEADERS,
+                  },
+                  signal: abort.signal,
+                });
 
-            for await (const chunk of Utils.streamToIterable(readable)) {
-              controller.enqueue(chunk);
+              const readable = chunks.body;
+
+              if (!readable || !chunks.ok)
+                throw new Error(
+                  `Downloading 「${videoInfo.basic_info.title}」 with method ${fallbackIndex} failed.`,
+                );
+
+              for await (const chunk of Utils.streamToIterable(readable)) {
+                controller.enqueue(chunk);
+              }
+
+              resolve();
+              break;
+            } catch (error: any) {
+              if (fallbackIndex === fallback.length - 1) return reject(error);
+              console.error(error.message);
             }
-
-            start = end + 1;
-            end += size;
-
-            resolve();
-          } catch (error) {
-            reject(error);
           }
         });
       },
@@ -116,9 +141,10 @@ export async function streamFromYT(
       options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
     );
     const download = createWebReadableStream(
-      `${downloadURL.url!}&cpn=${videoInfo.cpn}`,
+      downloadURL.url!,
       downloadURL.content_length!,
       innerTube,
+      videoInfo,
     );
 
     return createReadableFromWeb(download, context.highWaterMark);
