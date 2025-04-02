@@ -29,7 +29,7 @@ export function createWebReadableStream(
   innertube: Innertube,
   videoInfo: VideoInfo,
 ) {
-  let [start, end] = [0, size || 1048576 * 10];
+  let [start, end] = [0, Math.min(size, 1048576 * 10) || 1048576 * 10];
   let isEnded = false;
 
   let abort: AbortController;
