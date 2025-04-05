@@ -57,11 +57,11 @@ export async function stream<T extends boolean = false>(
 
   if (!fmt.url || !fmt.content_length) throw Errors.NoDownload;
 
-  const downloadedUrl = `${fmt.url!}&cpn=${info.cpn}`;
+  const downloadedUrl = fmt.url!;
 
   const stream = skipStream
     ? null
-    : createWebReadableStream(downloadedUrl, fmt.content_length, yt);
+    : createWebReadableStream(downloadedUrl, fmt.content_length, yt, info);
 
   const readable = stream ? await createReadableFromWeb(stream) : null;
 

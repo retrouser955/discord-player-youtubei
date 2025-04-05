@@ -13,7 +13,6 @@
     "@discord-player/extractor": "^7.1.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.7.5",
-    "bgutils-js": "^3.1.0",
     "discord-player": "^7.1.0",
     "discord.js": "^14.16.3",
     "googlevideo": "^3.0.0",
@@ -25,7 +24,8 @@
     "jsdom": "^26.0.0",
     "tiny-typed-emitter": "^2.1.0",
     "undici": "^7.1.0",
-    "youtubei.js": "^13.2.0"
+    "youtubei.js": "^13.2.0",
+    "bgutils-js": "^3.1.0"
   },
   "scripts": {
     "build": "npm run format && tsup",
