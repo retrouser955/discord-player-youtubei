@@ -12,7 +12,7 @@ export function defaultPeerUrlBuilder(url: string, id: string) {
 }
 
 export function defaultFetch(
-  player: Player,
+  _player: Player,
   input: RequestInfo | URL,
   init?: globalThis.RequestInit,
   proxy?: ProxyAgent,

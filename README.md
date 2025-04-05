@@ -69,7 +69,11 @@ const player = useMainPlayer()
 const oauthTokens = getOauthTokens() // The tokens printed from step above
 
 player.extractors.register(YoutubeiExtractor, {
-    authentication: oauthTokens
+  authentication: oauthTokens,
+  generateWithPoToken: true,
+  streamOptions: {
+    useClient: "WEB"
+  }
 })
 ```
 
@@ -94,20 +98,10 @@ player.extractors.register(YoutubeiExtractor, {
 | streamOptions | [StreamOptions](#streamoptions) | Configure streaming behavior |
 | disablePlayer | boolean | Disable the JavaScript player. Use ANDROID client for streaming when using this |
 | innertubeConfigRaw | [InntertubeConfigRaw](https://github.com/LuanRT/YouTube.js/blob/main/src/core/Session.ts#L109) | Options passed to <Innertube>.create() |
-| trustedTokens | [TrustedTokenConfig](#trustedtokenconfig) | The trusted tokens passed to YouTube to avoid bans |
 | cookie | string | The cookies passed to innertube similar to ytdl cookies |
 | proxy | [ProxyAgent](https://undici.nodejs.org/#/docs/api/ProxyAgent.md) | Define a proxy to route all the requests |
 | peers | [PeerInfo](#peerinfo) | Stream from peers allowing to bypass some IP block |
-
-### TrustedTokenConfig
-
-*Rename of [`GeneratorReturnData`](./docs/GENERATE_TRUSTED_TOKEN.md#generatorreturndata)*  
-*All properties are required*
-
-| name | type | description |
-| ---- | ---- | ----------- |
-| visitorData | string | The visitor data of the PoToken |
-| poToken | string | The trusted token of the YouTube client |
+| generateWithPoToken | boolean | Create an instance with PoToken. Only works with "WEB" client |
 
 ### PeerInfo
 
@@ -134,30 +128,10 @@ The function must return a `string` that is a URL that returns an audio stream w
 ## Raw Types
 
 ```ts
-export interface StreamOptions {
-  useClient?: InnerTubeClient;
-  highWaterMark?: number;
-}
-
-export interface RefreshInnertubeOptions {
-  filePath: string;
-  interval?: number;
-}
-
 export interface PeerInfo {
   url: string;
   parse?: (url: string, id: string) => string;
 }
-
-export type TrustedTokenConfig = {
-  poToken: string;
-  visitorData: string;
-};
-
-export type QueryBridgeModes = Partial<
-  Record<SearchQueryType, "yt" | "ytmusic">
-> & { default?: "yt" | "ytmusic" };
-
 export interface YoutubeiOptions {
   authentication?: string;
   overrideDownloadOptions?: DownloadOptions;
@@ -171,10 +145,12 @@ export interface YoutubeiOptions {
   disablePlayer?: boolean;
   ignoreSignInErrors?: boolean;
   innertubeConfigRaw?: InnerTubeConfig;
-  trustedTokens?: TrustedTokenConfig;
   cookie?: string;
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
+  slicePlaylist?: boolean;
+  useServerAbrStream?: boolean;
+  generateWithPoToken?: boolean;
 }
 ```
 
