@@ -43,5 +43,16 @@ export async function generateToken(innertube: Innertube) {
     visitorData,
   };
 
+  try {
+    globalThis.document.close();
+  } catch {
+    // no-op
+  }
+  // Clean up after jsdom is ran
+  // @ts-expect-error
+  delete globalThis.window;
+  // @ts-expect-error
+  delete globalThis.document;
+
   return poTokenResult;
 }
