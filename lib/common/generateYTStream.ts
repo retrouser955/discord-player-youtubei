@@ -5,10 +5,12 @@ import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type {
   DownloadOptions,
   InnerTubeClient,
+  FormatOptions
 } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
 import { createReadableFromWeb } from "./webToReadable";
+import { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 
 export interface YTStreamingOptions {
   extractor?: BaseExtractor<object>;
@@ -26,8 +28,9 @@ export function createWebReadableStream(
   url: string,
   size: number,
   innertube: Innertube,
+  videoInfo: VideoInfo,
 ) {
-  let [start, end] = [0, 1048576 * 10];
+  let [start, end] = [0, Math.min(size, 1048576 * 10) || 1048576 * 10];
   let isEnded = false;
 
   let abort: AbortController;
@@ -44,37 +47,75 @@ export function createWebReadableStream(
 
         if (end >= size) {
           isEnded = true;
+          end = size;
         }
 
         return new Promise(async (resolve, reject) => {
           abort = new AbortController();
-          try {
-            const chunks = await innertube.actions.session.http.fetch_function(
-              `${url}&range=${start}-${end || ""}`,
-              {
-                headers: {
-                  ...Constants.STREAM_HEADERS,
-                },
-                signal: abort.signal,
-              },
-            );
-
-            const readable = chunks.body;
-
-            if (!readable || !chunks.ok)
-              throw new Error(`Downloading of ${url} failed.`);
-
-            for await (const chunk of Utils.streamToIterable(readable)) {
-              controller.enqueue(chunk);
+          let fetchUrl = "";
+          let context = YoutubeiExtractor.getStreamingContext();
+          const downloadOpts = {
+            ...YoutubeiExtractor.instance?.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
+            toString() {
+              return JSON.stringify(this);
             }
+          };
 
-            start = end + 1;
-            end += size;
+          const fallback = [
+            function () {
+              fetchUrl = `${url}&cpn=${videoInfo.cpn}&range=${start}-${end || ""}`;
+              start += end;
+              return false;
+            },
+            function () {
+              if (!(["IOS", "ANDROID"] as InnerTubeClient[]).includes(context.useClient)) return true;
+              if (!(["audio", "video"] as Pick<FormatOptions, 'type'>["type"][]).includes(downloadOpts.type!)) return true;
+              downloadOpts.type = "video+audio";
+              console.warn(`\u001b[33mTrying with ${downloadOpts} option\u001b[39m`)
+              const fmtVideo = videoInfo.chooseFormat(downloadOpts);
+              fetchUrl = fmtVideo.url!;
+              return false;
+            },
+          ];
 
-            resolve();
-          } catch (error) {
-            reject(error);
+          for (
+            let fallbackIndex = 0;
+            fallbackIndex < fallback.length;
+            fallbackIndex++
+          ) {
+            try {
+              const isContinue = fallback[fallbackIndex]();
+              if (isContinue) continue;
+
+              const chunks =
+                await innertube.actions.session.http.fetch_function(fetchUrl, {
+                  headers: {
+                    ...Constants.STREAM_HEADERS,
+                  },
+                  signal: abort.signal,
+                });
+
+              const readable = chunks.body;
+
+              if (!readable || !chunks.ok)
+                throw new Error(
+                  `Downloading 「${videoInfo.basic_info.title}」 with method ${fallbackIndex} failed. current downloadOpts is ${downloadOpts}`,
+                );
+
+              for await (const chunk of Utils.streamToIterable(readable)) {
+                controller.enqueue(chunk);
+              }
+
+              resolve();
+              break;
+            } catch (error: any) {
+              if (fallbackIndex === fallback.length - 1) return reject(error);
+              console.error(error.message);
+            }
+            
+            Object.assign(downloadOpts, YoutubeiExtractor.instance?.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS);
           }
+          return reject(new Error(`Downloading 「${videoInfo.basic_info.title}」 failed.`)); 
         });
       },
       async cancel() {
@@ -116,9 +157,10 @@ export async function streamFromYT(
       options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
     );
     const download = createWebReadableStream(
-      `${downloadURL.url!}&cpn=${videoInfo.cpn}`,
+      downloadURL.url!,
       downloadURL.content_length!,
       innerTube,
+      videoInfo,
     );
 
     return createReadableFromWeb(download, context.highWaterMark);
