@@ -5,7 +5,7 @@ import type { OAuth2Tokens } from "youtubei.js/agnostic";
 import type {
   DownloadOptions,
   InnerTubeClient,
-  FormatOptions
+  FormatOptions,
 } from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
@@ -55,10 +55,11 @@ export function createWebReadableStream(
           let fetchUrl = "";
           let context = YoutubeiExtractor.getStreamingContext();
           const downloadOpts = {
-            ...YoutubeiExtractor.instance?.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS,
+            ...(YoutubeiExtractor.instance?.options.overrideDownloadOptions ??
+              DEFAULT_DOWNLOAD_OPTIONS),
             toString() {
               return JSON.stringify(this);
-            }
+            },
           };
 
           const fallback = [
@@ -68,10 +69,22 @@ export function createWebReadableStream(
               return false;
             },
             function () {
-              if (!(["IOS", "ANDROID"] as InnerTubeClient[]).includes(context.useClient)) return true;
-              if (!(["audio", "video"] as Pick<FormatOptions, 'type'>["type"][]).includes(downloadOpts.type!)) return true;
+              if (
+                !(["IOS", "ANDROID"] as InnerTubeClient[]).includes(
+                  context.useClient,
+                )
+              )
+                return true;
+              if (
+                !(
+                  ["audio", "video"] as Pick<FormatOptions, "type">["type"][]
+                ).includes(downloadOpts.type!)
+              )
+                return true;
               downloadOpts.type = "video+audio";
-              console.warn(`\u001b[33mTrying with ${downloadOpts} option\u001b[39m`)
+              console.warn(
+                `\u001b[33mTrying with ${downloadOpts} option\u001b[39m`,
+              );
               const fmtVideo = videoInfo.chooseFormat(downloadOpts);
               fetchUrl = fmtVideo.url!;
               return false;
@@ -112,10 +125,16 @@ export function createWebReadableStream(
               if (fallbackIndex === fallback.length - 1) return reject(error);
               console.error(error.message);
             }
-            
-            Object.assign(downloadOpts, YoutubeiExtractor.instance?.options.overrideDownloadOptions ?? DEFAULT_DOWNLOAD_OPTIONS);
+
+            Object.assign(
+              downloadOpts,
+              YoutubeiExtractor.instance?.options.overrideDownloadOptions ??
+                DEFAULT_DOWNLOAD_OPTIONS,
+            );
           }
-          return reject(new Error(`Downloading 「${videoInfo.basic_info.title}」 failed.`)); 
+          return reject(
+            new Error(`Downloading 「${videoInfo.basic_info.title}」 failed.`),
+          );
         });
       },
       async cancel() {

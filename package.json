@@ -1,6 +1,6 @@
 {
   "name": "discord-player-youtubei",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "An unofficial package to test the use of youtubei in discord-player v6.",
   "main": "dist/index.js",
   "repository": {
@@ -21,11 +21,11 @@
     "typescript": "^5.5.2"
   },
   "dependencies": {
-    "jsdom": "^26.0.0",
+    "bgutils-js": "^3.2.0",
+    "jsdom": "^26.1.0",
     "tiny-typed-emitter": "^2.1.0",
     "undici": "^7.1.0",
-    "youtubei.js": "^13.2.0",
-    "bgutils-js": "^3.1.0"
+    "youtubei.js": "^13.4.0"
   },
   "scripts": {
     "build": "npm run format && tsup",
