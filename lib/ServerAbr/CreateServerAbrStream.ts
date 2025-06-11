@@ -3,6 +3,7 @@ import type Innertube from "youtubei.js/agnostic";
 import type { YoutubeiExtractor } from "../Extractor/Youtube";
 import { extractVideoId } from "../common/extractVideoID";
 import { PassThrough } from "node:stream";
+import type { Format } from "youtubei.js/dist/src/parser/misc";
 
 export async function getGoogleVideo() {
   try {
@@ -19,19 +20,54 @@ export async function createServerAbrStream(
   innertube: Innertube,
   ext: YoutubeiExtractor,
 ) {
+  ext.context.player.debug("[YOUTUBE] Attempting to use Sabr for streaming");
+
+  const isTrackCached =
+    track.raw?.formats && Date.now() - track.raw?.formats.executedAt < 3.6e6;
+
   const { GoogleVideo } = await getGoogleVideo();
   if (!innertube.session.po_token)
     throw new Error("An PoToken must be present to use sabr stream");
   if (ext.options.streamOptions?.useClient !== "WEB")
     throw new Error("Sabr streaming only works on WEB client");
-  const videoId = extractVideoId(track.url);
-  const basicInfo = await innertube.getBasicInfo(videoId);
 
-  const format = basicInfo.chooseFormat({
-    quality: "best",
-    format: "webm",
-    type: "audio",
-  });
+  let serverAbrStreamingUrl: string | undefined;
+  let videoPlaybackUstreamerConfig: string | undefined;
+  let format: Format;
+  let durationMs: number;
+
+  if (isTrackCached) {
+    const trackData = track.raw?.formats as {
+      fmt: Format;
+      sabrUrl: string | undefined;
+      uStreamConfig: string | undefined;
+      durationMs: number;
+    };
+
+    serverAbrStreamingUrl = trackData.sabrUrl;
+    videoPlaybackUstreamerConfig = trackData.uStreamConfig;
+    format = trackData.fmt;
+    durationMs = trackData.durationMs;
+  } else {
+    const videoId = extractVideoId(track.url);
+    const basicInfo = await innertube.getBasicInfo(videoId);
+
+    format = basicInfo.chooseFormat({
+      quality: "best",
+      format: "webm",
+      type: "audio",
+    });
+
+    durationMs = (basicInfo.basic_info.duration ?? 0) * 1000;
+
+    serverAbrStreamingUrl = innertube.session.player?.decipher(
+      basicInfo.page[0].streaming_data?.server_abr_streaming_url,
+    );
+
+    videoPlaybackUstreamerConfig =
+      basicInfo.page[0].player_config?.media_common_config
+        .media_ustreamer_request_config?.video_playback_ustreamer_config;
+  }
 
   const selectedFormat: import("googlevideo").Format = {
     itag: format.itag,
@@ -39,17 +75,19 @@ export async function createServerAbrStream(
     xtags: format.xtags,
   };
 
-  const serverAbrStreamingUrl = innertube.session.player?.decipher(
-    basicInfo.page[0].streaming_data?.server_abr_streaming_url!,
-  )!;
-  const videoPlaybackUstreamerConfig =
-    basicInfo.page[0].player_config?.media_common_config
-      .media_ustreamer_request_config?.video_playback_ustreamer_config!;
+  if (!serverAbrStreamingUrl)
+    throw new Error("Unable to find the streaming url for server abr");
+
+  if (!videoPlaybackUstreamerConfig)
+    throw new Error(
+      "Unable to find UstreamerConfig which is required for Sabr",
+    );
+
   const sabrStream = new GoogleVideo.ServerAbrStream({
     fetch: innertube.session.http.fetch_function,
     serverAbrStreamingUrl,
     poToken: innertube.session.po_token!,
-    durationMs: basicInfo.basic_info.duration!,
+    durationMs,
     videoPlaybackUstreamerConfig,
   });
 
@@ -72,12 +110,9 @@ export async function createServerAbrStream(
   }
 
   sabrStream.on("data", serverAbrDataHandler);
-
-  sabrStream.on("end", function endHandler() {
-    audioStream.end();
-    // @ts-expect-error
-    sabrStream.removeEventListener("data", serverAbrDataHandler);
-    sabrStream.removeEventListener("end", endHandler);
+  sabrStream.on("error", (message) => {
+    console.log("[SERVER ABR STREAM ERR]");
+    console.error(message);
   });
 
   await sabrStream.init({
@@ -88,6 +123,8 @@ export async function createServerAbrStream(
       playerTimeMs: 0,
     },
   });
+
+  audioStream.on("end", () => {});
 
   return audioStream;
 }

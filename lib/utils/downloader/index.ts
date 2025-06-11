@@ -1,8 +1,10 @@
 import Innertube from "youtubei.js";
-import type { FormatOptions } from "youtubei.js/dist/src/types";
-import { createWebReadableStream } from "../../common/generateYTStream";
-import { createReadableFromWeb } from "../../common/webToReadable";
+import type {
+  FormatOptions,
+  InnerTubeClient,
+} from "youtubei.js/dist/src/types";
 import type { PassThrough } from "stream";
+import { createNativeReadable } from "../../common/createNativeReadable";
 
 export type If<C, T, F> = C extends true ? T : F;
 
@@ -30,6 +32,7 @@ export async function stream<T extends boolean = false>(
   skipStream?: T,
   options?: FormatOptions,
   tube?: Innertube,
+  client?: InnerTubeClient,
 ) {
   const urlObj = validateURL(url);
 
@@ -45,9 +48,9 @@ export async function stream<T extends boolean = false>(
       retrieve_player: false,
     }));
 
-  const info = await yt.getBasicInfo(vidId, "IOS");
+  const info = await yt.getBasicInfo(vidId, client);
 
-  const fmt = info.chooseFormat(
+  let fmt = info.chooseFormat(
     options || {
       format: "mp4",
       quality: "best",
@@ -55,20 +58,21 @@ export async function stream<T extends boolean = false>(
     },
   );
 
+  if (client && !(["IOS", "ANDROID"] as InnerTubeClient[]).includes(client))
+    fmt.url = fmt.decipher(yt.session.player);
+
   if (!fmt.url || !fmt.content_length) throw Errors.NoDownload;
 
   const downloadedUrl = fmt.url!;
 
   const stream = skipStream
     ? null
-    : createWebReadableStream(downloadedUrl, fmt.content_length, yt, info);
-
-  const readable = stream ? await createReadableFromWeb(stream) : null;
+    : createNativeReadable(downloadedUrl, fmt.content_length, yt, info);
 
   return {
     basicInfo: info.basic_info,
     formatInfo: fmt,
-    stream: readable as If<T, null, PassThrough>,
+    stream: stream as If<T, null, PassThrough>,
     downloadedUrl,
   };
 }

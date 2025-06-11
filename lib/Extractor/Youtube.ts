@@ -30,13 +30,12 @@ import type {
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
-import { createReadableFromWeb } from "../common/webToReadable";
-import { type PoTokenResult } from "bgutils-js";
 import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
 import { createServerAbrStream } from "../ServerAbr/CreateServerAbrStream";
 import { generateToken } from "../token/tokenGenerator";
+import { createNativeReadable } from "../common/createNativeReadable";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -52,6 +51,7 @@ const idRegex = /^[a-zA-Z0-9-_]{11}$/;
 export interface StreamOptions {
   useClient?: InnerTubeClient;
   highWaterMark?: number;
+  debugStream?: (msg: string) => unknown;
 }
 
 export interface RefreshInnertubeOptions {
@@ -338,15 +338,19 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     track.setMetadata(metadata);
 
-    const webStream = await info.download({
+    let format = info.chooseFormat({
       type: "audio",
       quality: "best",
       format: "mp4",
     });
 
-    return createReadableFromWeb(
-      webStream,
-      this.options.streamOptions?.highWaterMark,
+    format.url = format.decipher(this.innerTube.session.player);
+
+    return createNativeReadable(
+      format.url,
+      format.content_length!,
+      this.innerTube,
+      info,
     );
   }
 
@@ -561,11 +565,27 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
         const uploadTime = vid.basic_info.start_timestamp;
 
+        // for server abr only
+        const formats = {
+          fmt: vid.chooseFormat({
+            quality: "best",
+            format: "webm",
+            type: "audio",
+          }),
+          sabrUrl: vid.page[0].streaming_data?.server_abr_streaming_url,
+          uStreamConfig:
+            vid.page[0].player_config?.media_common_config
+              .media_ustreamer_request_config?.video_playback_ustreamer_config,
+          durationMs: (vid.basic_info.duration ?? 0) * 1000,
+          executedAt: Date.now(),
+        };
+
         const raw = {
           duration_ms: (vid.basic_info.duration as number) * 1000,
           live: vid.basic_info.is_live,
           duration,
           startTime: uploadTime,
+          formats,
         };
 
         return {
