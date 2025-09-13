@@ -15,6 +15,22 @@ export function buildVideoUrl(id: string) {
     return `https://www.youtube.com/watch?v=${id}`;
 }
 
+export function buildPlaylistUrl(id: string, vidId?: string) {
+    return `https://www.youtube.com/playlist?list=${id}${vidId ? `&v=${vidId}` : ""}`;
+}
+
+export function getPlaylistId(url: string) {
+    const parsed = new URL(url);
+    const playlistId = parsed.searchParams.get("list");
+    const videoId = parsed.searchParams.get("v");
+
+    return {
+        playlistId,
+        videoId,
+        isMix: playlistId ? playlistId.startsWith("RD") : false
+    }
+}
+
 export function createYoutubeFetch(options?: YoutubeOptions) {
     const f: typeof fetch = (input, init) => {
         if(options?.proxy) {
