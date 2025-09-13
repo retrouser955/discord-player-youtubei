@@ -168,8 +168,20 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
     const serverAbrStreamingUrl = yt.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
     const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
 
-    ytTrack.setCache(adaptiveStream.decipher(yt.session.player), CacheType.Adaptive)
-    ytTrack.setCache(serverAbrStreamingUrl ? { url: serverAbrStreamingUrl, uStreamerConfig: uStreamConfig } : { url: "", uStreamerConfig: undefined }, CacheType.ServerAbr)
+    ytTrack.setCache({
+        type: CacheType.Adaptive,
+        url: adaptiveStream.decipher(yt.session.player),
+        cpn: metadata.cpn,
+        size: adaptiveStream.content_length ?? 0 // yikes. what if yt doesnt provide this?
+    })
     
+    if(serverAbrStreamingUrl && uStreamConfig) {
+        ytTrack.setCache({
+            type: CacheType.ServerAbr,
+            url: serverAbrStreamingUrl,
+            uStreamConfig: uStreamConfig
+        })
+    }
+
     return ytTrack;
 }

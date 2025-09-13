@@ -1,7 +1,8 @@
-import { BaseExtractor, ExtractorInfo, ExtractorSearchContext, QueryType } from "discord-player";
+import { BaseExtractor, ExtractorInfo, ExtractorSearchContext, ExtractorStreamable, QueryType, Track } from "discord-player";
 import type { YoutubeOptions } from "../types";
 import { getInnertube, getPlaylistId } from "../utils";
-import { getMixedPlaylist, getPlaylist, getVideo, search } from "../internal";
+import { getMixedPlaylist, getPlaylist, getVideo, runWithSearchContext, search } from "../internal";
+import { YoutubeTrack } from "./YoutubeTrack";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
@@ -11,26 +12,34 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     }
 
     async handle(query: string, context: ExtractorSearchContext): Promise<ExtractorInfo> {
-        switch(context.type) {
-            case QueryType.YOUTUBE_PLAYLIST: {
-                const playlistId = getPlaylistId(query);
-                if(!playlistId.playlistId) {
-                    this.debug("Invalid Playlist ID { playlist: " + query + " }")
-                    return this.createResponse(null, []);
-                }
-                if(playlistId.isMix && playlistId.videoId) {
-                    const pl = await getMixedPlaylist(playlistId.playlistId, playlistId.videoId, this);
+        return runWithSearchContext(context, async () => {
+            switch (context.type) {
+                case QueryType.YOUTUBE_PLAYLIST: {
+                    const playlistId = getPlaylistId(query);
+                    if (!playlistId.playlistId) {
+                        this.debug("Invalid Playlist ID { playlist: " + query + " }")
+                        return this.createResponse(null, []);
+                    }
+                    if (playlistId.isMix && playlistId.videoId) {
+                        const pl = await getMixedPlaylist(playlistId.playlistId, playlistId.videoId, this);
+                        return this.createResponse(pl, pl.tracks);
+                    }
+                    const pl = await getPlaylist(playlistId.playlistId, this);
                     return this.createResponse(pl, pl.tracks);
                 }
-                const pl = await getPlaylist(playlistId.playlistId, this);
-                return this.createResponse(pl, pl.tracks);
+                case QueryType.YOUTUBE_VIDEO: {
+                    return this.createResponse(null, [await getVideo(query, this)])
+                }
+                default: {
+                    return this.createResponse(null, await search(query, this));
+                }
             }
-            case QueryType.YOUTUBE_VIDEO: {
-                return this.createResponse(null, [await getVideo(query, this)])
-            }
-            default: {
-                return this.createResponse(null, await search(query, this));
-            }
-        }
+        })
+    }
+
+    stream(info: Track): Promise<ExtractorStreamable> {
+        if(info instanceof YoutubeTrack) return info.downloadAdaptive();
+        // @ts-expect-error
+        return new YoutubeTrack(this.context.player, info).downloadAdaptive();
     }
 }
