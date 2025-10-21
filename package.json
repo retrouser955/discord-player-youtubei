@@ -13,6 +13,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "googlevideo": "^4.0.4",
     "undici": "^7.15.0",
     "youtubei.js": "^15.0.1"
   }

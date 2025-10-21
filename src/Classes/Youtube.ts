@@ -38,6 +38,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     }
 
     stream(info: Track): Promise<ExtractorStreamable> {
+        // TODO: Implement YouTube's SABR streaming for supported formats
         if(info instanceof YoutubeTrack) return info.downloadAdaptive();
         // @ts-expect-error
         return new YoutubeTrack(this.context.player, info).downloadAdaptive();

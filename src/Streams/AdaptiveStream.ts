@@ -7,7 +7,6 @@ const TEN_MB = 1048576 * 10;
 export class AdaptiveStream extends Readable {
     constructor(url: string, cpn: string, size: number) {
         let isEnded = false;
-        let downloaded = 0;
         let start = 0;
         let end = Math.min(size, TEN_MB);
 

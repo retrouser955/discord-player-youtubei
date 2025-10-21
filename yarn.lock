@@ -691,6 +691,7 @@ __metadata:
   resolution: "discord-player-youtubei@workspace:."
   dependencies:
     discord-player: "npm:^7.1.0"
+    googlevideo: "npm:^4.0.4"
     tsup: "npm:^8.5.0"
     typescript: "npm:^5.9.2"
     undici: "npm:^7.15.0"
@@ -943,6 +944,15 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10c0/19a9759ea77b8e3ca0a43c2f07ecddc2ad46216b786bb8f993c445aee80d345925a21e5280c7b7c6c59e860a0154b84e4b2b60321fea92cd3c56b4a7489f160e
+  languageName: node
+  linkType: hard
+
+"googlevideo@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "googlevideo@npm:4.0.4"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^2.0.0"
+  checksum: 10c0/5ca5a0368bcc18af095cc76218a158dfb02cc8f17d9060a630a1c669007374d5d6f182db31872bb9b69ba5c0a32546550d4235d6c556d1c407d53c4ce2c306c7
   languageName: node
   linkType: hard
 
