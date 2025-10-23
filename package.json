@@ -8,13 +8,17 @@
   "license": "MIT",
   "packageManager": "yarn@4.9.1+sha512.f95ce356460e05be48d66401c1ae64ef84d163dd689964962c6888a9810865e39097a5e9de748876c2e0bf89b232d583c33982773e9903ae7a76257270986538",
   "devDependencies": {
+    "@types/jsdom": "^27.0.0",
     "discord-player": "^7.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "bgutils-js": "^3.2.0",
     "googlevideo": "^4.0.4",
+    "jsdom": "^27.0.1",
     "undici": "^7.15.0",
-    "youtubei.js": "^15.0.1"
+    "youtubei.js": "^16.0.1"
   }
 }

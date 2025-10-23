@@ -27,3 +27,8 @@ export interface YoutubeOptions {
     peers?: PeerOptions[];
     proxy?: ProxyAgent[];
 }
+
+//Added this interface to make the generate token slightly neater
+export interface InitOptions {
+    forceRefresh?: boolean;
+}

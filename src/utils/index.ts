@@ -1,7 +1,10 @@
-import Innertube, { Platform } from "youtubei.js";
+import Innertube, { Platform, UniversalCache } from "youtubei.js";
 import { ProxyAgent } from "undici";
 import { YoutubeOptions } from "../types";
 import type { InnerTubeConfig } from "youtubei.js/dist/src/types";
+
+// New import from youtubei.js/web
+import { Types } from "youtubei.js/web";
 
 export type ProxyAgentOptions = ProxyAgent.Options | string;
 
@@ -42,6 +45,15 @@ export function createYoutubeFetch(options?: YoutubeOptions) {
 
     return f;
 }
+
+// Added this thingy here
+Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
+  const properties = [];
+  if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
+  if (env.sig) properties.push(`sig: exportedVars.sigFunction("${env.sig}")`);
+  const code = `${data.output}\nreturn { ${properties.join(', ')} }`;
+  return new Function(code)();
+};
 
 export async function getInnertube(options?: YoutubeOptions & { force?: boolean }) {
     if(tube && !options?.force) return tube;
