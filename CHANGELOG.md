@@ -17,4 +17,4 @@
 
 ## Internal Changes
 
-* Upgraded youtubei.js to latest (^10.2.0)
+* Upgraded youtubei.js to latest (^16.0.1)
