@@ -1,5 +1,5 @@
 import Innertube from "youtubei.js";
 
 declare global {
-    var tube: Innertube;
+    var tube: Innertube = null;
 }
