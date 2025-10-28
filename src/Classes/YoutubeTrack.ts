@@ -1,13 +1,14 @@
 import { Track } from "discord-player";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { AdaptiveStream } from "../Streams/AdaptiveStream";
-import { getInnertube } from "../utils";
-
-const DEFAULT_EXPIRE_DURATION = 10800000; // 3 hours
+import { getInnertube, getVideoId } from "../utils";
+import { DEFAULT_EXPIRE_DURATION } from "../Constants";
+import { createSabrStream } from "../Streams/ServerAbrStream";
+import { youtubeOptions } from "../types";
 
 export enum CacheType {
-    ServerAbr,
-    Adaptive
+    SeverAbr,
+    Adaptive,
 }
 
 export interface BaseDownloadCache {
@@ -23,7 +24,7 @@ export interface AdaptiveCache extends BaseDownloadCache {
 }
 
 export interface ServerAbrCache extends BaseDownloadCache {
-    type: CacheType.ServerAbr;
+    type: CacheType.SeverAbr;
     uStreamConfig?: string;
 }
 
@@ -32,8 +33,8 @@ export interface BaseSetCacheOptions {
     type: CacheType;
 }
 
-export interface ServerAbrSetCacheOptions extends BaseSetCacheOptions {
-    type: CacheType.ServerAbr;
+export interface ServerAbrCacheOptions extends BaseSetCacheOptions {
+    type: CacheType.SeverAbr;
     uStreamConfig?: string;
 }
 
@@ -44,25 +45,25 @@ export interface AdaptiveSetCacheOptions extends BaseSetCacheOptions {
 }
 
 export class YoutubeTrack extends Track {
-    cache = new Map<CacheType, ServerAbrCache | AdaptiveCache>();
+    cache = new Map<CacheType, ServerAbrCache|AdaptiveCache>();
 
     async downloadAdaptive(): Promise<Readable> {
         const cache = this.getCache(CacheType.Adaptive);
 
-        if(cache) return new AdaptiveStream(cache.url, cache.cpn, cache.size)
+        if(cache) return new AdaptiveStream(cache.url, cache.cpn, cache.size);
 
         const yt = await getInnertube();
         const info = await yt.getBasicInfo(this.url);
         const fmt = info.chooseFormat({ format: "mp4", quality: "highestaudio", type: "audio" })
 
-        return new AdaptiveStream(fmt.decipher(yt.session.player), info.cpn, fmt.content_length || 0);
+        return new AdaptiveStream(await fmt.decipher(yt.session.player), info.cpn, fmt.content_length || 0);
     }
 
-    async downloadSabr(): Promise<Readable> {
-        throw new Error("Method not implemented.")
+    async downloadSabr(options: youtubeOptions): Promise<Readable> {
+        return await createSabrStream(getVideoId(this.url), options);
     }
 
-    setCache(opt: AdaptiveSetCacheOptions | ServerAbrSetCacheOptions) {
+    setCache(opt: AdaptiveSetCacheOptions | ServerAbrCacheOptions) {
         const urlParsed = new URL(opt.url);
         let expire = Number(urlParsed.searchParams.get("expire") || "0");
         if(!expire && isNaN(expire)) expire = DEFAULT_EXPIRE_DURATION;

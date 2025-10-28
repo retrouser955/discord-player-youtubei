@@ -1,54 +1,23 @@
-// @ts-nocheck
-// Theres alot of import errors going on with googlevideo and other stuffs, i think it reccomends to switch to another module resolution in tsconfig
-// imma leave the stuffs as is, i made abit of change from itsmaat's one but it works for me
-// i know it aint really neat but i dont wanna make too many new files :c
-
-import { SabrStream } from "googlevideo/sabr-stream";
-import type { SabrStreamConfig } from "googlevideo/sabr-stream";
-import { buildSabrFormat, EnabledTrackTypes } from "googlevideo/utils";
-import { AudioQuality } from "googlevideo/protos";
+import Innertube, { Constants, YT, YTNodes } from "youtubei.js";
+import { getInnertube, toNodeReadable } from "../utils";
+import { getWebPoMinter, invalidateWebPoMinter } from "../Token/minter";
+import { SabrFormat } from "googlevideo/shared-types";
+import { SabrStream, SabrStreamConfig } from "googlevideo/sabr-stream";
+import { buildSabrFormat } from "googlevideo/utils";
+import { DEFAULT_OPTIONS } from "../Constants";
 import { Readable } from "node:stream";
-import { getInnertube } from "../utils/index";
-import { getWebPoMinter, invalidateWebPoMinter } from "../Token/generateToken";
-import { Constants, YTNodes } from "youtubei.js/agnostic";
-import type { SabrFormat } from "googlevideo/shared-types";
+import { youtubeOptions } from "../types";
 
-const DEFAULT_OPTIONS: any = {
-    audioQuality: AudioQuality.HIGH,
-    enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY
-}
-
-function toNodeReadable(stream: any): Readable | null {
-    if (!stream) return null;
-    if (typeof stream.pipe === "function") return stream;
-    if (typeof (stream.getReader === "function")) {
-        const reader = stream.getReader();
-        const iterable = (async function* () {
-            try {
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    if (value !== undefined) yield value;
-                }
-            } finally {
-                reader.releaseLock?.();
-            }
-        })();
-        return Readable.from(iterable);
-    }
-    if (Symbol.asyncIterator in stream) return Readable.from(stream);
-    throw new TypeError("Unsupported stream type from SABR");
-}
-
-export async function createSabrStream(videoId: string): Promise<Readable | null> {
-    const innertube = await getInnertube();
-    let accountInfo = null;
+export async function createSabrStream(videoId: string, options: youtubeOptions): Promise<Readable|null> {
+    const innertube: Innertube|null = await getInnertube(options);
+    let accountInfo: YT.AccountInfo|null;
 
     try {
         accountInfo = await innertube.account.getInfo();
     } catch (error) {
-        throw error;
+        accountInfo = null;
     }
+
     const dataSyncId = accountInfo?.contents?.contents[0]?.endpoint?.payload?.supportedTokens?.[2]?.datasyncIdToken?.datasyncIdToken ?? innertube.session.context.client.visitorData;
     const minter = await getWebPoMinter(innertube);
     const contentPoToken = await minter.mint(videoId);
@@ -67,7 +36,7 @@ export async function createSabrStream(videoId: string): Promise<Readable | null
         },
         contentCheckOk: true,
         racyCheckOk: true,
-        serviceIntegrityDimensions: { poToken: contentPoToken },
+        serviceIntegrityDimensions: { poToken: poToken },
         parse: true,
     });
 
@@ -83,7 +52,7 @@ export async function createSabrStream(videoId: string): Promise<Readable | null
         formats: sabrFormats,
         serverAbrStreamingUrl,
         videoPlaybackUstreamerConfig,
-        poToken: poToken,
+        poToken: contentPoToken,
         clientInfo: {
             clientName: parseInt(Constants.CLIENT_NAME_IDS[innertube.session.context.client.clientName]),
             clientVersion: innertube.session.context.client.clientVersion,
@@ -94,7 +63,6 @@ export async function createSabrStream(videoId: string): Promise<Readable | null
     let protectionFailureCount = 0;
     let lastStatus = null;
     serverAbrStream.on("streamProtectionStatusUpdate", async (statusUpdate: any) => {
-        console.log("Status: ", statusUpdate);
         if (statusUpdate.status !== lastStatus) lastStatus = statusUpdate.status;
         if (statusUpdate.status === 2) {
             protectionFailureCount = Math.min(protectionFailureCount + 1, 10);
@@ -115,10 +83,6 @@ export async function createSabrStream(videoId: string): Promise<Readable | null
             protectionFailureCount = 0;
         }
     });
-
-    // serverAbrStream.on("error", (error: Error) => {
-    //     console.error("SABR stream error:", error);
-    // });
 
     const { audioStream } = await serverAbrStream.start(DEFAULT_OPTIONS);
     const nodeStream = toNodeReadable(audioStream);

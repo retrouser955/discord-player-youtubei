@@ -1,34 +1,39 @@
-import type { QueryType, Track } from "discord-player";
+import type { Types } from "youtubei.js"
+import type { Track } from "discord-player";
+import type { Readable } from "node:stream";
+import type { YoutubeExtractor } from "../Classes";
 import type { ProxyAgent } from "undici";
-import type { DownloadOptions, InnerTubeClient } from "youtubei.js/dist/src/types";
-import type { YoutubeExtractor } from "../Classes/Youtube";
-import type { Readable } from "stream";
-import type { PeerOptions } from "../utils";
-import type { YoutubeTrack } from "../Classes/YoutubeTrack";
 
-export type OnBeforeMetadataRequest = (query: string, type: QueryType) => Promise<YoutubeTrack>;
-
-export enum DebugTypes {
-    Stream,
-    Metadata
-}
-
-export interface StreamOptions {
+export interface streamOptions {
     highWaterMark?: number;
-    client?: InnerTubeClient | ((track: Track) => InnerTubeClient);
+    client?: Types.InnerTubeClient | ((track: Track) => Types.InnerTubeClient);
 }
 
-export interface YoutubeOptions {
-    overrideDownloadOptions?: DownloadOptions;
-    createStream: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;
-    debug?: (type: DebugTypes, message: string) => unknown;
+export interface youtubeOptions {
+    createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;
+    overrideDownloadOptions?: Types.DownloadOptions;
     disablePlayer?: boolean;
     cookie?: string;
-    peers?: PeerOptions[];
     proxy?: ProxyAgent[];
+    peer?: peerOptions[];
 }
 
-//Added this interface to make the generate token slightly neater
 export interface InitOptions {
     forceRefresh?: boolean;
+}
+
+export interface minterResult {
+    generatePlaceholder?: (binding: string) => string;
+    mint?: (binding: string) => Promise<string>;
+}
+
+export interface playlistObj {
+    playlistId: string;
+    videoId?: string;
+    isMix?: boolean;
+}
+
+export interface peerOptions {
+    url: string;
+    parse?: (url: string, youtubeId: string) => string;
 }

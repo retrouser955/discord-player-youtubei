@@ -1,28 +1,33 @@
-import Innertube, { Platform, UniversalCache } from "youtubei.js";
 import { ProxyAgent } from "undici";
-import { YoutubeOptions } from "../types";
-import type { InnerTubeConfig } from "youtubei.js/dist/src/types";
-
-// New import from youtubei.js/web
-import { Types } from "youtubei.js/web";
+import { YOUTUBE_REGEX } from "../Constants";
+import type { peerOptions, playlistObj, youtubeOptions } from "../types";
+import Innertube, { Platform, Types } from "youtubei.js";
+import { once, PassThrough, Readable } from "node:stream";
 
 export type ProxyAgentOptions = ProxyAgent.Options | string;
 
-export function createProxy(options: ProxyAgentOptions) {
+export function createProxy(options: ProxyAgentOptions): ProxyAgent {
     return new ProxyAgent(options);
 }
 
-let tube: Innertube | null = null;
-
-export function buildVideoUrl(id: string) {
-    return `https://www.youtube.com/watch?v=${id}`;
+export function buildVideoUrl(videoId: string): string {
+    return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-export function buildPlaylistUrl(id: string, vidId?: string) {
-    return `https://www.youtube.com/playlist?list=${id}${vidId ? `&v=${vidId}` : ""}`;
+export function buildPlaylistUrl(playlistId: string, videoId?: string): string {
+    return `https://www.youtube.com/playlist?list=${playlistId}${videoId ? `&v=${videoId}` : ""}`;
 }
 
-export function getPlaylistId(url: string) {
+export function getVideoId(url: string): string {
+    if(!YOUTUBE_REGEX.test(url)) throw new Error("Invalid Youtube Link.");
+
+    let id = new URL(url).searchParams.get("v");
+    if (!id) id = url.split("/").at(-1)?.split("?").at(0);
+    
+    return id;
+}
+
+export function getPlaylistId(url: string): playlistObj {
     const parsed = new URL(url);
     const playlistId = parsed.searchParams.get("list");
     const videoId = parsed.searchParams.get("v");
@@ -30,15 +35,14 @@ export function getPlaylistId(url: string) {
     return {
         playlistId,
         videoId,
-        isMix: playlistId ? playlistId.startsWith("RD") : false
+        isMix: playlistId ? playlistId.startsWith("RD") : false,
     }
 }
 
-export function createYoutubeFetch(options?: YoutubeOptions) {
-    const f: typeof fetch = (input, init) => {
+export function createYoutubeFetch(options?: youtubeOptions): any {
+    const f: typeof fetch = (input: URL | RequestInfo, init: RequestInit): Promise<Response> => {
         if(options?.proxy) {
-            // @ts-expect-error
-            init.dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
+            (init as any).dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
         }
         return Platform.shim.fetch(input, init);
     }
@@ -46,7 +50,43 @@ export function createYoutubeFetch(options?: YoutubeOptions) {
     return f;
 }
 
-// Added this thingy here
+export function createPeer(option: peerOptions): peerOptions {
+    return {
+        url: option.url,
+        parse: option.parse || ((url, id) => `${url}/${id}`),
+    }
+}
+
+export function toNodeReadable(stream: any): Readable|null {
+    const nodeStream = new PassThrough();
+    const reader = stream.getReader();
+
+    (async () => {
+        try {
+            while(true) {
+                const { done, value } = await reader.read();
+                if(done) break;
+                if(value) {
+                    if(!nodeStream.write(Buffer.from(value))) await once(nodeStream, "drain");
+                }
+            }
+        } finally {
+            nodeStream.end();
+        }
+    })();
+
+    return nodeStream;
+}
+
+export function isUrl(input: string) {
+    try {
+        const url = new URL(input);
+        return ["http:", "https:"].includes(url.protocol);
+    } catch (error) {
+        return false;
+    }
+}
+
 Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
   const properties = [];
   if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
@@ -55,26 +95,14 @@ Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, T
   return new Function(code)();
 };
 
-export async function getInnertube(options?: YoutubeOptions & { force?: boolean }) {
+export async function getInnertube(options?: youtubeOptions & { force?: boolean }): Promise<Innertube> {
     if(tube && !options?.force) return tube;
 
     tube = await Innertube.create({
         retrieve_player: !options?.disablePlayer,
         fetch: createYoutubeFetch(options),
-        cookie: options?.cookie
-    })
+        cookie: options.cookie,
+    });
 
-    return tube
-}
-
-export interface PeerOptions {
-    url: string;
-    parse?: (url: string, youtubeId: string) => string;
-}
-
-export function createPeer(option: PeerOptions) {
-    return {
-        url: option.url,
-        parse: option.parse || ((url, id) => `${url}/${id}`)
-    } as PeerOptions;
+    return tube;
 }
