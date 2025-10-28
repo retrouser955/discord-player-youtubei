@@ -20,5 +20,8 @@
     "jsdom": "^27.0.1",
     "undici": "^7.15.0",
     "youtubei.js": "^16.0.1"
+  },
+  "scripts": {
+    "build": "tsc"
   }
 }
