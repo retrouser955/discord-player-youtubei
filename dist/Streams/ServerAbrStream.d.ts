@@ -1,3 +1,3 @@
 import { Readable } from "node:stream";
-import { youtubeOptions } from "../types";
-export declare function createSabrStream(videoId: string, options: youtubeOptions): Promise<Readable | null>;
+import { YoutubeOptions } from "../types";
+export declare function createSabrStream(videoId: string, options: YoutubeOptions): Promise<Readable | null>;

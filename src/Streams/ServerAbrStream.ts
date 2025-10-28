@@ -6,9 +6,9 @@ import { SabrStream, SabrStreamConfig } from "googlevideo/sabr-stream";
 import { buildSabrFormat } from "googlevideo/utils";
 import { DEFAULT_OPTIONS } from "../Constants";
 import { Readable } from "node:stream";
-import { youtubeOptions } from "../types";
+import { YoutubeOptions } from "../types";
 
-export async function createSabrStream(videoId: string, options: youtubeOptions): Promise<Readable|null> {
+export async function createSabrStream(videoId: string, options: YoutubeOptions): Promise<Readable|null> {
     const innertube: Innertube|null = await getInnertube(options);
     let accountInfo: YT.AccountInfo|null;
 

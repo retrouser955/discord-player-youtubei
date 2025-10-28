@@ -4,7 +4,7 @@ import { AdaptiveStream } from "../Streams/AdaptiveStream";
 import { getInnertube, getVideoId } from "../utils";
 import { DEFAULT_EXPIRE_DURATION } from "../Constants";
 import { createSabrStream } from "../Streams/ServerAbrStream";
-import { youtubeOptions } from "../types";
+import { YoutubeOptions } from "../types";
 
 export enum CacheType {
     SeverAbr,
@@ -59,7 +59,7 @@ export class YoutubeTrack extends Track {
         return new AdaptiveStream(await fmt.decipher(yt.session.player), info.cpn, fmt.content_length || 0);
     }
 
-    async downloadSabr(options: youtubeOptions): Promise<Readable> {
+    async downloadSabr(options: YoutubeOptions): Promise<Readable> {
         return await createSabrStream(getVideoId(this.url), options);
     }
 

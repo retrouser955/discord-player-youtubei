@@ -1,11 +1,11 @@
 import { BaseExtractor, ExtractorInfo, ExtractorSearchContext, ExtractorStreamable, QueryType, SearchQueryType, Track } from "discord-player";
-import { youtubeOptions } from "../types";
+import { YoutubeOptions } from "../types";
 import Innertube from "youtubei.js";
 import { getInnertube, getPlaylistId, isUrl } from "../utils";
 import { getMixedPlaylist, getPlaylist, getVideo, runWithSearchContext, search } from "../internal";
 import { CacheType, YoutubeTrack } from "./YoutubeTrack";
 
-export class YoutubeExtractor extends BaseExtractor<youtubeOptions> {
+export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
 
     private innertube: Innertube|null = null;

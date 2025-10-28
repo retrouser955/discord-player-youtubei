@@ -1,6 +1,6 @@
 import { BaseExtractor, ExtractorInfo, ExtractorSearchContext, ExtractorStreamable, SearchQueryType, Track } from "discord-player";
-import { youtubeOptions } from "../types";
-export declare class YoutubeExtractor extends BaseExtractor<youtubeOptions> {
+import { YoutubeOptions } from "../types";
+export declare class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     static identifier: string;
     private innertube;
     private _stream;

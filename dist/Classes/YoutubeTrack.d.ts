@@ -1,6 +1,6 @@
 import { Track } from "discord-player";
 import { Readable } from "node:stream";
-import { youtubeOptions } from "../types";
+import { YoutubeOptions } from "../types";
 export declare enum CacheType {
     SeverAbr = 0,
     Adaptive = 1
@@ -35,7 +35,7 @@ export interface AdaptiveSetCacheOptions extends BaseSetCacheOptions {
 export declare class YoutubeTrack extends Track {
     cache: Map<CacheType, AdaptiveCache | ServerAbrCache>;
     downloadAdaptive(): Promise<Readable>;
-    downloadSabr(options: youtubeOptions): Promise<Readable>;
+    downloadSabr(options: YoutubeOptions): Promise<Readable>;
     setCache(opt: AdaptiveSetCacheOptions | ServerAbrCacheOptions): void;
     getCache<T extends CacheType>(type: T): T extends CacheType.Adaptive ? AdaptiveCache : ServerAbrCache;
 }

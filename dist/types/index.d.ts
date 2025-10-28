@@ -7,7 +7,7 @@ export interface streamOptions {
     highWaterMark?: number;
     client?: Types.InnerTubeClient | ((track: Track) => Types.InnerTubeClient);
 }
-export interface youtubeOptions {
+export interface YoutubeOptions {
     createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string | Readable>;
     overrideDownloadOptions?: Types.DownloadOptions;
     disablePlayer?: boolean;

@@ -1,6 +1,6 @@
 import { ProxyAgent } from "undici";
 import { YOUTUBE_REGEX } from "../Constants";
-import type { peerOptions, playlistObj, youtubeOptions } from "../types";
+import type { peerOptions, playlistObj, YoutubeOptions } from "../types";
 import Innertube, { Platform, Types } from "youtubei.js";
 import { once, PassThrough, Readable } from "node:stream";
 
@@ -39,7 +39,7 @@ export function getPlaylistId(url: string): playlistObj {
     }
 }
 
-export function createYoutubeFetch(options?: youtubeOptions): any {
+export function createYoutubeFetch(options?: YoutubeOptions): any {
     const f: typeof fetch = (input: URL | RequestInfo, init: RequestInit): Promise<Response> => {
         if(options?.proxy) {
             (init as any).dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
@@ -95,7 +95,7 @@ Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, T
   return new Function(code)();
 };
 
-export async function getInnertube(options?: youtubeOptions & { force?: boolean }): Promise<Innertube> {
+export async function getInnertube(options?: YoutubeOptions & { force?: boolean }): Promise<Innertube> {
     if(tube && !options?.force) return tube;
 
     tube = await Innertube.create({
