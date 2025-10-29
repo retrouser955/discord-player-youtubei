@@ -5,7 +5,7 @@ exports.invalidateWebPoMinter = invalidateWebPoMinter;
 const bgutils_js_1 = require("bgutils-js");
 const jsdom_1 = require("jsdom");
 const canvas_1 = require("@napi-rs/canvas");
-const REQUEST_KEY = "O43z0dpjhgX20SCx4KAo";
+const Constants_1 = require("../Constants");
 let domWindow;
 let initializationPromise = null;
 let botguardClient;
@@ -172,7 +172,7 @@ async function initializeBotGuard(innertube, { forceRefresh } = {}) {
                 "x-user-agent": "grpc-web-javascript/0.1",
                 "user-agent": userAgent,
             },
-            body: JSON.stringify([REQUEST_KEY, botguardSnapshot]),
+            body: JSON.stringify([Constants_1.YOUTUBE_REQUEST_KEY, botguardSnapshot]),
         });
         const integrityPayload = await integrityResponse.json();
         const integrityToken = integrityPayload?.[0];

@@ -2,8 +2,7 @@ import { BG, GOOG_API_KEY, USER_AGENT, buildURL} from "bgutils-js";
 import { JSDOM, DOMWindow } from "jsdom";
 import { createCanvas, ImageData as CanvasImageData } from "@napi-rs/canvas";
 import Innertube from "youtubei.js/agnostic";
-
-const REQUEST_KEY = "O43z0dpjhgX20SCx4KAo";
+import { YOUTUBE_REQUEST_KEY } from "../Constants";
 
 let domWindow: DOMWindow;
 let initializationPromise: Promise<BG.WebPoMinter> | null = null;
@@ -199,7 +198,7 @@ async function initializeBotGuard(innertube: Innertube, { forceRefresh }: InitOp
                 "x-user-agent": "grpc-web-javascript/0.1",
                 "user-agent": userAgent,
             },
-            body: JSON.stringify([ REQUEST_KEY, botguardSnapshot ]),
+            body: JSON.stringify([ YOUTUBE_REQUEST_KEY, botguardSnapshot ]),
         });
 
         const integrityPayload = await integrityResponse.json();
