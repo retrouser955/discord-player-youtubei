@@ -1,6 +1,6 @@
 import Innertube, { Constants, YT, YTNodes } from "youtubei.js";
 import { getInnertube, toNodeReadable } from "../utils";
-import { getWebPoMinter, invalidateWebPoMinter } from "../Token/minter";
+import { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
 import { SabrFormat } from "googlevideo/shared-types";
 import { SabrStream, SabrStreamConfig } from "googlevideo/sabr-stream";
 import { buildSabrFormat } from "googlevideo/utils";
@@ -36,7 +36,7 @@ export async function createSabrStream(videoId: string, options: YoutubeOptions)
         },
         contentCheckOk: true,
         racyCheckOk: true,
-        serviceIntegrityDimensions: { poToken: poToken },
+        serviceIntegrityDimensions: { poToken: contentPoToken },
         parse: true,
     });
 
@@ -52,7 +52,7 @@ export async function createSabrStream(videoId: string, options: YoutubeOptions)
         formats: sabrFormats,
         serverAbrStreamingUrl,
         videoPlaybackUstreamerConfig,
-        poToken: contentPoToken,
+        poToken: poToken,
         clientInfo: {
             clientName: parseInt(Constants.CLIENT_NAME_IDS[innertube.session.context.client.clientName]),
             clientVersion: innertube.session.context.client.clientVersion,

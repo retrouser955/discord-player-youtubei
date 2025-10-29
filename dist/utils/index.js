@@ -47,6 +47,7 @@ const undici_1 = require("undici");
 const Constants_1 = require("../Constants");
 const youtubei_js_1 = __importStar(require("youtubei.js"));
 const node_stream_1 = require("node:stream");
+let tube = null;
 function createProxy(options) {
     return new undici_1.ProxyAgent(options);
 }
@@ -129,12 +130,12 @@ youtubei_js_1.Platform.shim.eval = async (data, env) => {
     return new Function(code)();
 };
 async function getInnertube(options) {
-    if (tube && !options?.force)
-        return tube;
-    tube = await youtubei_js_1.default.create({
-        retrieve_player: !options?.disablePlayer,
-        fetch: createYoutubeFetch(options),
-        cookie: options.cookie,
-    });
+    if (!tube) {
+        tube = await youtubei_js_1.default.create({
+            retrieve_player: !options?.disablePlayer,
+            fetch: createYoutubeFetch(options),
+            cookie: options.cookie ?? null,
+        });
+    }
     return tube;
 }

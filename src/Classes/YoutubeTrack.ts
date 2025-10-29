@@ -74,7 +74,7 @@ export class YoutubeTrack extends Track {
     getCache<T extends CacheType>(type: T) {
         const data = this.cache.get(type);
         if (!data) return null;
-        if (data.expire < Date.now()) {
+        if (data.expire < (Date.now()/1000)) {
             this.cache.delete(type);
             return null;
         }

@@ -4,6 +4,8 @@ import type { peerOptions, playlistObj, YoutubeOptions } from "../types";
 import Innertube, { Platform, Types } from "youtubei.js";
 import { once, PassThrough, Readable } from "node:stream";
 
+let tube: Innertube|null = null;
+
 export type ProxyAgentOptions = ProxyAgent.Options | string;
 
 export function createProxy(options: ProxyAgentOptions): ProxyAgent {
@@ -19,11 +21,11 @@ export function buildPlaylistUrl(playlistId: string, videoId?: string): string {
 }
 
 export function getVideoId(url: string): string {
-    if(!YOUTUBE_REGEX.test(url)) throw new Error("Invalid Youtube Link.");
+    if (!YOUTUBE_REGEX.test(url)) throw new Error("Invalid Youtube Link.");
 
     let id = new URL(url).searchParams.get("v");
     if (!id) id = url.split("/").at(-1)?.split("?").at(0);
-    
+
     return id;
 }
 
@@ -41,7 +43,7 @@ export function getPlaylistId(url: string): playlistObj {
 
 export function createYoutubeFetch(options?: YoutubeOptions): any {
     const f: typeof fetch = (input: URL | RequestInfo, init: RequestInit): Promise<Response> => {
-        if(options?.proxy) {
+        if (options?.proxy) {
             (init as any).dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
         }
         return Platform.shim.fetch(input, init);
@@ -57,17 +59,17 @@ export function createPeer(option: peerOptions): peerOptions {
     }
 }
 
-export function toNodeReadable(stream: any): Readable|null {
+export function toNodeReadable(stream: any): Readable | null {
     const nodeStream = new PassThrough();
     const reader = stream.getReader();
 
     (async () => {
         try {
-            while(true) {
+            while (true) {
                 const { done, value } = await reader.read();
-                if(done) break;
-                if(value) {
-                    if(!nodeStream.write(Buffer.from(value))) await once(nodeStream, "drain");
+                if (done) break;
+                if (value) {
+                    if (!nodeStream.write(Buffer.from(value))) await once(nodeStream, "drain");
                 }
             }
         } finally {
@@ -88,21 +90,20 @@ export function isUrl(input: string) {
 }
 
 Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
-  const properties = [];
-  if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
-  if (env.sig) properties.push(`sig: exportedVars.sigFunction("${env.sig}")`);
-  const code = `${data.output}\nreturn { ${properties.join(', ')} }`;
-  return new Function(code)();
+    const properties = [];
+    if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
+    if (env.sig) properties.push(`sig: exportedVars.sigFunction("${env.sig}")`);
+    const code = `${data.output}\nreturn { ${properties.join(', ')} }`;
+    return new Function(code)();
 };
 
 export async function getInnertube(options?: YoutubeOptions & { force?: boolean }): Promise<Innertube> {
-    if(tube && !options?.force) return tube;
-
-    tube = await Innertube.create({
-        retrieve_player: !options?.disablePlayer,
-        fetch: createYoutubeFetch(options),
-        cookie: options.cookie,
-    });
-
+    if (!tube) {
+        tube = await Innertube.create({
+            retrieve_player: !options?.disablePlayer,
+            fetch: createYoutubeFetch(options),
+            cookie: options.cookie ?? null,
+        });
+    }
     return tube;
 }

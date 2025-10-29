@@ -119,21 +119,26 @@ async function getVideo(videoId, ext) {
         queryType: discord_player_1.QueryType.YOUTUBE_VIDEO,
         source: "youtube",
     });
-    const adaptiveStream = metadata.chooseFormat({ format: "mp4", quality: "highestaudio", type: "audio" });
+    const adaptiveStream = metadata.chooseFormat({ format: "any", quality: "best", type: "audio" });
     const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
     const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
-    ytTrack.setCache({
-        type: Classes_1.CacheType.Adaptive,
-        url: await adaptiveStream.decipher(tube.session.player),
-        cpn: metadata.cpn,
-        size: adaptiveStream.content_length ?? 0,
-    });
-    if (serverAbrStreamingUrl && uStreamConfig) {
+    try {
         ytTrack.setCache({
-            type: Classes_1.CacheType.SeverAbr,
-            url: serverAbrStreamingUrl,
-            uStreamConfig: uStreamConfig,
+            type: Classes_1.CacheType.Adaptive,
+            url: (0, utils_1.buildVideoUrl)(videoId),
+            cpn: metadata.cpn,
+            size: adaptiveStream.content_length ?? 0,
         });
+        if (serverAbrStreamingUrl && uStreamConfig) {
+            ytTrack.setCache({
+                type: Classes_1.CacheType.SeverAbr,
+                url: serverAbrStreamingUrl,
+                uStreamConfig: uStreamConfig,
+            });
+        }
+    }
+    catch (error) {
+        console.error(error);
     }
     return ytTrack;
 }

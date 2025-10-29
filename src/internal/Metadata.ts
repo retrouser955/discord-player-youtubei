@@ -55,7 +55,7 @@ export async function getMixedPlaylist(playlistId: string, videoId: string, ext:
     });
 
     const mixVidInfo: YT.VideoInfo = await tube.getInfo(endpoint);
-    if(!mixVidInfo?.playlist) throw new Error("Mix playlist not found or is invalid.");
+    if (!mixVidInfo?.playlist) throw new Error("Mix playlist not found or is invalid.");
 
     const pl: Playlist = new Playlist(ext.context.player, {
         title: mixVidInfo.playlist.title ?? "UNKOWN PLAYLIST",
@@ -100,7 +100,7 @@ export async function getPlaylist(playlistId: string, ext: YoutubeExtractor): Pr
         .filter(v => v.is(YTNodes.PlaylistVideo))
         .map(v => buildTrackFromPlaylistVideo(v, pl, ext));
 
-    while(playlist.has_continuation) {
+    while (playlist.has_continuation) {
         playlist = await playlist.getContinuation();
         const tracks = playlist.videos
             .filter(v => v.is(YTNodes.PlaylistVideo))
@@ -129,24 +129,28 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
         source: "youtube",
     });
 
-    const adaptiveStream = metadata.chooseFormat({ format: "mp4", quality: "highestaudio", type: "audio" });
+    const adaptiveStream = metadata.chooseFormat({ format: "any", quality: "best", type: "audio" });
 
     const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
     const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
 
-    ytTrack.setCache({
-        type: CacheType.Adaptive,
-        url: await adaptiveStream.decipher(tube.session.player),
-        cpn: metadata.cpn,
-        size: adaptiveStream.content_length ?? 0,
-    });
-
-    if (serverAbrStreamingUrl && uStreamConfig) {
+    try {
         ytTrack.setCache({
-            type: CacheType.SeverAbr,
-            url: serverAbrStreamingUrl,
-            uStreamConfig: uStreamConfig,
+            type: CacheType.Adaptive,
+            url: buildVideoUrl(videoId),
+            cpn: metadata.cpn,
+            size: adaptiveStream.content_length ?? 0,
         });
+
+        if (serverAbrStreamingUrl && uStreamConfig) {
+            ytTrack.setCache({
+                type: CacheType.SeverAbr,
+                url: serverAbrStreamingUrl,
+                uStreamConfig: uStreamConfig,
+            });
+        }
+    } catch (error) {
+        console.error(error);
     }
 
     return ytTrack;

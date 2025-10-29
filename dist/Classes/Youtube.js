@@ -23,9 +23,23 @@ class YoutubeExtractor extends discord_player_1.BaseExtractor {
     async validate(query, type) {
         if (typeof query !== "string")
             return false;
-        return !(0, utils_1.isUrl)(query) || /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(query);
+        return true;
     }
     async handle(query, context) {
+        if (context.type !== discord_player_1.QueryType.YOUTUBE_PLAYLIST && context.type !== discord_player_1.QueryType.YOUTUBE_VIDEO) {
+            try {
+                if ((0, utils_1.isUrl)(query)) {
+                    context.type = discord_player_1.QueryType.YOUTUBE_VIDEO;
+                    const queryUrl = new URL(query);
+                    if (queryUrl.searchParams.has("list"))
+                        context.type = discord_player_1.QueryType.YOUTUBE_PLAYLIST;
+                }
+            }
+            catch (error) {
+                this.context.player.debug(`Error determining context type: ${error}`);
+                throw error;
+            }
+        }
         return (0, internal_1.runWithSearchContext)(context, async () => {
             switch (context.type) {
                 case discord_player_1.QueryType.YOUTUBE_PLAYLIST: {
@@ -42,7 +56,7 @@ class YoutubeExtractor extends discord_player_1.BaseExtractor {
                     return this.createResponse(pl, pl.tracks);
                 }
                 case discord_player_1.QueryType.YOUTUBE_VIDEO: {
-                    return this.createResponse(null, [await (0, internal_1.getVideo)(query, this)]);
+                    return this.createResponse(null, [await (0, internal_1.getVideo)((0, utils_1.getVideoId)(query), this)]);
                 }
                 default: {
                     return this.createResponse(null, await (0, internal_1.search)(query, this));
@@ -55,13 +69,18 @@ class YoutubeExtractor extends discord_player_1.BaseExtractor {
             throw new Error("Invalid youtube track provided.");
         try {
             const sabrCache = info.getCache(YoutubeTrack_1.CacheType.SeverAbr);
+            const adaptiveCache = info.getCache(YoutubeTrack_1.CacheType.Adaptive);
             if (sabrCache) {
                 this.context.player.debug(`[${info.title}] Streaming with: SABR Protocol (from cache)`);
                 return await info.downloadSabr(this.options);
             }
-            this.context.player.debug(`[${info.title}] Sabr Cache not found. Streaming with: Adaptive`);
-            ;
-            return await info.downloadAdaptive();
+            if (!sabrCache && adaptiveCache) {
+                this.context.player.debug(`[${info.title}] Sabr Cache not found. Streaming with: Adaptive`);
+                ;
+                return await info.downloadAdaptive();
+            }
+            this.context.player.debug(`[${info.title}] No Cache found, assume track is searched by name. Streaming with: SABR Protocol`);
+            return await info.downloadSabr(this.options);
         }
         catch (error) {
             this.context.player.debug(`[${info.title}] Failed to create stream: ${error}`);
