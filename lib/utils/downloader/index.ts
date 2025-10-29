@@ -48,7 +48,7 @@ export async function stream<T extends boolean = false>(
       retrieve_player: false,
     }));
 
-  const info = await yt.getBasicInfo(vidId, client);
+  const info = await yt.getBasicInfo(vidId, { client: client });
 
   let fmt = info.chooseFormat(
     options || {
@@ -59,7 +59,7 @@ export async function stream<T extends boolean = false>(
   );
 
   if (client && !(["IOS", "ANDROID"] as InnerTubeClient[]).includes(client))
-    fmt.url = fmt.decipher(yt.session.player);
+    fmt.url = await fmt.decipher(yt.session.player);
 
   if (!fmt.url || !fmt.content_length) throw Errors.NoDownload;
 

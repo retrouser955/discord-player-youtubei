@@ -60,7 +60,7 @@ export async function createServerAbrStream(
 
     durationMs = (basicInfo.basic_info.duration ?? 0) * 1000;
 
-    serverAbrStreamingUrl = innertube.session.player?.decipher(
+    serverAbrStreamingUrl = await innertube.session.player?.decipher(
       basicInfo.page[0].streaming_data?.server_abr_streaming_url,
     );
 

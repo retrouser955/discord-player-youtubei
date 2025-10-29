@@ -163,7 +163,9 @@ export async function streamFromYT(
   let id = new URL(query.url).searchParams.get("v");
   // VIDEO DETECTED AS YT SHORTS OR youtu.be link
   if (!id) id = query.url.split("/").at(-1)?.split("?").at(0)!;
-  const videoInfo = await innerTube.getBasicInfo(id, context.useClient);
+  const videoInfo = await innerTube.getBasicInfo(id, {
+    client: context.useClient,
+  });
 
   if (videoInfo.basic_info.is_live)
     return videoInfo.streaming_data?.hls_manifest_url!;
@@ -186,7 +188,7 @@ export async function streamFromYT(
       videoInfo,
     );
   } else {
-    format.url = format.decipher(innerTube.session.player);
+    format.url = await format.decipher(innerTube.session.player);
     if (!format.content_length)
       throw new Error("Not matching URL for this format found");
     return createNativeReadable(

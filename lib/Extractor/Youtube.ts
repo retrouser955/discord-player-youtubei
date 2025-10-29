@@ -14,12 +14,18 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { UniversalCache, YTNodes } from "youtubei.js";
+import Innertube, {
+  Platform,
+  Types,
+  UniversalCache,
+  YTNodes,
+} from "youtubei.js";
 import type { ProxyAgent } from "undici";
 import {
   type DownloadOptions,
   InnerTubeConfig,
   InnerTubeClient,
+  EvalResult,
 } from "youtubei.js/dist/src/types";
 import { Readable } from "node:stream";
 import type {
@@ -99,6 +105,27 @@ export interface AsyncTrackingContext {
   highWaterMark?: number;
 }
 
+// Custom sandboxed JS interpreter now required:
+// https://github.com/LuanRT/YouTube.js/pull/1052
+async function sandboxedJsInterpreter(
+  data: Types.BuildScriptResult,
+  env: Record<string, Types.VMPrimative>,
+): Promise<EvalResult> {
+  const properties = [];
+
+  if (env.n) {
+    properties.push(`n: exportedVars.nFunction("${env.n}")`);
+  }
+
+  if (env.sig) {
+    properties.push(`sig: exportedVars.sigFunction("${env.sig}")`);
+  }
+
+  const code = `${data.output}\nreturn { ${properties.join(", ")} }`;
+
+  return new Function(code)();
+}
+
 export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public static identifier: string =
     "com.retrouser955.discord-player.discord-player-youtubei";
@@ -148,6 +175,8 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   }
 
   async activate(): Promise<void> {
+    Platform.shim.eval = sandboxedJsInterpreter;
+
     this.protocols = ["ytsearch", "youtube"];
 
     const INNERTUBE_OPTIONS: InnerTubeConfig = {
@@ -344,7 +373,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       format: "mp4",
     });
 
-    format.url = format.decipher(this.innerTube.session.player);
+    format.url = await format.decipher(this.innerTube.session.player);
 
     return createNativeReadable(
       format.url,
