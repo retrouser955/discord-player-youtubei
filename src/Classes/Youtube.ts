@@ -80,7 +80,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 
             if (sabrCache) {
                 this.context.player.debug(`[${info.title}] Streaming with: SABR Protocol (from cache)`);
-                return await info.downloadSabr(this.options);
+                return await info.downloadSabr();
             }
 
             if (!sabrCache && adaptiveCache) {
@@ -89,7 +89,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
             }
 
             this.context.player.debug(`[${info.title}] No Cache found, assume track is searched by name. Streaming with: SABR Protocol`);
-            return await info.downloadSabr(this.options);
+            return await info.downloadSabr();
         } catch (error) {
             this.context.player.debug(`[${info.title}] Failed to create stream: ${error}`);
             throw error;

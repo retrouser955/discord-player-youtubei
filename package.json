@@ -10,8 +10,8 @@
   "devDependencies": {
     "@types/jsdom": "^27.0.0",
     "discord-player": "^7.1.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",

@@ -5,6 +5,7 @@ import { getInnertube, getVideoId } from "../utils";
 import { DEFAULT_EXPIRE_DURATION } from "../Constants";
 import { createSabrStream } from "../Streams/ServerAbrStream";
 import { YoutubeOptions } from "../types";
+import { SabrFormat } from "googlevideo/shared-types";
 
 export enum CacheType {
     SeverAbr,
@@ -26,6 +27,7 @@ export interface AdaptiveCache extends BaseDownloadCache {
 export interface ServerAbrCache extends BaseDownloadCache {
     type: CacheType.SeverAbr;
     uStreamConfig?: string;
+    sabrFormat?: SabrFormat[];
 }
 
 export interface BaseSetCacheOptions {
@@ -36,6 +38,7 @@ export interface BaseSetCacheOptions {
 export interface ServerAbrCacheOptions extends BaseSetCacheOptions {
     type: CacheType.SeverAbr;
     uStreamConfig?: string;
+    sabrFormat?: SabrFormat[];
 }
 
 export interface AdaptiveSetCacheOptions extends BaseSetCacheOptions {
@@ -59,8 +62,8 @@ export class YoutubeTrack extends Track {
         return new AdaptiveStream(await fmt.decipher(yt.session.player), info.cpn, fmt.content_length || 0);
     }
 
-    async downloadSabr(options: YoutubeOptions): Promise<Readable> {
-        return await createSabrStream(getVideoId(this.url), options);
+    async downloadSabr(): Promise<Readable> {
+        return await createSabrStream(this);
     }
 
     setCache(opt: AdaptiveSetCacheOptions | ServerAbrCacheOptions) {

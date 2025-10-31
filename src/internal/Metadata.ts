@@ -4,6 +4,7 @@ import { buildPlaylistUrl, buildVideoUrl, getInnertube } from "../utils";
 import { Playlist, QueryType, Util } from "discord-player";
 import { getSearchContext } from "./ContextProvider";
 import { YOUTUBE_LOGO } from "../Constants";
+import { buildSabrFormat } from "googlevideo/utils";
 
 export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): YoutubeTrack {
     return new YoutubeTrack(ext.context.player, {
@@ -133,6 +134,7 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
 
     const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
     const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
+    const sabrFormat = metadata.streaming_data.adaptive_formats.map(buildSabrFormat) || [];
 
     try {
         ytTrack.setCache({
@@ -147,6 +149,7 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
                 type: CacheType.SeverAbr,
                 url: serverAbrStreamingUrl,
                 uStreamConfig: uStreamConfig,
+                sabrFormat: sabrFormat,
             });
         }
     } catch (error) {
