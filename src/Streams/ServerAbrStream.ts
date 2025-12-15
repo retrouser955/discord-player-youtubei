@@ -31,6 +31,7 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
 
         if (videoData) {
             SabrStreamConfig = {
+                fetch: innertube.session.http.fetch_function,
                 formats: videoData.sabrFormat,
                 serverAbrStreamingUrl: videoData.url,
                 videoPlaybackUstreamerConfig: videoData.uStreamConfig,
@@ -67,6 +68,7 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
             const sabrFormats: SabrFormat[] = playerResponse.streaming_data?.adaptive_formats.map(buildSabrFormat) || [];
 
             SabrStreamConfig = {
+                fetch: innertube.session.http.fetch_function,
                 formats: sabrFormats,
                 serverAbrStreamingUrl,
                 videoPlaybackUstreamerConfig,
