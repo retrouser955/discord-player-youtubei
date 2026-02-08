@@ -14,28 +14,19 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { UniversalCache, YTNodes } from "youtubei.js";
+import Innertube, { SessionOptions, UniversalCache, YTNodes } from "youtubei.js";
 import type { ProxyAgent } from "undici";
-import {
-  type DownloadOptions,
-  InnerTubeConfig,
-  InnerTubeClient,
-} from "youtubei.js/dist/src/types";
+import type { DownloadOptions, InnerTubeClient } from "../common/generateYTStream";
 import { Readable } from "node:stream";
-import type {
-  PlaylistVideo,
-  CompactVideo,
-  Video,
-} from "youtubei.js/dist/src/parser/nodes";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { tokenToObject } from "../common/tokenUtils";
 import { defaultFetch } from "../utils";
 import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
-import { createServerAbrStream } from "../ServerAbr/CreateServerAbrStream";
 import { generateToken } from "../token/tokenGenerator";
 import { createNativeReadable } from "../common/createNativeReadable";
+import { updateDl } from "../experimental/YoutubeDL";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -85,13 +76,16 @@ export interface YoutubeiOptions {
   overrideBridgeMode?: "ytmusic" | "yt" | QueryBridgeModes;
   disablePlayer?: boolean;
   ignoreSignInErrors?: boolean;
-  innertubeConfigRaw?: InnerTubeConfig;
+  innertubeConfigRaw?: SessionOptions;
   cookie?: string;
   proxy?: ProxyAgent;
   peers?: PeerInfo[];
   slicePlaylist?: boolean;
   useServerAbrStream?: boolean;
   generateWithPoToken?: boolean;
+  logLevel: "NONE"|"LOW"|"ALL";
+  useYoutubeDL?: boolean;
+  dlUpdateInterval?: number;
 }
 
 export interface AsyncTrackingContext {
@@ -150,7 +144,23 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   async activate(): Promise<void> {
     this.protocols = ["ytsearch", "youtube"];
 
-    const INNERTUBE_OPTIONS: InnerTubeConfig = {
+    if(this.options.useYoutubeDL) {
+      if(this.options.logLevel !== "NONE") console.log("WARNING: Youtube DL is an experimental downloader. Use in production as your own risk.");
+      const dlUpdater = async () => {
+        if(this.options.logLevel === "ALL") console.log("Updating YoutubeDL");
+        try {
+          await updateDl();
+        } catch (error) {
+          if(["LOW", "ALL"].includes(this.options.logLevel)) console.log("Ran into an error while updating DL", error)
+        }
+      }
+
+      await dlUpdater();
+
+      setInterval(dlUpdater, this.options.dlUpdateInterval || 6.048e+8 /* 1 week */).unref()
+    }
+
+    const INNERTUBE_OPTIONS: SessionOptions = {
       retrieve_player: this.options.disablePlayer === true ? false : true,
       ...this.options.innertubeConfigRaw,
       cookie: this.options.cookie,
@@ -189,10 +199,6 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                   Math.round(Math.random() * (this.options.peers.length - 1))
                 ],
               );
-            }
-
-            if (this.options.useServerAbrStream) {
-              return createServerAbrStream(q, this.innerTube, this);
             }
 
             return streamFromYT(q, this.innerTube, {
@@ -344,7 +350,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       format: "mp4",
     });
 
-    format.url = format.decipher(this.innerTube.session.player);
+    format.url = await format.decipher(this.innerTube.session.player);
 
     return createNativeReadable(
       format.url,
@@ -476,7 +482,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
         let plTracks = (
           playlist.videos.filter(
             (v) => v.type === "PlaylistVideo",
-          ) as PlaylistVideo[]
+          ) as YTNodes.PlaylistVideo[]
         ).map((v) => {
           const duration = Util.buildTimeCode(
             Util.parseMS(v.duration.seconds * 1000),
@@ -511,9 +517,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
           plTracks.push(
             ...(
-              playlist.videos.filter(
-                (v) => v.type === "PlaylistVideo",
-              ) as PlaylistVideo[]
+              playlist.videos.filterType(YTNodes.PlaylistVideo)
             ).map((v) => {
               const duration = Util.buildTimeCode(
                 Util.parseMS(v.duration.seconds * 1000),
@@ -614,9 +618,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
       }
       default: {
         const search = await this.innerTube.search(query);
-        const videos = search.videos.filter(
-          (v) => v.type === "Video",
-        ) as Video[];
+        const videos = search.videos.filterType(YTNodes.Video);
 
         return {
           playlist: null,
@@ -626,7 +628,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     }
   }
 
-  buildTrack(vid: Video, context: ExtractorSearchContext, pl?: Playlist) {
+  buildTrack(vid: YTNodes.Video, context: ExtractorSearchContext, pl?: Playlist) {
     const duration = Util.buildTimeCode(
       Util.parseMS(vid.duration.seconds * 1000),
     );
@@ -677,7 +679,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
     const next = videoInfo.watch_next_feed!;
 
-    const recommended = (next as unknown as CompactVideo[]).filter(
+    const recommended = (next as unknown as YTNodes.CompactVideo[]).filter(
       (v) =>
         !history.tracks.some(
           (x) => x.url === `https://youtube.com/watch?v=${v.id}`,

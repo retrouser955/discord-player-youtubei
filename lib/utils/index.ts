@@ -2,11 +2,6 @@ import type { Player } from "discord-player";
 import { type ProxyAgent } from "undici";
 import { Platform } from "youtubei.js";
 
-export * from "./live/getLiveChat";
-export { LiveChatEvents } from "./live/LiveChat";
-export { ChatMessageType } from "./live/LiveChatMessage";
-export * from "./downloader/index";
-
 export function defaultPeerUrlBuilder(url: string, id: string) {
   return `${url}/${id}`;
 }

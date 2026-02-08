@@ -1,22 +1,21 @@
 import type Innertube from "youtubei.js/agnostic";
-import { Constants, Platform, Utils } from "youtubei.js";
 import type { BaseExtractor, Track } from "discord-player";
 import type { OAuth2Tokens } from "youtubei.js/agnostic";
-import type {
-  DownloadOptions,
-  InnerTubeClient,
-  FormatOptions,
-} from "youtubei.js/dist/src/types";
 import { YoutubeiExtractor } from "../Extractor/Youtube";
 import type { ExtractorStreamable } from "discord-player";
 // import { createReadableFromWeb } from "./webToReadable";
 // import { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { createNativeReadable } from "./createNativeReadable";
 
+type ReturnBasicInfo = Awaited<ReturnType<Innertube['getBasicInfo']>>;
+export type FormatOptions = Parameters<ReturnBasicInfo['chooseFormat']>[0];
+export type DownloadOptions = FormatOptions;
+export type InnerTubeClient = Exclude<Exclude<Parameters<Innertube['getBasicInfo']>[1], undefined>['client'], undefined>;
+
 export interface YTStreamingOptions {
   extractor?: BaseExtractor<object>;
   authentication?: OAuth2Tokens;
-  overrideDownloadOptions?: DownloadOptions;
+  overrideDownloadOptions?: FormatOptions;
 }
 
 export const DEFAULT_DOWNLOAD_OPTIONS: DownloadOptions = {
@@ -163,7 +162,9 @@ export async function streamFromYT(
   let id = new URL(query.url).searchParams.get("v");
   // VIDEO DETECTED AS YT SHORTS OR youtu.be link
   if (!id) id = query.url.split("/").at(-1)?.split("?").at(0)!;
-  const videoInfo = await innerTube.getBasicInfo(id, context.useClient);
+  const videoInfo = await innerTube.getBasicInfo(id, {
+     client: context.useClient
+  });
 
   if (videoInfo.basic_info.is_live)
     return videoInfo.streaming_data?.hls_manifest_url!;
@@ -186,7 +187,7 @@ export async function streamFromYT(
       videoInfo,
     );
   } else {
-    format.url = format.decipher(innerTube.session.player);
+    format.url = await format.decipher(innerTube.session.player);
     if (!format.content_length)
       throw new Error("Not matching URL for this format found");
     return createNativeReadable(
