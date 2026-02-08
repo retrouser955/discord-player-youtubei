@@ -7,10 +7,13 @@ import type { ExtractorStreamable } from "discord-player";
 // import { VideoInfo } from "youtubei.js/dist/src/parser/youtube";
 import { createNativeReadable } from "./createNativeReadable";
 
-type ReturnBasicInfo = Awaited<ReturnType<Innertube['getBasicInfo']>>;
-export type FormatOptions = Parameters<ReturnBasicInfo['chooseFormat']>[0];
+type ReturnBasicInfo = Awaited<ReturnType<Innertube["getBasicInfo"]>>;
+export type FormatOptions = Parameters<ReturnBasicInfo["chooseFormat"]>[0];
 export type DownloadOptions = FormatOptions;
-export type InnerTubeClient = Exclude<Exclude<Parameters<Innertube['getBasicInfo']>[1], undefined>['client'], undefined>;
+export type InnerTubeClient = Exclude<
+  Exclude<Parameters<Innertube["getBasicInfo"]>[1], undefined>["client"],
+  undefined
+>;
 
 export interface YTStreamingOptions {
   extractor?: BaseExtractor<object>;
@@ -163,7 +166,7 @@ export async function streamFromYT(
   // VIDEO DETECTED AS YT SHORTS OR youtu.be link
   if (!id) id = query.url.split("/").at(-1)?.split("?").at(0)!;
   const videoInfo = await innerTube.getBasicInfo(id, {
-     client: context.useClient
+    client: context.useClient,
   });
 
   if (videoInfo.basic_info.is_live)

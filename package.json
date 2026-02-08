@@ -1,6 +1,6 @@
 {
   "name": "discord-player-youtubei",
-  "version": "1.5.0",
+  "version": "2.0.0-dev",
   "description": "An unofficial package to test the use of youtubei in discord-player v6.",
   "main": "dist/index.js",
   "repository": {

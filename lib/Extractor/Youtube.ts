@@ -14,9 +14,16 @@ import {
   BaseExtractor,
 } from "discord-player";
 
-import Innertube, { SessionOptions, UniversalCache, YTNodes } from "youtubei.js";
+import Innertube, {
+  SessionOptions,
+  UniversalCache,
+  YTNodes,
+} from "youtubei.js";
 import type { ProxyAgent } from "undici";
-import type { DownloadOptions, InnerTubeClient } from "../common/generateYTStream";
+import type {
+  DownloadOptions,
+  InnerTubeClient,
+} from "../common/generateYTStream";
 import { Readable } from "node:stream";
 import { streamFromYT } from "../common/generateYTStream";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -26,7 +33,7 @@ import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
 import { generateToken } from "../token/tokenGenerator";
 import { createNativeReadable } from "../common/createNativeReadable";
-import { updateDl } from "../experimental/YoutubeDL";
+import { generateStreamWithYoutubeDL, updateDl } from "../experimental/YoutubeDL";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -83,7 +90,7 @@ export interface YoutubeiOptions {
   slicePlaylist?: boolean;
   useServerAbrStream?: boolean;
   generateWithPoToken?: boolean;
-  logLevel: "NONE"|"LOW"|"ALL";
+  logLevel: "NONE" | "LOW" | "ALL";
   useYoutubeDL?: boolean;
   dlUpdateInterval?: number;
 }
@@ -100,7 +107,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public _stream!: (
     q: Track,
     extractor: YoutubeiExtractor,
-  ) => Promise<ExtractorStreamable>;
+  ) => Promise<ExtractorStreamable|undefined>;
   public static instance?: YoutubeiExtractor;
   public priority = 2;
   static ytContext = new AsyncLocalStorage<AsyncTrackingContext>();
@@ -144,20 +151,27 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   async activate(): Promise<void> {
     this.protocols = ["ytsearch", "youtube"];
 
-    if(this.options.useYoutubeDL) {
-      if(this.options.logLevel !== "NONE") console.log("WARNING: Youtube DL is an experimental downloader. Use in production as your own risk.");
+    if (this.options.useYoutubeDL) {
+      if (this.options.logLevel !== "NONE")
+        console.log(
+          "WARNING: Youtube DL is an experimental downloader. Use in production as your own risk.",
+        );
       const dlUpdater = async () => {
-        if(this.options.logLevel === "ALL") console.log("Updating YoutubeDL");
+        if (this.options.logLevel === "ALL") console.log("Updating YoutubeDL");
         try {
           await updateDl();
         } catch (error) {
-          if(["LOW", "ALL"].includes(this.options.logLevel)) console.log("Ran into an error while updating DL", error)
+          if (["LOW", "ALL"].includes(this.options.logLevel))
+            console.log("Ran into an error while updating DL", error);
         }
-      }
+      };
 
       await dlUpdater();
 
-      setInterval(dlUpdater, this.options.dlUpdateInterval || 6.048e+8 /* 1 week */).unref()
+      setInterval(
+        dlUpdater,
+        this.options.dlUpdateInterval || 6.048e8 /* 1 week */,
+      ).unref();
     }
 
     const INNERTUBE_OPTIONS: SessionOptions = {
@@ -199,6 +213,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
                   Math.round(Math.random() * (this.options.peers.length - 1))
                 ],
               );
+            }
+
+            if(this.options.useYoutubeDL) {
+              return generateStreamWithYoutubeDL(q, this);
             }
 
             return streamFromYT(q, this.innerTube, {
@@ -516,9 +534,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
           playlist = await playlist.getContinuation();
 
           plTracks.push(
-            ...(
-              playlist.videos.filterType(YTNodes.PlaylistVideo)
-            ).map((v) => {
+            ...playlist.videos.filterType(YTNodes.PlaylistVideo).map((v) => {
               const duration = Util.buildTimeCode(
                 Util.parseMS(v.duration.seconds * 1000),
               );
@@ -628,7 +644,11 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     }
   }
 
-  buildTrack(vid: YTNodes.Video, context: ExtractorSearchContext, pl?: Playlist) {
+  buildTrack(
+    vid: YTNodes.Video,
+    context: ExtractorSearchContext,
+    pl?: Playlist,
+  ) {
     const duration = Util.buildTimeCode(
       Util.parseMS(vid.duration.seconds * 1000),
     );
@@ -663,8 +683,10 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
     return track;
   }
 
-  stream(info: Track<unknown>): Promise<ExtractorStreamable> {
-    return this._stream(info, this);
+  async stream(info: Track<unknown>): Promise<ExtractorStreamable> {
+    const stream = await this._stream(info, this);
+    if(!stream) throw new Error("could not stream")
+    return stream;
   }
 
   async getRelatedTracks(
