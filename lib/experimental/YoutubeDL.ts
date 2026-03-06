@@ -2,7 +2,6 @@ import type { Track } from "discord-player";
 import { extractVideoId } from "../common/extractVideoID";
 import youtubeDl from "youtube-dl-exec";
 import { type YoutubeiExtractor } from "../Extractor/Youtube";
-
 import ytdlExec from "youtube-dl-exec";
 import { mkdir, chmod } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
@@ -78,6 +77,8 @@ export async function generateStreamWithYoutubeDL(
     format: videoFormat,
     output: "-",
     cookies: youtubei.options.cookie,
+    noWarnings: true,
+    noProgress: true
   });
 
   process.catch((e) => {
@@ -87,5 +88,13 @@ export async function generateStreamWithYoutubeDL(
 
   const stream = process.stdout;
 
-  return stream ? stream : undefined;
+  if (!stream) return undefined;
+
+  const killProcess = () => process.killed && process.kill();
+
+  stream.on("close", killProcess);
+  stream.on("error", killProcess);
+  stream.on("end", killProcess);
+
+  return stream;
 }

@@ -33,7 +33,10 @@ import peerDownloader from "../common/peerDownloader";
 import { extractVideoId } from "../common/extractVideoID";
 import { generateToken } from "../token/tokenGenerator";
 import { createNativeReadable } from "../common/createNativeReadable";
-import { generateStreamWithYoutubeDL, updateDl } from "../experimental/YoutubeDL";
+import {
+  generateStreamWithYoutubeDL,
+  updateDl,
+} from "../experimental/YoutubeDL";
 
 const validPathDomains =
   /^https?:\/\/(youtu\.be\/|(www\.)?youtube\.com\/(embed|v|shorts)\/)/;
@@ -107,7 +110,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
   public _stream!: (
     q: Track,
     extractor: YoutubeiExtractor,
-  ) => Promise<ExtractorStreamable|undefined>;
+  ) => Promise<ExtractorStreamable | undefined>;
   public static instance?: YoutubeiExtractor;
   public priority = 2;
   static ytContext = new AsyncLocalStorage<AsyncTrackingContext>();
@@ -215,7 +218,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
               );
             }
 
-            if(this.options.useYoutubeDL) {
+            if (this.options.useYoutubeDL) {
               return generateStreamWithYoutubeDL(q, this);
             }
 
@@ -685,7 +688,7 @@ export class YoutubeiExtractor extends BaseExtractor<YoutubeiOptions> {
 
   async stream(info: Track<unknown>): Promise<ExtractorStreamable> {
     const stream = await this._stream(info, this);
-    if(!stream) throw new Error("could not stream")
+    if (!stream) throw new Error("could not stream");
     return stream;
   }
 

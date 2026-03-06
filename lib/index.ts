@@ -43,3 +43,4 @@ export * from "./common/tokenUtils";
 export * from "./common/getInstance";
 export * from "./utils/index";
 export * from "./token/tokenGenerator";
+export { Log } from "youtubei.js";
