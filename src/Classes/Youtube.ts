@@ -3,7 +3,9 @@ import { YoutubeOptions } from "../types";
 import Innertube from "youtubei.js";
 import { getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import { getMixedPlaylist, getPlaylist, getVideo, runWithSearchContext, search } from "../internal";
-import { CacheType, YoutubeTrack } from "./YoutubeTrack";
+import { buildAdaptiveCacheKey, buildSabrCacheKey, cache } from "../Cache/DownloadCache";
+import { createSabrStream } from "../Streams/ServerAbrStream";
+import { AdaptiveStream } from "../Streams/AdaptiveStream";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
@@ -49,7 +51,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
                     const playlistId = getPlaylistId(query);
 
                     if (!playlistId.playlistId) {
-                        this.debug("Invalid Playlist ID { playlist: " + query + " }.");
+                        this.context.player.debug("Invalid Playlist ID { playlist: " + query + " }.");
                         return this.createResponse(null, []);
                     }
 
@@ -69,30 +71,5 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
                 }
             }
         });
-    }
-
-    public async stream(info: Track): Promise<ExtractorStreamable> {
-        if (!(info instanceof YoutubeTrack)) throw new Error("Invalid youtube track provided.");
-
-        try {
-            const sabrCache = info.getCache(CacheType.SeverAbr);
-            const adaptiveCache = info.getCache(CacheType.Adaptive)
-
-            if (sabrCache) {
-                this.context.player.debug(`[${info.title}] Streaming with: SABR Protocol (from cache)`);
-                return await info.downloadSabr();
-            }
-
-            if (!sabrCache && adaptiveCache) {
-                this.context.player.debug(`[${info.title}] Sabr Cache not found. Streaming with: Adaptive`);;
-                return await info.downloadAdaptive();
-            }
-
-            this.context.player.debug(`[${info.title}] No Cache found, assume track is searched by name. Streaming with: SABR Protocol`);
-            return await info.downloadSabr();
-        } catch (error) {
-            this.context.player.debug(`[${info.title}] Failed to create stream: ${error}`);
-            throw error;
-        }
     }
 }

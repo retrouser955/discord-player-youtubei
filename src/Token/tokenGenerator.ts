@@ -226,7 +226,12 @@ function requireBinding(binding: string | undefined | null): string {
     return binding;
 }
 
-export async function getWebPoMinter(innertube: Innertube, options = {}): Promise<any> {
+export type WebMinter = {
+    generatePlaceholder(binding: string | undefined | null): string;
+    mint(binding: string | undefined | null): Promise<string>
+}
+
+export async function getWebPoMinter(innertube: Innertube, options = {}): Promise<WebMinter> {
     const minter = await initializeBotGuard(innertube, options);
 
     return {

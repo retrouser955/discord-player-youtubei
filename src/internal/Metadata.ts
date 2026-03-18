@@ -1,13 +1,14 @@
 import Innertube, { YT, YTNodes } from "youtubei.js";
-import { CacheType, YoutubeExtractor, YoutubeTrack } from "../Classes";
+import { YoutubeExtractor } from "../Classes";
 import { buildPlaylistUrl, buildVideoUrl, getInnertube } from "../utils";
-import { Playlist, QueryType, Util } from "discord-player";
+import { Playlist, QueryType, Track, Util } from "discord-player";
 import { getSearchContext } from "./ContextProvider";
-import { YOUTUBE_LOGO } from "../Constants";
+import { DEFAULT_EXPIRE_DURATION, YOUTUBE_LOGO } from "../Constants";
 import { buildSabrFormat } from "googlevideo/utils";
+import { AdaptiveItem, buildAdaptiveCacheKey, buildSabrCacheKey, cache, ServerAbrItem } from "../Cache/DownloadCache";
 
-export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): YoutubeTrack {
-    return new YoutubeTrack(ext.context.player, {
+export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): Track {
+    return new Track(ext.context.player, {
         title: vid.title.toString() ?? "UNKNOWN TITLE",
         url: buildVideoUrl(vid.video_id),
         duration: Util.buildTimeCode(Util.parseMS((vid.duration?.seconds ?? 0) * 1000)),
@@ -21,8 +22,8 @@ export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): 
     });
 }
 
-export function buildTrackFromPlaylistVideo(vid: YTNodes.PlaylistVideo, pl: Playlist, ext: YoutubeExtractor): YoutubeTrack {
-    return new YoutubeTrack(ext.context.player, {
+export function buildTrackFromPlaylistVideo(vid: YTNodes.PlaylistVideo, pl: Playlist, ext: YoutubeExtractor): Track {
+    return new Track(ext.context.player, {
         title: vid.title.text ?? "UNKNOWN TITLE",
         url: buildVideoUrl(vid.id),
         duration: Util.buildTimeCode(Util.parseMS((vid.duration?.seconds ?? 0) * 1000)),
@@ -118,7 +119,7 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
     const tube: Innertube = await getInnertube();
     const metadata: YT.VideoInfo = await tube.getBasicInfo(videoId);
 
-    const ytTrack: YoutubeTrack = new YoutubeTrack(ext.context.player, {
+    const ytTrack = new Track(ext.context.player, {
         title: metadata.basic_info.title,
         thumbnail: metadata.basic_info.thumbnail?.at(0)?.url || YOUTUBE_LOGO,
         description: metadata.basic_info.short_description,
@@ -130,30 +131,27 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
         source: "youtube",
     });
 
-    const adaptiveStream = metadata.chooseFormat({ format: "any", quality: "best", type: "audio" });
-
-    const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
-    const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
-    const sabrFormat = metadata.streaming_data.adaptive_formats.map(buildSabrFormat) || [];
-
     try {
-        ytTrack.setCache({
-            type: CacheType.Adaptive,
-            url: buildVideoUrl(videoId),
-            cpn: metadata.cpn,
-            size: adaptiveStream.content_length ?? 0,
-        });
+        // Note: WEB rarely return adaptive format these days. Let's just cache sabr for WEB clients
+
+        const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
+        const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
+        const sabrFormat = metadata.streaming_data.adaptive_formats.map(buildSabrFormat) || [];
 
         if (serverAbrStreamingUrl && uStreamConfig) {
-            ytTrack.setCache({
-                type: CacheType.SeverAbr,
+            const urlParsed = new URL(serverAbrStreamingUrl);
+            let expire = Number(urlParsed.searchParams.get("expire") || "0");
+            if (!expire && isNaN(expire)) expire = DEFAULT_EXPIRE_DURATION;
+
+            cache.set(buildSabrCacheKey(videoId), {
+                expire,
                 url: serverAbrStreamingUrl,
-                uStreamConfig: uStreamConfig,
-                sabrFormat: sabrFormat,
-            });
+                sabrFormat,
+                uStreamConfig
+            })
         }
-    } catch (error) {
-        console.error(error);
+    } catch {
+        // no-op
     }
 
     return ytTrack;

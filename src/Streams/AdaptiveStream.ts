@@ -1,10 +1,9 @@
 import { Readable } from "node:stream";
 import { TEN_MB } from "../Constants";
-import { getInnertube } from "../utils";
-import { Constants, Utils } from "youtubei.js";
+import Innertube, { Constants, Utils } from "youtubei.js";
 
 export class AdaptiveStream extends Readable {
-    constructor(url: string, cpn: string, size: number) {
+    constructor(tube: Innertube, url: string, cpn: string, size: number) {
         let isEnded: boolean = false;
         let start: number = 0;
         let end: number = Math.min(size, TEN_MB);
@@ -17,8 +16,7 @@ export class AdaptiveStream extends Readable {
                     isEnded = true;
                     end = size;
                 }
-
-                const tube = await getInnertube();
+                
                 abortController = new AbortController();
 
                 const fUrl = `${url}&cpn=${cpn}&range=${start}-${end || ""}`;

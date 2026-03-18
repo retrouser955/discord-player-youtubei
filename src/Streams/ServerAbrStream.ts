@@ -1,15 +1,22 @@
-import Innertube, { Constants, YT, YTNodes } from "youtubei.js";
-import { getInnertube, getVideoId, toNodeReadable } from "../utils";
-import { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
+import { Constants, type YT, YTNodes } from "youtubei.js";
+import type Innertube from "youtubei.js";
+import { getVideoId, toNodeReadable } from "./common";
+import type { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
 import { SabrFormat } from "googlevideo/shared-types";
 import { SabrStream, SabrStreamConfig } from "googlevideo/sabr-stream";
 import { buildSabrFormat } from "googlevideo/utils";
-import { DEFAULT_OPTIONS } from "../Constants";
 import { Readable } from "node:stream";
-import { CacheType, YoutubeTrack } from "../Classes";
+import { Track } from "discord-player";
+import { SabrPlaybackOptions } from "googlevideo/sabr-stream";
+import { type DownloadUrlCache } from "../Cache/DownloadCache";
+import { EnabledTrackTypes } from "googlevideo/utils";
 
-export async function createSabrStream(video: YoutubeTrack): Promise<Readable | null> {
-    const innertube: Innertube | null = await getInnertube();
+export const DEFAULT_OPTIONS: SabrPlaybackOptions = {
+    audioQuality: "AUDIO_QUALITY_MEDIUM",
+    enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY,
+}
+
+export async function createSabrStream(innertube: Innertube, webMinter: typeof getWebPoMinter, invMinter: typeof invalidateWebPoMinter,  video: Track, cache: DownloadUrlCache): Promise<Readable | null> {
     let accountInfo: YT.AccountInfo | null;
     const videoId: string = getVideoId(video.url);
     let serverAbrStream: SabrStream;
@@ -21,12 +28,12 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
     }
 
     const dataSyncId = accountInfo?.contents?.contents[0]?.endpoint?.payload?.supportedTokens?.[2]?.datasyncIdToken?.datasyncIdToken ?? innertube.session.context.client.visitorData;
-    const minter = await getWebPoMinter(innertube);
+    const minter = await webMinter(innertube);
     const contentPoToken = await minter.mint(videoId);
     const poToken = await minter.mint(dataSyncId);
 
     try {
-        const videoData = video.getCache(CacheType.SeverAbr);
+        const videoData = cache.get(cache.buildSabrCacheKey(videoId));
         let SabrStreamConfig: SabrStreamConfig;
 
         if (videoData) {
@@ -44,7 +51,6 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
             const watchEndpoint = new YTNodes.NavigationEndpoint({ watchEndpoint: { videoId } });
             const playerResponse = await watchEndpoint.call(innertube.actions, {
                 playbackContext: {
-                    adPlaybackContext: { pyv: true },
                     contentPlaybackContext: {
                         vis: 0,
                         splay: false,
@@ -82,8 +88,6 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
         console.error("[SabrStream Error] Error while creating SabrStream: ", error);
     }
 
-
-
     let protectionFailureCount = 0;
     let lastStatus = null;
     serverAbrStream.on("streamProtectionStatusUpdate", async (statusUpdate: any) => {
@@ -92,7 +96,7 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
             protectionFailureCount = Math.min(protectionFailureCount + 1, 10);
 
             try {
-                const rotationMinter = await getWebPoMinter(innertube, { forceRefresh: protectionFailureCount >= 3 });
+                const rotationMinter = await webMinter(innertube, { forceRefresh: protectionFailureCount >= 3 });
                 const placeholderToken = rotationMinter.generatePlaceholder(videoId);
                 serverAbrStream.setPoToken(placeholderToken);
                 const mintedPoToken = await rotationMinter.mint(videoId);
@@ -102,7 +106,7 @@ export async function createSabrStream(video: YoutubeTrack): Promise<Readable | 
             }
         } else if (statusUpdate.status === 3) {
             console.error("Stream protection rejected token (SPS 3). Resetting Botguard.");
-            invalidateWebPoMinter();
+            invMinter();
         } else {
             protectionFailureCount = 0;
         }
