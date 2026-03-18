@@ -44,6 +44,7 @@ export function getPlaylistId(url: string): playlistObj {
 export function createYoutubeFetch(options?: YoutubeOptions): any {
     const f: typeof fetch = (input: URL | RequestInfo, init: RequestInit): Promise<Response> => {
         if (options?.proxy) {
+            init ??= {};
             (init as any).dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
         }
         return Platform.shim.fetch(input, init);

@@ -38,6 +38,7 @@ export async function createSabrStream(innertube: Innertube, webMinter: typeof g
 
         if (videoData) {
             SabrStreamConfig = {
+                fetch: innertube.session.http.fetch_function,
                 formats: videoData.sabrFormat,
                 serverAbrStreamingUrl: videoData.url,
                 videoPlaybackUstreamerConfig: videoData.uStreamConfig,
@@ -73,6 +74,7 @@ export async function createSabrStream(innertube: Innertube, webMinter: typeof g
             const sabrFormats: SabrFormat[] = playerResponse.streaming_data?.adaptive_formats.map(buildSabrFormat) || [];
 
             SabrStreamConfig = {
+                fetch: innertube.session.http.fetch_function,
                 formats: sabrFormats,
                 serverAbrStreamingUrl,
                 videoPlaybackUstreamerConfig,
