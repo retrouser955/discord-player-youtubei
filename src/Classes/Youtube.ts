@@ -3,9 +3,9 @@ import { YoutubeOptions } from "../types";
 import Innertube from "youtubei.js";
 import { getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import { getMixedPlaylist, getPlaylist, getVideo, runWithSearchContext, search } from "../internal";
-import { buildAdaptiveCacheKey, buildSabrCacheKey, cache } from "../Cache/DownloadCache";
-import { createSabrStream } from "../Streams/ServerAbrStream";
-import { AdaptiveStream } from "../Streams/AdaptiveStream";
+import { createStreamFunction } from "../Streams";
+import { cache } from "../Cache/DownloadCache";
+import { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
@@ -71,5 +71,18 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
                 }
             }
         });
+    }
+
+    async stream(info: Track): Promise<ExtractorStreamable> {
+        if(this._stream && typeof this._stream === "function") return this._stream(info);
+
+        const stream = createStreamFunction(
+            this.innertube,
+            cache,
+            getWebPoMinter,
+            invalidateWebPoMinter
+        )
+
+        return stream(info);
     }
 }

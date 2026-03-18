@@ -1,3 +1,9 @@
+/**
+ * Now you might be questioning some programming choices used here.
+ * But, I originally planned to make this a remote module.
+ * Basically, user would download this at runtime and integrate it into the extractor.
+ * But, I realized that it would be unsafe because I don't like the idea of remote code execution.
+ */
 import type { Track } from "discord-player";
 import type { DownloadUrlCache } from "../Cache/DownloadCache";
 import type { Readable } from "node:stream";

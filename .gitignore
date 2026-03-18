@@ -1,6 +1,4 @@
 node_modules
 package-lock.json
 *.tgz
-dist/index*
-dist/chunk*
-dist/Streams/index.d*
+dist/
