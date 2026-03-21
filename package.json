@@ -23,6 +23,7 @@
     "youtubei.js": "^17.0.1"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepare": "npm run build"
   }
 }
