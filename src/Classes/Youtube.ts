@@ -19,6 +19,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
         this.protocols = ["yt", "youtube"];
         const fn = this.options.createStream;
         if (typeof fn === "function") this._stream = (q) => { return fn(q, this) };
+        else this._stream = createStreamFunction(this.innertube, cache, getWebPoMinter, invalidateWebPoMinter)
     }
 
     public async deactivate(): Promise<void> {
@@ -74,15 +75,6 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     }
 
     async stream(info: Track): Promise<ExtractorStreamable> {
-        if(this._stream && typeof this._stream === "function") return this._stream(info);
-
-        const stream = createStreamFunction(
-            this.innertube,
-            cache,
-            getWebPoMinter,
-            invalidateWebPoMinter
-        )
-
-        return stream(info);
+        return this._stream(info);
     }
 }
