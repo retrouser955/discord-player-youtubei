@@ -57,6 +57,7 @@ export interface YoutubeOptions {
 - [x] Implement metadata fetching
 - [x] Implement single video streaming
 - [x] Implement SABR streaming for single videos
+- [ ] Implement yt-dlp fallback if installed
 - [ ] Implement live streaming
 - [ ] Implement live streaming for SABR
 - [ ] Add support for extractorpack
