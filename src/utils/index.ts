@@ -1,7 +1,7 @@
 import { ProxyAgent } from "undici";
 import { YOUTUBE_REGEX } from "../Constants";
 import type { peerOptions, playlistObj, YoutubeOptions } from "../types";
-import Innertube, { Platform, Types } from "youtubei.js";
+import Innertube, { Platform, Types, Player } from "youtubei.js";
 import { once, PassThrough, Readable } from "node:stream";
 
 let tube: Innertube|null = null;
@@ -107,4 +107,41 @@ export async function getInnertube(options?: YoutubeOptions & { force?: boolean 
         });
     }
     return tube;
+}
+
+export async function decipherLiveStreamUrl(url: string, player: Player, poToken: string): Promise<string> {
+    const urlObject = new URL(url);
+    
+    if (urlObject.searchParams.size > 0) {
+        urlObject.searchParams.set('pot', poToken);
+        urlObject.searchParams.set('mpd_version', '7');
+
+        return await player.decipher(urlObject.toString());
+    }
+
+    const pathPrefix = '/api/manifest/dash';
+
+    const pathParts = urlObject.pathname
+        .replace(pathPrefix, '')
+        .split('/')
+        .filter(part => part.length > 0);
+
+    urlObject.pathname = pathPrefix;
+
+    for (let i = 0; i + 1 < pathParts.length; i+=2) {
+        urlObject.searchParams.set(pathParts[i], decodeURIComponent(pathParts[i+1]))
+    }
+
+    const deciphered = await player.decipher(urlObject.toString());
+    const decipheredUrlObject = new URL(deciphered);
+
+    for (const [key, value] of decipheredUrlObject.searchParams) {
+        decipheredUrlObject.pathname += `/${key}/${encodeURIComponent(value)}`
+    }
+
+    decipheredUrlObject.search = ``;
+    decipheredUrlObject.pathname += `/pot/${encodeURIComponent(poToken)}`;
+    decipheredUrlObject.pathname += `/mpd_version/7`;
+
+    return decipheredUrlObject.toString();
 }
