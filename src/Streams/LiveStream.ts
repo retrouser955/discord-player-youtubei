@@ -1,7 +1,20 @@
+/**
+ * Notice: 
+ * This should work for live streams pretty nicely
+ * I was debating between whether or not I should use ffmpeg but ultimate decided not to
+ * Theres still a lot desired from this code, currently its still kinda messy, but should do fine performance-wise
+ * 
+ * Note to brrrbot:
+ * "Please tidy this up"
+ * 
+ * From: brrrbot
+ */
+
 import { Readable } from 'stream';
 import { decipherLiveStreamUrl, getInnertube } from '../utils';
 import { getWebPoMinter, invalidateWebPoMinter } from '../Token/tokenGenerator';
 import { Platform, Types, Constants, Utils } from 'youtubei.js';
+import { MAX_LIVESTREAM_RETRY_ATTEMPT } from '../Constants';
 
 Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
     const properties = [];
@@ -11,245 +24,178 @@ Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, T
     return new Function(code)();
 };
 
-const MAX_RETRY_ATTEMPTS = 10;
-
-/**
- * Robust Live Stream handler.
- * Supports: SegmentTemplate (Standard), SegmentList (HLS-like), and BaseURL+Sequence (Legacy/Raw).
- */
 class SequenceBasedLiveStream extends Readable {
-    private videoId: string;
-    private dashUrl: string;
-    private innertube: any;
-    
-    // Stream State
-    private manifestUrl: string;
-    private baseUrl: string = ''; 
-    private segmentTemplate: string = ''; 
-    private currentSequence: number = -1;
-    private isFetching: boolean = false;
-    private retryCount: number = 0;
-    private isEnded: boolean = false;
+    constructor(manifestUrl: string, videoId: string, dashUrl: string, innertube: any) {
+        let isEnded: boolean = false;
+        let isFetching: boolean = false;
+        let retryCount: number = 0;
+        let currentSequence: number = -1;
+        let baseUrl: string = '';
+        let segmentTemplate: string = '';
+        let segmentUrlPrefix: string = '';
+        let segmentUrlSuffix: string = '';
+        let useTemplate: boolean = false;
+        let abortController: AbortController;
 
-    constructor(
-        manifestUrl: string,
-        videoId: string,
-        dashUrl: string,
-        innertube: any
-    ) {
-        super();
-        this.manifestUrl = manifestUrl;
-        this.videoId = videoId;
-        this.dashUrl = dashUrl;
-        this.innertube = innertube;
-    }
-
-    async _read(): Promise<void> {
-        if (this.isFetching || this.isEnded) return;
-        this.isFetching = true;
-
-        try {
-            // Initialize parsing on the first read
-            if (this.currentSequence === -1) {
-                await this.initializeStreamInfo();
-            }
-
-            let pushMore = true;
-            // Fetch loop: keep getting segments until the internal buffer is full
-            while (pushMore && !this.destroyed && !this.isEnded) {
-                pushMore = await this.fetchNextSegment();
-            }
-        } catch (error) {
-            if (!this.destroyed) {
-                console.error('[LiveStream] Fatal error:', error);
-                this.destroy(error instanceof Error ? error : new Error(String(error)));
-            }
-        } finally {
-            this.isFetching = false;
-        }
-    }
-
-    /**
-     * Parses the DASH manifest to find the Live Edge.
-     */
-    private async initializeStreamInfo(): Promise<void> {
-        console.log('[LiveStream] Fetching and parsing manifest...');
-        
-        const response = await this.innertube.session.http.fetch_function(this.manifestUrl, {
-            headers: Constants.STREAM_HEADERS,
-        });
-
-        if (!response.ok) throw new Error(`Failed to fetch manifest: ${response.status}`);
-        const xml = await response.text();
-
-        // --- 1. Find the BaseURL ---
-        // Supports standard <BaseURL> and namespaced <dash:BaseURL>
-        const baseUrlMatch = xml.match(/<(\w+:)?BaseURL>([^<]+)<\/(\w+:)?BaseURL>/);
-        if (baseUrlMatch) {
-            this.baseUrl = baseUrlMatch[2];
-            console.log('[LiveStream] Found BaseURL.');
-        }
-
-        // --- 2. Find the Start Number ---
-        // This is the sequence number of the first segment in the list
-        const startNumberMatch = xml.match(/startNumber="(\d+)"/);
-        let startSeq = startNumberMatch ? parseInt(startNumberMatch[1]) : 0;
-
-        // --- 3. Check for SegmentTemplate (Preferred) ---
-        // Look for media template string (e.g., "sq/$Number$")
-        const templateMatch = xml.match(/<(\w+:)?SegmentTemplate[^>]*media="([^"]+)"/);
-        if (templateMatch) {
-            this.segmentTemplate = templateMatch[2];
-        }
-
-        // --- 4. Calculate Live Edge using Timeline or SegmentList ---
-        // We need to count how many segments exist to find the END (Live)
-        
-        // Check for SegmentTimeline
-        const timelineMatch = xml.match(/<(\w+:)?SegmentTimeline>([\s\S]*?)<\/(\w+:)?SegmentTimeline>/);
-        
-        // Check for SegmentList (alternative to timeline)
-        const listMatch = xml.match(/<(\w+:)?SegmentList>([\s\S]*?)<\/(\w+:)?SegmentList>/);
-
-        let totalSegments = 0;
-
-        if (timelineMatch) {
-            const timelineStr = timelineMatch[2];
-            // <S d="..." r="N" /> means 1 segment + N repeats
-            const segments = timelineStr.match(/<(\w+:)?S [^>]*>/g) || [];
-            for (const seg of segments) {
-                const rMatch = seg.match(/r="(\d+)"/);
-                const r = rMatch ? parseInt(rMatch[1]) : 0;
-                totalSegments += (1 + r);
-            }
-        } else if (listMatch) {
-            // Count <SegmentURL> tags
-            const listStr = listMatch[2];
-            const segmentUrls = listStr.match(/<(\w+:)?SegmentURL/g) || [];
-            totalSegments = segmentUrls.length;
-        }
-
-        // --- 5. Set the Start Sequence ---
-        if (totalSegments > 0) {
-            // Start 3 segments from the end to ensure we have a buffer and don't hit 404s
-            this.currentSequence = startSeq + totalSegments - 3;
-            console.log(`[LiveStream] Calculated Live Edge: ${this.currentSequence} (Start: ${startSeq}, Segments: ${totalSegments})`);
-        } else {
-            // Fallback: If no timeline/list found, trust startSeq.
-            // Note: For some DVR streams, startSeq is 0 (beginning of time). 
-            // If this happens, we might need a different strategy, but usually YouTube updates startNumber.
-            this.currentSequence = startSeq;
-            console.warn(`[LiveStream] No timeline found. Starting at sequence ${this.currentSequence}`);
-        }
-
-        if (!this.baseUrl && !this.segmentTemplate) {
-            console.error('[LiveStream] XML Preview:', xml.substring(0, 500));
-            throw new Error('Manifest parsing failed: No BaseURL and no SegmentTemplate found.');
-        }
-    }
-
-    private async fetchNextSegment(): Promise<boolean> {
-        let segmentUrl = '';
-
-        if (this.segmentTemplate) {
-            // Option A: We have a template (e.g. sq/$Number$)
-            segmentUrl = this.segmentTemplate
-                .replace(/\$Number\$/g, this.currentSequence.toString())
-                .replace(/\$Time\$/g, (Date.now() * 1000).toString());
-            
-            // Handle relative URLs
-            if (!segmentUrl.startsWith('http')) {
-                if (this.baseUrl) {
-                    segmentUrl = this.baseUrl + segmentUrl;
-                } else {
-                    const manifestBase = this.manifestUrl.substring(0, this.manifestUrl.lastIndexOf('/') + 1);
-                    segmentUrl = manifestBase + segmentUrl;
-                }
-            }
-        } else {
-            // Option B: We only have BaseURL. Append 'sq' parameter.
-            // This handles the URL you provided.
-            const separator = this.baseUrl.includes('?') ? '&' : '?';
-            segmentUrl = `${this.baseUrl}${separator}sq=${this.currentSequence}`;
-        }
-
-        // AbortController to prevent hanging requests
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
-
-        try {
-            const response = await this.innertube.session.http.fetch_function(segmentUrl, {
+        async function initializeStreamInfo(): Promise<void> {
+            const response = await innertube.session.http.fetch_function(manifestUrl, {
                 headers: Constants.STREAM_HEADERS,
-                signal: controller.signal
             });
-            clearTimeout(timeout);
 
-            // 403 Forbidden: URL expired -> Regenerate Manifest
-            if (response.status === 403) {
-                console.log('[LiveStream] 403 Forbidden. Refreshing manifest...');
-                await this.handle403Error();
-                return true; // Retry immediately
+            if (!response.ok) throw new Error(`Failed to fetch manifest: ${response.status}`);
+            const xml = await response.text();
+
+            const baseUrlMatch = xml.match(/<(\w+:)?BaseURL>([^<]+)<\/(\w+:)?BaseURL>/);
+            if (baseUrlMatch) baseUrl = baseUrlMatch[2];
+
+            const startNumberMatch = xml.match(/startNumber="(\d+)"/);
+            let startSeq = startNumberMatch ? parseInt(startNumberMatch[1]) : 0;
+
+            const templateMatch = xml.match(/<(\w+:)?SegmentTemplate[^>]*media="([^"]+)"/);
+            if (templateMatch) segmentTemplate = templateMatch[2];
+
+            const timelineMatch = xml.match(/<(\w+:)?SegmentTimeline>([\s\S]*?)<\/(\w+:)?SegmentTimeline>/);
+            const listMatch = xml.match(/<(\w+:)?SegmentList>([\s\S]*?)<\/(\w+:)?SegmentList>/);
+
+            let totalSegments = 0;
+
+            if (timelineMatch) {
+                const segments = timelineMatch[2].match(/<(\w+:)?S [^>]*>/g) || [];
+                for (const seg of segments) {
+                    const rMatch = seg.match(/r="(\d+)"/);
+                    totalSegments += 1 + (rMatch ? parseInt(rMatch[1]) : 0);
+                }
+            } else if (listMatch) {
+                totalSegments = (listMatch[2].match(/<(\w+:)?SegmentURL/g) || []).length;
             }
 
-            // 404 Not Found: We are ahead of the server (Live Edge)
-            if (response.status === 404) {
-                // Wait briefly for the segment to be generated
-                await new Promise(r => setTimeout(r, 1500));
-                return true; // Retry same sequence
+            currentSequence = totalSegments > 0 ? startSeq + totalSegments - 3 : startSeq;
+
+            if (!baseUrl && !segmentTemplate) {
+                throw new Error('Manifest parsing failed: No BaseURL and no SegmentTemplate found.');
             }
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            if (!response.body) throw new Error('No body');
-
-            this.retryCount = 0;
-            
-            // Push audio data
-            for await (const chunk of Utils.streamToIterable(response.body)) {
-                this.push(Buffer.from(chunk));
+            if (segmentTemplate) {
+                useTemplate = true;
+                let resolvedTemplate = segmentTemplate;
+                if (!resolvedTemplate.startsWith('http')) {
+                    resolvedTemplate = baseUrl
+                        ? baseUrl + resolvedTemplate
+                        : manifestUrl.substring(0, manifestUrl.lastIndexOf('/') + 1) + resolvedTemplate;
+                }
+                const numberIdx = resolvedTemplate.indexOf('$Number$');
+                if (numberIdx !== -1) {
+                    segmentUrlPrefix = resolvedTemplate.substring(0, numberIdx);
+                    segmentUrlSuffix = resolvedTemplate.substring(numberIdx + '$Number$'.length);
+                } else {
+                    segmentUrlPrefix = resolvedTemplate;
+                    segmentUrlSuffix = '';
+                }
+            } else {
+                useTemplate = false;
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                segmentUrlPrefix = `${baseUrl}${separator}sq=`;
+                segmentUrlSuffix = '';
             }
+        }
 
-            // Increment sequence for next loop
-            this.currentSequence++;
-            return true;
+        async function handle403Error(): Promise<void> {
+            if (retryCount++ > MAX_LIVESTREAM_RETRY_ATTEMPT) throw new Error('Max retries reached');
 
-        } catch (error) {
-            clearTimeout(timeout);
-            const msg = error instanceof Error ? error.message : String(error);
-            
-            if (msg.includes('aborted')) {
-                console.log('[LiveStream] Fetch timed out, retrying...');
+            const newManifest = await generateManifestUrl(dashUrl, videoId, innertube);
+            if (newManifest) {
+                manifestUrl = newManifest;
+                const savedSeq = currentSequence;
+                currentSequence = -1;
+                await initializeStreamInfo();
+                if (savedSeq > 0) currentSequence = savedSeq;
+            }
+        }
+
+        async function fetchNextSegment(self: Readable): Promise<boolean> {
+            const segmentUrl = segmentUrlPrefix + currentSequence + segmentUrlSuffix;
+
+            abortController = new AbortController();
+            const timeout = setTimeout(() => abortController.abort(), 8000);
+
+            try {
+                const response = await innertube.session.http.fetch_function(segmentUrl, {
+                    headers: Constants.STREAM_HEADERS,
+                    signal: abortController.signal,
+                });
+                clearTimeout(timeout);
+
+                if (response.status === 403) {
+                    await handle403Error();
+                    return true;
+                }
+
+                if (response.status === 404) {
+                    await new Promise<void>((resolve, reject) => {
+                        const t = setTimeout(resolve, 1500);
+                        abortController.signal.addEventListener('abort', () => { clearTimeout(t); reject(); });
+                    });
+                    return true;
+                }
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (!response.body) throw new Error('No body');
+
+                retryCount = 0;
+
+                for await (const chunk of Utils.streamToIterable(response.body)) {
+                    if (self.destroyed) return false;
+                    self.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                }
+
+                currentSequence++;
+                return true;
+
+            } catch (error) {
+                clearTimeout(timeout);
+                const msg = error instanceof Error ? error.message : String(error);
+                if (msg.includes('aborted')) return false;
+                await new Promise<void>((resolve, reject) => {
+                    const t = setTimeout(resolve, 1000);
+                    abortController.signal.addEventListener('abort', () => { clearTimeout(t); reject(); });
+                });
                 return true;
             }
-
-            console.error(`[LiveStream] Error fetching seq ${this.currentSequence}:`, msg);
-            await new Promise(r => setTimeout(r, 1000));
-            return true;
         }
-    }
 
-    private async handle403Error(): Promise<void> {
-        if (this.retryCount++ > MAX_RETRY_ATTEMPTS) throw new Error('Max retries reached');
+        super({
+            highWaterMark: 512 * 1024,
+            async read() {
+                if (isFetching || isEnded) return;
+                isFetching = true;
 
-        const newManifest = await generateManifestUrl(this.dashUrl, this.videoId, this.innertube);
-        if (newManifest) {
-            this.manifestUrl = newManifest;
-            // Re-parse to get fresh BaseURL signatures, but keep our place in the stream (currentSequence)
-            const savedSeq = this.currentSequence;
-            this.currentSequence = -1; 
-            await this.initializeStreamInfo();
-            
-            // Restore sequence if we had one
-            if (savedSeq > 0) this.currentSequence = savedSeq;
-        }
+                try {
+                    if (currentSequence === -1) {
+                        await initializeStreamInfo();
+                    }
+
+                    let pushMore = true;
+                    while (pushMore && !this.destroyed && !isEnded) {
+                        pushMore = await fetchNextSegment(this);
+                    }
+                } catch (error) {
+                    if (!this.destroyed) {
+                        this.destroy(error instanceof Error ? error : new Error(String(error)));
+                    }
+                } finally {
+                    isFetching = false;
+                }
+            },
+            destroy(error, callback) {
+                isEnded = true;
+                abortController?.abort(error);
+                callback(error);
+            }
+        });
     }
 }
 
-/**
- * Entry Point
- */
 export async function createLiveStream(videoId: string): Promise<Readable | null> {
-    console.log(`[LiveStream] Starting live stream for video: ${videoId}`);
-
     try {
         const innertube = await getInnertube();
         const videoInfo = await innertube.getBasicInfo(videoId);
@@ -259,24 +205,18 @@ export async function createLiveStream(videoId: string): Promise<Readable | null
         }
 
         const dashUrl = videoInfo.streaming_data?.dash_manifest_url;
-        if (!dashUrl) {
-            console.error('[LiveStream] No DASH manifest URL found');
-            return null;
-        }
+        if (!dashUrl) return null;
 
-        // Generate Signed Manifest URL
         const manifestUrl = await generateManifestUrl(dashUrl, videoId, innertube);
         if (!manifestUrl) return null;
 
         return new SequenceBasedLiveStream(manifestUrl, videoId, dashUrl, innertube);
 
     } catch (error) {
-        console.error('[LiveStream] Fatal error:', error);
         return null;
     }
 }
 
-// Helper: Generate Signed URL
 async function generateManifestUrl(
     dashUrl: string,
     videoId: string,
@@ -290,7 +230,7 @@ async function generateManifestUrl(
         const url = await decipherLiveStreamUrl(dashUrl, innertube.session.player, poToken);
         return url.toString();
     } catch (error) {
-        if (attempt < MAX_RETRY_ATTEMPTS) {
+        if (attempt < MAX_LIVESTREAM_RETRY_ATTEMPT) {
             await new Promise(r => setTimeout(r, 1000));
             return generateManifestUrl(dashUrl, videoId, innertube, attempt + 1);
         }

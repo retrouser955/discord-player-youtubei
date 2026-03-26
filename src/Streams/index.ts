@@ -53,7 +53,6 @@ async function createAdaptiveStream(
     //--- Handling of Live Streams ---
     const videoInfo = await tube.getBasicInfo(videoId);
     if (videoInfo.basic_info.is_live) {
-        console.log("creating live stream");
         const stream = createLiveStream(videoId);
         return stream;
     }
