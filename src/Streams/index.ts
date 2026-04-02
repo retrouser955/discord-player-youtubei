@@ -51,8 +51,7 @@ async function createAdaptiveStream(
     const item = cache.get(itemKey);
 
     //--- Handling of Live Streams ---
-    const videoInfo = await tube.getBasicInfo(videoId);
-    if (videoInfo.basic_info.is_live) {
+    if (video.live) {
         const stream = createLiveStream(videoId);
         return stream;
     }

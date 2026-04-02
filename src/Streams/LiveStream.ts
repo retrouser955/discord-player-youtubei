@@ -13,7 +13,7 @@
 import { Readable } from 'stream';
 import { decipherLiveStreamUrl, getInnertube } from '../utils';
 import { getWebPoMinter, invalidateWebPoMinter } from '../Token/tokenGenerator';
-import { Platform, Types, Constants, Utils } from 'youtubei.js';
+import Innertube, { Platform, Types, Constants, Utils } from 'youtubei.js';
 import { MAX_LIVESTREAM_RETRY_ATTEMPT } from '../Constants';
 
 Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
@@ -25,7 +25,7 @@ Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, T
 };
 
 class SequenceBasedLiveStream extends Readable {
-    constructor(manifestUrl: string, videoId: string, dashUrl: string, innertube: any) {
+    constructor(manifestUrl: string, videoId: string, dashUrl: string, innertube: Innertube) {
         let isEnded: boolean = false;
         let isFetching: boolean = false;
         let retryCount: number = 0;
@@ -36,6 +36,7 @@ class SequenceBasedLiveStream extends Readable {
         let segmentUrlSuffix: string = '';
         let useTemplate: boolean = false;
         let abortController: AbortController;
+        let self: Readable;
 
         async function initializeStreamInfo(): Promise<void> {
             const response = await innertube.session.http.fetch_function(manifestUrl, {
@@ -112,7 +113,7 @@ class SequenceBasedLiveStream extends Readable {
             }
         }
 
-        async function fetchNextSegment(self: Readable): Promise<boolean> {
+        async function fetchNextSegment(): Promise<boolean> {
             const segmentUrl = segmentUrlPrefix + currentSequence + segmentUrlSuffix;
 
             abortController = new AbortController();
@@ -168,6 +169,7 @@ class SequenceBasedLiveStream extends Readable {
             async read() {
                 if (isFetching || isEnded) return;
                 isFetching = true;
+                self = this;
 
                 try {
                     if (currentSequence === -1) {
@@ -175,12 +177,12 @@ class SequenceBasedLiveStream extends Readable {
                     }
 
                     let pushMore = true;
-                    while (pushMore && !this.destroyed && !isEnded) {
-                        pushMore = await fetchNextSegment(this);
+                    while (pushMore && !self.destroyed && !isEnded) {
+                        pushMore = await fetchNextSegment();
                     }
                 } catch (error) {
-                    if (!this.destroyed) {
-                        this.destroy(error instanceof Error ? error : new Error(String(error)));
+                    if (!self.destroyed) {
+                        self.destroy(error instanceof Error ? error : new Error(String(error)));
                     }
                 } finally {
                     isFetching = false;
@@ -220,7 +222,7 @@ export async function createLiveStream(videoId: string): Promise<Readable | null
 async function generateManifestUrl(
     dashUrl: string,
     videoId: string,
-    innertube: any,
+    innertube: Innertube,
     attempt: number = 1
 ): Promise<string | null> {
     try {
