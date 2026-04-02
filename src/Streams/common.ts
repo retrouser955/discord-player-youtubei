@@ -1,4 +1,4 @@
-import { Readable, PassThrough, once } from "node:stream";
+import { Readable, PassThrough } from "node:stream";
 
 export const YOUTUBE_REGEX = /^https:\/\/(www\.)?youtu(\.be\/.{11}(.+)?|be\.com\/watch\?v=.{11}(&.+)?)/;
 
@@ -21,7 +21,7 @@ export function toNodeReadable(stream: any): Readable | null {
                 const { done, value } = await reader.read();
                 if (done) break;
                 if (value) {
-                    if (!nodeStream.write(Buffer.from(value))) await once(nodeStream, "drain");
+                    if (!nodeStream.write(Buffer.from(value))) await new Promise<void>((res) => nodeStream.once("drain", () => res()));
                 }
             }
         } finally {
