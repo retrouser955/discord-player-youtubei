@@ -12,6 +12,7 @@ import type { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenera
 import { AdaptiveStream } from "./AdaptiveStream";
 import { createSabrStream } from "./ServerAbrStream";
 import { getVideoId } from "./common";
+import { createLiveStream } from "./LiveStream";
 
 type VideoStreamerFunction = (videoInfo: Track) => Promise<Readable>;
 type InnertubeClient = Parameters<Innertube['getBasicInfo']>[1]['client'];
@@ -44,8 +45,17 @@ async function createAdaptiveStream(
     cache: DownloadUrlCache,
     getMinter: typeof getWebPoMinter
 ) {
-    const itemKey = cache.buildAdaptiveCacheKey(getVideoId(video.url));
+    const videoId = getVideoId(video.url);
+
+    const itemKey = cache.buildAdaptiveCacheKey(videoId);
     const item = cache.get(itemKey);
+
+    //--- Handling of Live Streams ---
+    if (video.live) {
+        const stream = createLiveStream(videoId);
+        return stream;
+    }
+    //--- End of Live Stream Handling ---
 
     if (item && RELIABLE_CLIENTS_STR.includes(item.client)) {
         return new AdaptiveStream(tube, item.url, item.cpn, item.size);

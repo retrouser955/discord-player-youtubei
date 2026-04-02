@@ -124,6 +124,7 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
         thumbnail: metadata.basic_info.thumbnail?.at(0)?.url || YOUTUBE_LOGO,
         description: metadata.basic_info.short_description,
         author: metadata.basic_info.author,
+        live: metadata.basic_info.is_live,
         duration: Util.buildTimeCode(Util.parseMS((metadata.basic_info.duration ?? 0) * 1000)),
         url: buildVideoUrl(videoId),
         requestedBy: getSearchContext().requestedBy,
