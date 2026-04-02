@@ -13,6 +13,9 @@ import { AdaptiveStream } from "./AdaptiveStream";
 import { createSabrStream } from "./ServerAbrStream";
 import { getVideoId } from "./common";
 import { createLiveStream } from "./LiveStream";
+import { createYoutubeDlStream, YtDLPError, YTDLPErrorType } from "./YoutubeDLStream";
+import { YoutubeOptions } from "../types";
+import { downloadPeer } from "./PeerStream";
 
 type VideoStreamerFunction = (videoInfo: Track) => Promise<Readable>;
 type InnertubeClient = Parameters<Innertube['getBasicInfo']>[1]['client'];
@@ -65,7 +68,7 @@ async function createAdaptiveStream(
     let firstRun = true;
 
     for (const client of RELIABLE_CLIENTS) {
-        if(!firstRun) {
+        if (!firstRun) {
             await wait(500)
         } else {
             firstRun = false;
@@ -91,7 +94,7 @@ async function createAdaptiveStream(
                 po_token: poToken
             });
 
-            if(!format.url || !format.content_length) continue;
+            if (!format.url || !format.content_length) continue;
             const url = client.requireDecipher ? await format.decipher(tube.session.player) : format.url!;
 
             // check if req will go through
@@ -100,7 +103,7 @@ async function createAdaptiveStream(
                 method: "HEAD"
             })
 
-            if(!willGoThrough.ok) continue;
+            if (!willGoThrough.ok) continue;
 
             const stream = new AdaptiveStream(tube, url, info.cpn, format.content_length);
 
@@ -111,25 +114,72 @@ async function createAdaptiveStream(
     }
 }
 
+export type Tried = "yt-dlp" | "adaptive" | "sabr" | "peer";
+
 export function createStreamFunction(
     innertube: Innertube,
     cache: DownloadUrlCache,
     getMinter: typeof getWebPoMinter,
-    invMinter: typeof invalidateWebPoMinter
+    invMinter: typeof invalidateWebPoMinter,
+    debug: (str: string) => unknown,
+    options: YoutubeOptions
 ): VideoStreamerFunction {
     return async (info) => {
-        try {
-            const stream = await createAdaptiveStream(info, innertube, cache, getMinter);
-            return stream;
-        } catch {
-            // no-op
+        let tried: Tried[] = [];
+
+        if (options.peer || options.peer.length !== 0) {
+            try {
+                debug("[YouTube]: Peers detected. Trying peer streaming ...")
+                const peer = options.peer[Math.floor(Math.random() * options.peer.length)];
+                const url = peer.parseUrl(getVideoId(info.url));
+                const headers = typeof peer.headers === "function" ? await peer.headers(url) : peer.headers;
+
+                debug(`[YouTube]: Attempting to stream from peer { url: ${url} } ...`)
+                const stream = downloadPeer(url, headers);
+                debug("[YouTube]: Stream extraction from peer successful.")
+
+                return stream
+            } catch (error) {
+                tried.push("peer");
+                debug("[YouTube]: Tried peer streaming but ran into an error.");
+                debug(error);
+            }
         }
 
         try {
+            debug("[YouTube]: Attempting to stream adaptive from YouTube ...")
+            const stream = await createAdaptiveStream(info, innertube, cache, getMinter);
+            debug("[YouTube]: Adaptive stream extraction successful.")
+            return stream;
+        } catch (error) {
+            tried.push("adaptive");
+            debug("[YouTube]: Tried adaptive stream but ran into an error.");
+            debug(error);
+        }
+
+        try {
+            debug("[YouTube]: Attempting to stream with server-abr.");
             const stream = createSabrStream(innertube, getMinter, invMinter, info, cache);
             return stream;
-        } catch {
-            
+        } catch (error) {
+            tried.push("sabr");
+            debug("[YouTube]: Tried SABR stream but ran into an error.");
+            debug(error);
         }
+
+        try {
+            debug("[YouTube]: Attempting to stream with yt-dlp if installed ...")
+            const stream = createYoutubeDlStream(info);
+            return stream;
+        } catch (error) {
+            if (!(error instanceof YtDLPError && error.type === YTDLPErrorType.NOT_INSTALLED)) {
+                tried.push("yt-dlp");
+                debug("[YouTube]: Tried yt-dlp but ran into an error.");
+                debug(error);
+            }
+            debug("[YouTube]: yt-dlp is not installed. Skipping ...");
+        }
+
+        throw new Error(`Tried ${tried.join(", ")} but could not extract any streams for Track { title: ${info.title}, url: ${info.url} }`);
     }
 }

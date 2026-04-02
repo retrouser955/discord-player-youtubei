@@ -4,6 +4,16 @@ Discord Player Youtubei is a youtube extractor for discord-player.
 
 # Installation
 
+## Extractorpack
+
+We recommend setting up [extractorpack](github.com/discord-player/extractorpack/) for managing your extractors. See the link above for instructions on how to use it.
+
+```bash
+npx --no extractorpack add discord-player-youtubei
+```
+
+## Manual
+
 You can install discord-player-youtubei via npm.
 
 ```bash
@@ -23,7 +33,14 @@ We strongly recommend using extractorpack to manage your extractors
 
 ## Registering via extractorpack
 
-(comming soon)
+```js
+// extractorpack.config.mjs
+import { defineConfig } from "@extractorpack/extractorpack"
+
+export default defineConfig({
+    "discord-player-youtubei": {}
+})
+```
 
 ## Registering manually
 
@@ -39,16 +56,14 @@ await player.extractors.register(YoutubeExtractor, {});
 export interface YoutubeOptions {
     // override the streaming behavior of youtube extractor
     createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;
-    // override the download options passed to youtubei.js
-    overrideDownloadOptions?: Types.DownloadOptions;
     // disable player fetching
     disablePlayer?: boolean;
     // add cookies
     cookie?: string;
-    // add proxy. will be removed soon
-    proxy?: ProxyAgent[];
-    // add peers
-    peer?: peerOptions[];
+    // add proxy
+    proxy?: ProxyAgent;
+    // add peers.
+    peer?: PeerOptions[];
 }
 ```
 
@@ -57,10 +72,7 @@ export interface YoutubeOptions {
 - [x] Implement metadata fetching
 - [x] Implement single video streaming
 - [x] Implement SABR streaming for single videos
-- [ ] Implement yt-dlp fallback if installed
-- [ ] Implement live streaming
-- [ ] Implement live streaming for SABR
-- [ ] Add support for extractorpack
-- [ ] Add ability to change stream behavior using options
-- [ ] Remove proxies
-- [ ] Implement streaming from peers
+- [x] Implement yt-dlp fallback if installed
+- [x] Implement live streaming
+- [x] Add support for extractorpack
+- [x] Implement streaming from peers

@@ -1,0 +1,11 @@
+# TypeScript source files
+src
+
+# Yarn
+.yarn
+.yarnrc.yml
+yarn.lock
+
+# TypeScript configuration files
+tsconfig.json
+tsdown.config.ts

@@ -1,7 +1,7 @@
 import { BG, GOOG_API_KEY, USER_AGENT, buildURL} from "bgutils-js";
 import { JSDOM, DOMWindow } from "jsdom";
 import { createCanvas, ImageData as CanvasImageData } from "@napi-rs/canvas";
-import Innertube from "youtubei.js/agnostic";
+import type Innertube from "youtubei.js";
 import { YOUTUBE_REQUEST_KEY } from "../Constants";
 
 let domWindow: DOMWindow;

@@ -1,6 +1,6 @@
 import { ProxyAgent } from "undici";
 import { YOUTUBE_REGEX } from "../Constants";
-import type { peerOptions, playlistObj, YoutubeOptions } from "../types";
+import type { PlaylistObj, YoutubeOptions } from "../types";
 import Innertube, { Platform, Types, Player } from "youtubei.js";
 import { once, PassThrough, Readable } from "node:stream";
 
@@ -29,7 +29,7 @@ export function getVideoId(url: string): string {
     return id;
 }
 
-export function getPlaylistId(url: string): playlistObj {
+export function getPlaylistId(url: string): PlaylistObj {
     const parsed = new URL(url);
     const playlistId = parsed.searchParams.get("list");
     const videoId = parsed.searchParams.get("v");
@@ -45,19 +45,12 @@ export function createYoutubeFetch(options?: YoutubeOptions): any {
     const f: typeof fetch = (input: URL | RequestInfo, init: RequestInit): Promise<Response> => {
         if (options?.proxy) {
             init ??= {};
-            (init as any).dispatcher = options.proxy[Math.floor(Math.random() * options.proxy.length)];
+            (init as any).dispatcher = options.proxy;
         }
         return Platform.shim.fetch(input, init);
     }
 
     return f;
-}
-
-export function createPeer(option: peerOptions): peerOptions {
-    return {
-        url: option.url,
-        parse: option.parse || ((url, id) => `${url}/${id}`),
-    }
 }
 
 export function toNodeReadable(stream: any): Readable | null {

@@ -19,7 +19,14 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
         this.protocols = ["yt", "youtube"];
         const fn = this.options.createStream;
         if (typeof fn === "function") this._stream = (q) => { return fn(q, this) };
-        else this._stream = createStreamFunction(this.innertube, cache, getWebPoMinter, invalidateWebPoMinter)
+        else this._stream = createStreamFunction(
+            this.innertube,
+            cache,
+            getWebPoMinter,
+            invalidateWebPoMinter,
+            this.context.player.debug,
+            this.options
+        );
     }
 
     public async deactivate(): Promise<void> {

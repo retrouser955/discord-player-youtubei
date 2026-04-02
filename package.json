@@ -1,29 +1,40 @@
 {
   "name": "discord-player-youtubei",
-  "version": "2.0.0",
+  "version": "3.0.0-beta.0",
   "description": "A YouTube extractor for discord-player",
   "main": "dist/index.js",
   "repository": "https://github.com/retrouser955/discord-player-youtubei",
   "author": "retro_ig",
   "license": "MIT",
-  "packageManager": "yarn@4.9.1+sha512.f95ce356460e05be48d66401c1ae64ef84d163dd689964962c6888a9810865e39097a5e9de748876c2e0bf89b232d583c33982773e9903ae7a76257270986538",
+  "packageManager": "yarn@4.9.1",
   "devDependencies": {
-    "@types/jsdom": "^27.0.0",
+    "@types/jsdom": "^28.0.1",
     "@types/node": "^25.5.0",
     "discord-player": "^7.1.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.21.7",
+    "typescript": "^6.0.2",
+    "youtube-dl-exec": "^3.1.4"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
     "bgutils-js": "^3.2.0",
     "googlevideo": "^4.0.4",
-    "jsdom": "^27.0.1",
-    "undici": "^7.15.0",
+    "jsdom": "^29.0.1",
+    "undici": "^8.0.0",
     "youtubei.js": "^17.0.1"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "prepare": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": {
+        "require": "./dist/index.d.cts",
+        "import": "./dist/index.d.mts"
+      }
+    }
   }
 }

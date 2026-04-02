@@ -1,3 +1,7 @@
+import { Log } from "youtubei.js";
+
+Log.setLevel(Log.Level.ERROR);
+
 export * from "./Classes";
 export * from "./Constants";
 export * from "./internal";

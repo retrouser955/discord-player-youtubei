@@ -11,11 +11,10 @@ export interface streamOptions {
 
 export interface YoutubeOptions {
     createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;
-    overrideDownloadOptions?: Types.DownloadOptions;
     disablePlayer?: boolean;
     cookie?: string;
-    proxy?: ProxyAgent[];
-    peer?: peerOptions[];
+    proxy?: ProxyAgent;
+    peer?: PeerOptions[];
 }
 
 export interface InitOptions {
@@ -27,13 +26,13 @@ export interface minterResult {
     mint?: (binding: string) => Promise<string>;
 }
 
-export interface playlistObj {
+export interface PlaylistObj {
     playlistId: string;
     videoId?: string;
     isMix?: boolean;
 }
 
-export interface peerOptions {
-    url: string;
-    parse?: (url: string, youtubeId: string) => string;
+export interface PeerOptions {
+    parseUrl: (youtubeId: string) => string;
+    headers?: HeadersInit | ((parsedUrl: string) => HeadersInit | Promise<HeadersInit>)
 }
