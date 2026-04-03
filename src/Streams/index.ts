@@ -127,7 +127,7 @@ export function createStreamFunction(
     return async (info) => {
         let tried: Tried[] = [];
 
-        if (options.peer || options.peer.length !== 0) {
+        if (options.peer && options.peer.length !== 0) {
             try {
                 debug("[YouTube]: Peers detected. Trying peer streaming ...")
                 const peer = options.peer[Math.floor(Math.random() * options.peer.length)];
