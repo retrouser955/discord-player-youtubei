@@ -24,7 +24,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
             cache,
             getWebPoMinter,
             invalidateWebPoMinter,
-            this.context.player.debug,
+            this.context.player.debug.bind(this.context.player),
             this.options
         );
     }

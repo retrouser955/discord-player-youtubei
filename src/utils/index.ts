@@ -2,7 +2,7 @@ import { ProxyAgent } from "undici";
 import { YOUTUBE_REGEX } from "../Constants";
 import type { PlaylistObj, YoutubeOptions } from "../types";
 import Innertube, { Platform, Types, Player } from "youtubei.js";
-import { once, PassThrough, Readable } from "node:stream";
+import { PassThrough, Readable } from "node:stream";
 
 let tube: Innertube|null = null;
 
@@ -63,7 +63,7 @@ export function toNodeReadable(stream: any): Readable | null {
                 const { done, value } = await reader.read();
                 if (done) break;
                 if (value) {
-                    if (!nodeStream.write(Buffer.from(value))) await once(nodeStream, "drain");
+                    if (!nodeStream.write(Buffer.from(value))) await new Promise<void>((res) => nodeStream.on("drain", () => res()));
                 }
             }
         } finally {
