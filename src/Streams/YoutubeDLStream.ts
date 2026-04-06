@@ -1,5 +1,5 @@
 import { Track } from 'discord-player';
-import youtubeDl, { JSRuntime } from 'youtube-dl-exec';
+import type { JSRuntime } from 'youtube-dl-exec';
 import { getVideoId } from './common';
 
 // There is no need to detect quickjs since we are running a bot.
@@ -37,6 +37,7 @@ export async function createYoutubeDlStream(track: Track) {
     const format = track.live ? "best[height<=360]" : "bestaudio";
     const id = getVideoId(track.url);
 
+    const youtubeDl = await import("youtube-dl-exec");
     // TODO: Add cookies
     const dl = youtubeDl.exec(`https://youtu.be/${id}`, {
         jsRuntimes: detectRuntime(),
