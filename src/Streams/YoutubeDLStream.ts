@@ -38,7 +38,7 @@ export async function createYoutubeDlStream(track: Track, ext: YoutubeExtractor)
     const format = track.live ? "best[height<=360]" : "bestaudio";
     const id = getVideoId(track.url);
 
-    const youtubeDl = await import("youtube-dl-exec");
+    const youtubeDl = (await import("youtube-dl-exec")).default;
     
     const dl = youtubeDl.exec(`https://youtu.be/${id}`, {
         jsRuntimes: detectRuntime(),
