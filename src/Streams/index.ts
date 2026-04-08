@@ -17,7 +17,7 @@ import { TrialItem } from "../types";
 const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor) => Promise<Readable>> = {
     "adaptive": async (info, ext) => {
         ext.context.player.debug("[YouTube]: Attempting to stream adaptive from YouTube ...")
-        const stream = await createAdaptiveStream(info, ext.context.player.debug);
+        const stream = await createAdaptiveStream(info, ext.context.player.debug.bind(ext.context.player));
         ext.context.player.debug("[YouTube]: Adaptive stream extraction successful.")
         return stream;
     },
@@ -60,7 +60,7 @@ export function createStreamFunction(
     extractor: YoutubeExtractor
 ): VideoStreamerFunction {
     const { options } = extractor;
-    const debug = extractor.context.player.debug;
+    const debug = extractor.context.player.debug.bind(extractor.context.player);
 
     return async (info) => {
         for (const method of options.downloads.trialOrder!) {
