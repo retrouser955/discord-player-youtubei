@@ -22,7 +22,7 @@ const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor)
         return stream;
     },
     "peer": async (info, ext) => {
-        if (ext.options.peer.length > 0) {
+        if (ext.options.peer?.length > 0) {
             ext.context.player.debug("[YouTube]: Peers detected. Trying peer streaming ...")
             const peer = ext.options.peer[Math.floor(Math.random() * ext.options.peer.length)];
             const url = peer.parseUrl(getVideoId(info.url));
@@ -60,7 +60,6 @@ export function createStreamFunction(
     extractor: YoutubeExtractor
 ): VideoStreamerFunction {
     const { options } = extractor;
-    const debug = extractor.context.player.debug.bind(extractor.context.player);
 
     return async (info) => {
         for (const method of options.downloads.trialOrder!) {
@@ -70,8 +69,8 @@ export function createStreamFunction(
                 const stream = await streamFunc(info, extractor);
                 return stream;
             } catch (error) {
-                debug("[YouTube]: Stream extraction of " + createJsonLikeDebug(info) + " failed with the method " + method);
-                debug(error);
+                extractor.context.player.debug("[YouTube]: Stream extraction of " + createJsonLikeDebug(info) + " failed with the method " + method);
+                extractor.context.player.debug(error);
             }
         }
     }
