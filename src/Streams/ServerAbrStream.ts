@@ -1,23 +1,25 @@
 import { Constants, type YT, YTNodes } from "youtubei.js";
 import type Innertube from "youtubei.js";
 import { getVideoId, toNodeReadable } from "./common";
-import type { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
+import { getWebPoMinter, invalidateWebPoMinter } from "../Token/tokenGenerator";
 import { SabrFormat } from "googlevideo/shared-types";
 import { SabrStream, SabrStreamConfig } from "googlevideo/sabr-stream";
 import { buildSabrFormat } from "googlevideo/utils";
 import { Readable } from "node:stream";
 import { Track } from "discord-player";
 import { SabrPlaybackOptions } from "googlevideo/sabr-stream";
-import { type DownloadUrlCache } from "../Cache/DownloadCache";
+import { cache } from "../Cache/DownloadCache";
 import { EnabledTrackTypes } from "googlevideo/utils";
+import { getInnertube } from "../utils";
 
 export const DEFAULT_OPTIONS: SabrPlaybackOptions = {
     audioQuality: "AUDIO_QUALITY_MEDIUM",
     enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY,
 }
 
-export async function createSabrStream(innertube: Innertube, webMinter: typeof getWebPoMinter, invMinter: typeof invalidateWebPoMinter,  video: Track, cache: DownloadUrlCache): Promise<Readable | null> {
+export async function createSabrStream(video: Track): Promise<Readable | null> {
     let accountInfo: YT.AccountInfo | null;
+    const innertube = await getInnertube();
     const videoId: string = getVideoId(video.url);
     let serverAbrStream: SabrStream;
 
@@ -28,7 +30,7 @@ export async function createSabrStream(innertube: Innertube, webMinter: typeof g
     }
 
     const dataSyncId = accountInfo?.contents?.contents[0]?.endpoint?.payload?.supportedTokens?.[2]?.datasyncIdToken?.datasyncIdToken ?? innertube.session.context.client.visitorData;
-    const minter = await webMinter(innertube);
+    const minter = await getWebPoMinter(innertube);
     const contentPoToken = await minter.mint(videoId);
     const poToken = await minter.mint(dataSyncId);
 
@@ -98,7 +100,7 @@ export async function createSabrStream(innertube: Innertube, webMinter: typeof g
             protectionFailureCount = Math.min(protectionFailureCount + 1, 10);
 
             try {
-                const rotationMinter = await webMinter(innertube, { forceRefresh: protectionFailureCount >= 3 });
+                const rotationMinter = await getWebPoMinter(innertube, { forceRefresh: protectionFailureCount >= 3 });
                 const placeholderToken = rotationMinter.generatePlaceholder(videoId);
                 serverAbrStream.setPoToken(placeholderToken);
                 const mintedPoToken = await rotationMinter.mint(videoId);
@@ -108,7 +110,7 @@ export async function createSabrStream(innertube: Innertube, webMinter: typeof g
             }
         } else if (statusUpdate.status === 3) {
             console.error("Stream protection rejected token (SPS 3). Resetting Botguard.");
-            invMinter();
+            invalidateWebPoMinter();
         } else {
             protectionFailureCount = 0;
         }

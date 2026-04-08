@@ -1,6 +1,7 @@
 import { Track } from 'discord-player';
 import type { JSRuntime } from 'youtube-dl-exec';
 import { getVideoId } from './common';
+import { YoutubeExtractor } from '../Classes';
 
 // There is no need to detect quickjs since we are running a bot.
 export function detectRuntime(): JSRuntime {
@@ -31,20 +32,21 @@ export class YtDLPError extends Error {
     }
 }
 
-export async function createYoutubeDlStream(track: Track) {
+export async function createYoutubeDlStream(track: Track, ext: YoutubeExtractor) {
     if(!await isYoutubeDlInstalled()) throw new YtDLPError(YTDLPErrorType.NOT_INSTALLED, "Youtube-DL is not installed");
 
     const format = track.live ? "best[height<=360]" : "bestaudio";
     const id = getVideoId(track.url);
 
     const youtubeDl = await import("youtube-dl-exec");
-    // TODO: Add cookies
+    
     const dl = youtubeDl.exec(`https://youtu.be/${id}`, {
         jsRuntimes: detectRuntime(),
         format,
         output: "-",
         noWarnings: true,
-        noProgress: true
+        noProgress: true,
+        cookies: ext.options.downloads?.ytdlp?.cookiePath,
     })
 
     dl.catch((e) => {

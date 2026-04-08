@@ -1,3 +1,4 @@
+import { Track } from "discord-player";
 import { Readable, PassThrough } from "node:stream";
 
 export const YOUTUBE_REGEX = /^https:\/\/(www\.)?youtu(\.be\/.{11}(.+)?|be\.com\/watch\?v=.{11}(&.+)?)/;
@@ -9,6 +10,10 @@ export function getVideoId(url: string): string {
     if (!id) id = url.split("/").at(-1)?.split("?").at(0);
 
     return id;
+}
+
+export function createJsonLikeDebug(track: Track) {
+    return `{ title: ${track.title}, url: ${track.url} }`;
 }
 
 export function toNodeReadable(stream: any): Readable | null {

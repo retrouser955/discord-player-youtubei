@@ -9,12 +9,22 @@ export interface streamOptions {
     client?: Types.InnerTubeClient | ((track: Track) => Types.InnerTubeClient);
 }
 
+export interface YoutubeDlOptions {
+    cookiePath?: string;
+}
+
+export type TrialItem = "peer" | "adaptive" | "sabr" | "yt-dlp";
+
 export interface YoutubeOptions {
     createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;
     disablePlayer?: boolean;
     cookie?: string;
     proxy?: ProxyAgent;
     peer?: PeerOptions[];
+    downloads?: {
+        trialOrder?: TrialItem[];
+        ytdlp?: YoutubeDlOptions;
+    }
 }
 
 export interface InitOptions {
