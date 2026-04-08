@@ -14,9 +14,8 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 
     public async activate(): Promise<void> {
         if(!this.options) this.options = {};
-        if(!this.options.downloads) this.options.downloads = {
-            trialOrder: ["peer", "adaptive", "sabr", "yt-dlp"]
-        };
+        if(!this.options.downloads) this.options.downloads = {};
+        if(!this.options.downloads.trialOrder) this.options.downloads.trialOrder = ["peer", "adaptive", "sabr", "yt-dlp"];
 
         if(!Array.isArray(this.options.downloads.trialOrder)) throw new Error("Invalid trial order for downloads. Expected an array of strings.");
         if(this.options.downloads.trialOrder.length === 0) throw new Error("Trial order for downloads cannot be empty.");
