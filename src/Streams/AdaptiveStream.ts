@@ -8,7 +8,7 @@ import { createLiveStream } from "./LiveStream";
 import { cache } from "../Cache/DownloadCache";
 import { getWebPoMinter } from "../Token/tokenGenerator";
 
-const wait = (ms: number) => new Promise((res) => setInterval(res, ms));
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 const RELIABLE_CLIENTS: { client: Types.InnerTubeClient, requirePoToken: boolean, requireDecipher: boolean }[] = [
     {
@@ -180,7 +180,7 @@ export class AdaptiveStreamFmt {
                     }
                 },
                 destroy() {
-                    abortController2.abort();
+                    abortController2?.abort();
                 }
             });
         }
