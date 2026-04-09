@@ -13,12 +13,13 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     private interval: NodeJS.Timeout | undefined;
 
     public async activate(): Promise<void> {
-        this.options.downloads ??= {
-            trialOrder: ["peer", "adaptive", "sabr", "yt-dlp"]
-        };
+        if(!this.options) this.options = {};
+        if(!this.options.downloads) this.options.downloads = {};
+        if(!this.options.downloads.trialOrder) this.options.downloads.trialOrder = ["peer", "adaptive", "sabr", "yt-dlp"];
 
-        if(this.options.downloads.trialOrder.length > 4) throw new Error("trialOrder must have an array length of no more than 4.");
-        if((new Set(this.options.downloads.trialOrder).size !== this.options.downloads.trialOrder.length)) throw new Error("trialOrder contains duplicates.")
+        if(!Array.isArray(this.options.downloads.trialOrder)) throw new Error("Invalid trial order for downloads. Expected an array of strings.");
+        if(this.options.downloads.trialOrder.length === 0) throw new Error("Trial order for downloads cannot be empty.");
+        if(new Set(this.options.downloads.trialOrder).size !== this.options.downloads.trialOrder.length) throw new Error("Trial order for downloads cannot contain duplicate values.");
 
         this.innertube = await getInnertube(this.options);
 
