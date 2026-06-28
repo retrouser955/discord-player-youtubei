@@ -1,9 +1,37 @@
-import Innertube, { YT, YTNodes } from "youtubei.js";
+import Innertube, { Helpers, YT, YTNodes } from "youtubei.js";
 import { YoutubeExtractor } from "../Classes";
-import { buildPlaylistUrl, buildVideoUrl, getInnertube } from "../utils";
+import { buildPlaylistUrl, buildVideoUrl, getInnertube, assertNever } from "../utils";
 import { Playlist, QueryType, Track, Util } from "discord-player";
 import { getSearchContext } from "./ContextProvider";
 import { YOUTUBE_LOGO } from "../Constants";
+
+export type TrackLikeNode = YTNodes.Video | YTNodes.PlaylistVideo | (YTNodes.LockupView & { content_type: "VIDEO" });
+
+export function isTrackLikeNode(node: Helpers.YTNode): node is TrackLikeNode {
+    return node.is(YTNodes.Video) ||
+        node.is(YTNodes.PlaylistVideo) ||
+        (node.is(YTNodes.LockupView) && node.content_type === "VIDEO");
+}
+
+export function buildTracks(nodes: Helpers.YTNode[], ext: YoutubeExtractor, pl?: Playlist): Track[] {
+    return nodes
+        .filter(isTrackLikeNode)
+        .map(vid => {
+            const track = buildTrackFromTrackLikeNode(vid, ext);
+            return pl ? enrichTrackWithPlaylistData(track, pl) : track;
+        });
+}
+
+export function buildTrackFromTrackLikeNode(vid: TrackLikeNode, ext: YoutubeExtractor): Track {
+    if (vid.is(YTNodes.Video)) {
+        return buildTrackFromVideo(vid, ext);
+    } else if (vid.is(YTNodes.PlaylistVideo)) {
+        return buildTrackFromPlaylistVideo(vid, ext);
+    } else if (vid.is(YTNodes.LockupView)) {
+        return buildTrackFromLockupView(vid, ext);
+    }
+    assertNever(vid);
+}
 
 export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): Track {
     return new Track(ext.context.player, {
@@ -20,28 +48,41 @@ export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): 
     });
 }
 
-export function buildTrackFromPlaylistVideo(vid: YTNodes.PlaylistVideo, pl: Playlist, ext: YoutubeExtractor): Track {
+export function buildTrackFromPlaylistVideo(vid: YTNodes.PlaylistVideo, ext: YoutubeExtractor): Track {
     return new Track(ext.context.player, {
         title: vid.title.text ?? "UNKNOWN TITLE",
         url: buildVideoUrl(vid.id),
         duration: Util.buildTimeCode(Util.parseMS((vid.duration?.seconds ?? 0) * 1000)),
-        thumbnail: vid.thumbnails[0]?.url,
+        thumbnail: vid.thumbnails?.at(0)?.url ?? YOUTUBE_LOGO,
         author: vid.author.name ?? "UNKNOWN AUTHOR",
         requestedBy: getSearchContext().requestedBy,
         source: "youtube",
         queryType: QueryType.YOUTUBE_VIDEO,
         live: vid.is_live,
-        playlist: pl,
         async requestMetadata() { return this.raw },
     });
 }
 
+export function buildTrackFromLockupView(vid: YTNodes.LockupView, ext: YoutubeExtractor): Track {
+    if (vid.content_type === "VIDEO") {
+        return new Track(ext.context.player, {
+            title: vid.metadata?.title?.text ?? "UNKNOWN TITLE",
+            url: buildVideoUrl(vid.content_id),
+            thumbnail: extractThumbnailFromLockupView(vid) ?? YOUTUBE_LOGO,
+            requestedBy: getSearchContext().requestedBy,
+            source: "youtube",
+            queryType: QueryType.YOUTUBE_VIDEO,
+            async requestMetadata() { return this.raw },
+        });
+    }
+
+    throw new Error(`Unable to build track from unsupported LockupView type: ${vid.content_type}`);
+}
+
 export async function search(term: string, ext: YoutubeExtractor): Promise<any> {
     const tube: Innertube = await getInnertube();
-    return ((await tube.search(term)).videos
-        .filter(vid => vid.is(YTNodes.Video))
-        .map(vid => buildTrackFromVideo(vid, ext))
-    );
+    const searchResult = await tube.search(term);
+    return buildTracks(searchResult.videos, ext);
 }
 
 export async function getMixedPlaylist(playlistId: string, videoId: string, ext: YoutubeExtractor): Promise<Playlist> {
@@ -72,7 +113,7 @@ export async function getMixedPlaylist(playlistId: string, videoId: string, ext:
         source: "youtube",
     });
 
-    pl.tracks = mixVidInfo.playlist.contents.filter(v => v.is(YTNodes.PlaylistVideo)).map(v => buildTrackFromPlaylistVideo(v, pl, ext));
+    pl.tracks = buildTracks(mixVidInfo.playlist.contents, ext, pl);
     return pl;
 }
 
@@ -83,7 +124,7 @@ export async function getPlaylist(playlistId: string, ext: YoutubeExtractor): Pr
 
     const pl: Playlist = new Playlist(ext.context.player, {
         title: playlist.info.title ?? "UNKNOWN PLAYLIST",
-        thumbnail: playlist.info.thumbnails[0].url,
+        thumbnail: playlist.info.thumbnails?.at(0)?.url,
         description: playlist.info.description ?? "UNKNOWN DESCRIPTION",
         author: {
             name: playlist.info.author.name ?? playlist.channels[0]?.author?.name ?? "UNKNOWN AUTHOR",
@@ -96,20 +137,15 @@ export async function getPlaylist(playlistId: string, ext: YoutubeExtractor): Pr
         source: "youtube",
     });
 
-    const parsedTrack = playlist.videos
-        .filter(v => v.is(YTNodes.PlaylistVideo))
-        .map(v => buildTrackFromPlaylistVideo(v, pl, ext));
+    const parsedTracks = buildTracks(playlist.videos, ext, pl);
 
     while (playlist.has_continuation) {
         playlist = await playlist.getContinuation();
-        const tracks = playlist.videos
-            .filter(v => v.is(YTNodes.PlaylistVideo))
-            .map(v => buildTrackFromPlaylistVideo(v, pl, ext));
-
-        parsedTrack.push(...tracks);
+        const tracks = buildTracks(playlist.videos, ext, pl);
+        parsedTracks.push(...tracks);
     }
 
-    pl.tracks = parsedTrack;
+    pl.tracks = parsedTracks;
     return pl;
 }
 
@@ -119,7 +155,7 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
 
     const ytTrack = new Track(ext.context.player, {
         title: metadata.basic_info.title,
-        thumbnail: metadata.basic_info.thumbnail?.at(0)?.url || YOUTUBE_LOGO,
+        thumbnail: metadata.basic_info.thumbnail?.at(0)?.url ?? YOUTUBE_LOGO,
         description: metadata.basic_info.short_description,
         author: metadata.basic_info.author,
         live: metadata.basic_info.is_live,
@@ -131,4 +167,22 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
     });
 
     return ytTrack;
+}
+
+function enrichTrackWithPlaylistData(track: Track, pl: Playlist): Track {
+    track.playlist = pl;
+    track.queryType = QueryType.YOUTUBE_PLAYLIST;
+    return track;
+}
+
+function extractThumbnailFromLockupView(vid: YTNodes.LockupView): string | undefined {
+    let thumbnailUrl: string | undefined;
+
+    if (vid.content_image?.is(YTNodes.CollectionThumbnailView)) {
+        thumbnailUrl = vid.content_image?.primary_thumbnail?.image?.at(0)?.url;
+    } else if (vid.content_image?.is(YTNodes.ThumbnailView)) {
+        thumbnailUrl = vid.content_image?.image?.at(0)?.url;
+    }
+
+    return thumbnailUrl;
 }

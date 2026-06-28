@@ -83,6 +83,10 @@ export function isUrl(input: string) {
     }
 }
 
+export function assertNever(value: never): never {
+    throw new Error(`Unexpected object: ${value}`);
+}
+
 Platform.shim.eval = async (data: Types.BuildScriptResult, env: Record<string, Types.VMPrimative>) => {
     const properties = [];
     if (env.n) properties.push(`n: exportedVars.nFunction("${env.n}")`);
