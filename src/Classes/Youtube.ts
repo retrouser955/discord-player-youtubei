@@ -103,6 +103,16 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
         });
     }
 
+    async bridge(track: Track): Promise<ExtractorStreamable | null> {
+        const results = await runWithSearchContext(
+            { requestedBy: track.requestedBy, type: QueryType.YOUTUBE_SEARCH },
+            () => search(this.createBridgeQuery(track), this)
+        );
+        const bridgedTrack = results[0];
+
+        return bridgedTrack ? this.stream(bridgedTrack) : null;
+    }
+
     async stream(info: Track): Promise<ExtractorStreamable> {
         return this._stream(info);
     }

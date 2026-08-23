@@ -127,16 +127,22 @@ export class AdaptiveStreamFmt {
 
         if (size < TEN_MB) {
             const stream = new Readable({
-                destroy: () => {
+                read() {},
+                destroy(err, callback) {
                     abortController.abort();
+                    callback(err);
                 }
             });
 
             (async () => {
-                for await (const chunk of Utils.streamToIterable(chunks.body)) {
-                    stream.push(Buffer.from(chunk));
+                try {
+                    for await (const chunk of Utils.streamToIterable(chunks.body)) {
+                        stream.push(Buffer.from(chunk));
+                    }
+                    stream.push(null);
+                } catch (error) {
+                    stream.destroy(error instanceof Error ? error : new Error(String(error)));
                 }
-                stream.push(null);
             })()
 
             return stream;
@@ -179,8 +185,9 @@ export class AdaptiveStreamFmt {
                         end += TEN_MB;
                     }
                 },
-                destroy() {
+                destroy(err, callback) {
                     abortController2?.abort();
+                    callback(err);
                 }
             });
         }
