@@ -3,6 +3,7 @@ import type { Track } from "discord-player";
 import type { Readable } from "node:stream";
 import type { YoutubeExtractor } from "../Classes";
 import type { ProxyAgent } from "undici";
+import { ClientList } from "simple-ytdl-core";
 
 export interface streamOptions {
     highWaterMark?: number;
@@ -24,6 +25,9 @@ export interface YoutubeOptions {
     downloads?: {
         trialOrder?: TrialItem[];
         ytdlp?: YoutubeDlOptions;
+        adaptiveStream?: {
+            customClientOrder?: ClientList;
+        }
     }
 }
 

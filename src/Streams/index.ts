@@ -40,7 +40,7 @@ const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor)
         }
     },
     adaptive: async (info, ext) => {
-        const stream = await createAdaptiveStreamMultiStep(ext.innertube, getVideoId(info.url));
+        const stream = await createAdaptiveStreamMultiStep(ext.innertube, getVideoId(info.url), ext.options.downloads?.adaptiveStream?.customClientOrder);
         return stream;
     },
     sabr: async (info, ext) => {
