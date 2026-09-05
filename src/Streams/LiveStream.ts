@@ -12,7 +12,7 @@
 
 import { Readable } from 'stream';
 import { decipherLiveStreamUrl, getInnertube } from '../utils';
-import { getWebPoMinter, invalidateWebPoMinter } from '../Token/tokenGenerator';
+import { BotGuardSimplified } from 'simple-ytdl-core';
 import Innertube, { Platform, Types, Constants, Utils } from 'youtubei.js';
 import { MAX_LIVESTREAM_RETRY_ATTEMPT } from '../Constants';
 
@@ -226,9 +226,8 @@ async function generateManifestUrl(
     attempt: number = 1
 ): Promise<string | null> {
     try {
-        invalidateWebPoMinter();
-        const minter = await getWebPoMinter(innertube);
-        const poToken = await minter.mint(videoId);
+        const botguard = await BotGuardSimplified.create(innertube);
+        const poToken = await botguard.createBindingToken(videoId);
         const url = await decipherLiveStreamUrl(dashUrl, innertube.session.player, poToken);
         return url.toString();
     } catch (error) {

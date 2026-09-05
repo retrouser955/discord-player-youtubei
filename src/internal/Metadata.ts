@@ -3,9 +3,7 @@ import { YoutubeExtractor } from "../Classes";
 import { buildPlaylistUrl, buildVideoUrl, getInnertube } from "../utils";
 import { Playlist, QueryType, Track, Util } from "discord-player";
 import { getSearchContext } from "./ContextProvider";
-import { DEFAULT_EXPIRE_DURATION, YOUTUBE_LOGO } from "../Constants";
-import { buildSabrFormat } from "googlevideo/utils";
-import { AdaptiveItem, buildAdaptiveCacheKey, buildSabrCacheKey, cache, ServerAbrItem } from "../Cache/DownloadCache";
+import { YOUTUBE_LOGO } from "../Constants";
 
 export function buildTrackFromVideo(vid: YTNodes.Video, ext: YoutubeExtractor): Track {
     return new Track(ext.context.player, {
@@ -131,29 +129,6 @@ export async function getVideo(videoId: string, ext: YoutubeExtractor) {
         queryType: QueryType.YOUTUBE_VIDEO,
         source: "youtube",
     });
-
-    try {
-        // Note: WEB rarely return adaptive format these days. Let's just cache sabr for WEB clients
-
-        const serverAbrStreamingUrl = await tube.session.player?.decipher(metadata.streaming_data?.server_abr_streaming_url);
-        const uStreamConfig = metadata.player_config?.media_common_config.media_ustreamer_request_config?.video_playback_ustreamer_config;
-        const sabrFormat = metadata.streaming_data.adaptive_formats.map(buildSabrFormat) || [];
-
-        if (serverAbrStreamingUrl && uStreamConfig) {
-            const urlParsed = new URL(serverAbrStreamingUrl);
-            let expire = Number(urlParsed.searchParams.get("expire") || "0");
-            if (!expire && isNaN(expire)) expire = DEFAULT_EXPIRE_DURATION;
-
-            cache.set(buildSabrCacheKey(videoId), {
-                expire,
-                url: serverAbrStreamingUrl,
-                sabrFormat,
-                uStreamConfig
-            })
-        }
-    } catch {
-        // no-op
-    }
 
     return ytTrack;
 }

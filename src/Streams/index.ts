@@ -6,21 +6,14 @@
  */
 import type { Track } from "discord-player";
 import type { Readable } from "node:stream";
-import { createSabrStream } from "./ServerAbrStream";
 import { createJsonLikeDebug, getVideoId } from "./common";
 import { createYoutubeDlStream, YtDLPError, YTDLPErrorType } from "./YoutubeDLStream";
 import { downloadPeer } from "./PeerStream";
 import { type YoutubeExtractor } from "../Classes";
-import { createAdaptiveStream } from "./AdaptiveStream";
 import { TrialItem } from "../types";
+import { createAdaptiveStreamMultiStep, createSabrStream } from "simple-ytdl-core";
 
 const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor) => Promise<Readable>> = {
-    "adaptive": async (info, ext) => {
-        ext.context.player.debug("[YouTube]: Attempting to stream adaptive from YouTube ...")
-        const stream = await createAdaptiveStream(info, ext.context.player.debug.bind(ext.context.player));
-        ext.context.player.debug("[YouTube]: Adaptive stream extraction successful.")
-        return stream;
-    },
     "peer": async (info, ext) => {
         if (ext.options.peer?.length > 0) {
             ext.context.player.debug("[YouTube]: Peers detected. Trying peer streaming ...")
@@ -35,11 +28,6 @@ const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor)
             return stream
         } else throw new Error("No peers configured.")
     },
-    "sabr": async (info, ext) => {
-        ext.context.player.debug("[YouTube]: Attempting to stream with server-abr.");
-        const stream = await createSabrStream(info);
-        return stream;
-    },
     "yt-dlp": async (info, ext) => {
         try {
             ext.context.player.debug("[YouTube]: Attempting to stream with yt-dlp if installed ...")
@@ -50,6 +38,14 @@ const VIDEO_STREAMER_MAP: Record<TrialItem, (info: Track, ext: YoutubeExtractor)
                 ext.context.player.debug("[YouTube]: yt-dlp is not installed. Skipping.")
             } else throw error;
         }
+    },
+    adaptive: async (info, ext) => {
+        const stream = await createAdaptiveStreamMultiStep(ext.innertube, getVideoId(info.url));
+        return stream;
+    },
+    sabr: async (info, ext) => {
+        const stream = await createSabrStream(ext.innertube, getVideoId(info.url));
+        return stream;
     }
 } as const;
 

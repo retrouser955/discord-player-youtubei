@@ -13,7 +13,7 @@ export interface YoutubeDlOptions {
     cookiePath?: string;
 }
 
-export type TrialItem = "peer" | "adaptive" | "sabr" | "yt-dlp";
+export type TrialItem = "adaptive" | "sabr" | "peer" | "yt-dlp";
 
 export interface YoutubeOptions {
     createStream?: (q: Track, ext: YoutubeExtractor) => Promise<string|Readable>;

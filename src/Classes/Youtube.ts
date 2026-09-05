@@ -5,6 +5,7 @@ import { getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import { getMixedPlaylist, getPlaylist, getVideo, runWithSearchContext, search } from "../internal";
 import { createStreamFunction } from "../Streams";
 import { isYoutubeDlInstalled } from "../Streams/YoutubeDLStream";
+import { ytdlDebugger } from "simple-ytdl-core";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     public static identifier: string = "com.retrouser955.discord-player.discord-player-youtubei";
@@ -13,6 +14,9 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
     private interval: NodeJS.Timeout | undefined;
 
     public async activate(): Promise<void> {
+        ytdlDebugger.onDebug((text) => {
+            this.context.player.debug.bind(this.context.player)(text);
+        })
         if(!this.options) this.options = {};
         if(!this.options.downloads) this.options.downloads = {};
         if(!this.options.downloads.trialOrder) this.options.downloads.trialOrder = ["peer", "adaptive", "sabr", "yt-dlp"];
