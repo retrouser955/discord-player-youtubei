@@ -1,9 +1,12 @@
 {
 	"name": "discord-player-youtubei",
-	"version": "3.1.0-beta.1",
+	"version": "3.1.0",
 	"description": "A YouTube extractor for discord-player",
 	"main": "dist/index.js",
-	"repository": "https://github.com/retrouser955/discord-player-youtubei",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/retrouser955/discord-player-youtubei.git"
+	},
 	"author": "retro_ig",
 	"license": "MIT",
 	"packageManager": "yarn@4.9.1",
@@ -25,7 +28,7 @@
 		"format": "biome format --write",
 		"lint": "biome lint",
 		"lint:fix": "biome lint --write",
-		"format-and-lint:fix": "npm run format && npm run lint:fix"
+		"format-and-lint:fix": "npm run lint:fix && npm run format"
 	},
 	"exports": {
 		".": {

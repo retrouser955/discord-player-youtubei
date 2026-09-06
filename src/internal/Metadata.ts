@@ -50,7 +50,7 @@ export function buildTrackFromTrackLikeNode(
 }
 
 export function buildTrackFromVideo(
-	vid: YTNodes.Video,
+	vid: YTNodes.Video | YTNodes.CompactVideo,
 	ext: YoutubeExtractor,
 ): Track {
 	return new Track(ext.context.player, {
@@ -65,7 +65,7 @@ export function buildTrackFromVideo(
 		source: "youtube",
 		queryType: QueryType.YOUTUBE_VIDEO,
 		live: vid.is_live,
-		description: vid.description.toString() || "",
+		description: vid.is(YTNodes.CompactVideo) ? undefined : vid.description,
 	});
 }
 

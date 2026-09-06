@@ -3,6 +3,7 @@ import {
 	type ExtractorInfo,
 	type ExtractorSearchContext,
 	type ExtractorStreamable,
+	type GuildQueueHistory,
 	QueryType,
 	type SearchQueryType,
 	type Track,
@@ -11,6 +12,7 @@ import type { YoutubeOptions } from "../types";
 import type Innertube from "youtubei.js";
 import { getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import {
+	buildTrackFromVideo,
 	getMixedPlaylist,
 	getPlaylist,
 	getVideo,
@@ -21,6 +23,7 @@ import { createStreamFunction } from "../Streams";
 import { isYoutubeDlInstalled } from "../Streams/YoutubeDLStream";
 import { ytdlDebugger } from "simple-ytdl-core";
 import type { Readable } from "node:stream";
+import { YTNodes } from "youtubei.js";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	public static identifier: string =
@@ -175,6 +178,35 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 		const bridgedTrack = results[0];
 
 		return bridgedTrack ? this.stream(bridgedTrack) : null;
+	}
+
+	async getRelatedTracks(
+		track: Track,
+		history: GuildQueueHistory,
+	): Promise<ExtractorInfo> {
+		const id = getVideoId(track.url);
+
+		const info = await this.innertube.getInfo(id);
+		const next = info.watch_next_feed;
+
+		if (!next) return this.createResponse();
+
+		const recommended = next.filter(
+			(v) =>
+				v.is(YTNodes.CompactVideo) &&
+				!history.tracks.some((x) => getVideoId(x.url) === v.video_id),
+		) as YTNodes.CompactVideo[]; // TypeScript failed to actually infer types
+
+		if (recommended.length === 0) {
+			this.context.player.debug("Cannot fetch recommendations");
+			return this.createResponse();
+		}
+
+		const tracks = recommended.map((v) => {
+			return buildTrackFromVideo(v, this);
+		});
+
+		return this.createResponse(null, tracks);
 	}
 
 	async stream(info: Track): Promise<ExtractorStreamable> {
