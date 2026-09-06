@@ -1,38 +1,17 @@
-import { Track } from "discord-player";
-import { Readable, PassThrough } from "node:stream";
+import type { Track } from "discord-player";
 
-export const YOUTUBE_REGEX = /^https:\/\/(www\.)?youtu(\.be\/.{11}(.+)?|be\.com\/watch\?v=.{11}(&.+)?)/;
+export const YOUTUBE_REGEX =
+	/^https:\/\/(www\.)?youtu(\.be\/.{11}(.+)?|be\.com\/watch\?v=.{11}(&.+)?)/;
 
 export function getVideoId(url: string): string {
-    if (!YOUTUBE_REGEX.test(url)) throw new Error("Invalid Youtube Link.");
+	if (!YOUTUBE_REGEX.test(url)) throw new Error("Invalid Youtube Link.");
 
-    let id = new URL(url).searchParams.get("v");
-    if (!id) id = url.split("/").at(-1)?.split("?").at(0);
+	let id = new URL(url).searchParams.get("v");
+	if (!id) id = url.split("/").at(-1)?.split("?").at(0);
 
-    return id;
+	return id;
 }
 
 export function createJsonLikeDebug(track: Track) {
-    return `{ title: ${track.title}, url: ${track.url} }`;
-}
-
-export function toNodeReadable(stream: any): Readable | null {
-    const nodeStream = new PassThrough();
-    const reader = stream.getReader();
-
-    (async () => {
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                if (value) {
-                    if (!nodeStream.write(Buffer.from(value))) await new Promise<void>((res) => nodeStream.once("drain", () => res()));
-                }
-            }
-        } finally {
-            nodeStream.end();
-        }
-    })();
-
-    return nodeStream;
+	return `{ title: ${track.title}, url: ${track.url} }`;
 }
