@@ -1,39 +1,44 @@
 {
-  "name": "discord-player-youtubei",
-  "version": "3.1.0-beta.1",
-  "description": "A YouTube extractor for discord-player",
-  "main": "dist/index.js",
-  "repository": "https://github.com/retrouser955/discord-player-youtubei",
-  "author": "retro_ig",
-  "license": "MIT",
-  "packageManager": "yarn@4.9.1",
-  "devDependencies": {
-    "@types/node": "^25.5.0",
-    "discord-player": "^7.1.0",
-    "simple-ytdl-core": "^1.1.0",
-    "tsdown": "^0.21.7",
-    "typescript": "^6.0.2",
-    "youtube-dl-exec": "^3.1.4"
-  },
-  "dependencies": {
-    "youtubei.js": "^18.0.0"
-  },
-  "scripts": {
-    "build": "tsdown",
-    "prepare": "npm run build"
-  },
-  "exports": {
-    ".": {
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.mjs",
-      "types": {
-        "require": "./dist/index.d.cts",
-        "import": "./dist/index.d.mts"
-      }
-    }
-  },
-  "peerDependencies": {
-    "bgutils-js": "^4.0.0",
-    "googlevideo": "^4.0.0"
-  }
+	"name": "discord-player-youtubei",
+	"version": "3.1.0-beta.1",
+	"description": "A YouTube extractor for discord-player",
+	"main": "dist/index.js",
+	"repository": "https://github.com/retrouser955/discord-player-youtubei",
+	"author": "retro_ig",
+	"license": "MIT",
+	"packageManager": "yarn@4.9.1",
+	"devDependencies": {
+		"@biomejs/biome": "2.5.12",
+		"@types/node": "^25.5.0",
+		"discord-player": "^7.1.0",
+		"simple-ytdl-core": "^1.1.0",
+		"tsdown": "^0.21.7",
+		"typescript": "^6.0.2",
+		"youtube-dl-exec": "^3.1.4"
+	},
+	"dependencies": {
+		"youtubei.js": "^18.0.0"
+	},
+	"scripts": {
+		"build": "tsdown",
+		"prepare": "npm run build",
+		"format": "biome format --write",
+		"lint": "biome lint",
+		"lint:fix": "biome lint --write",
+		"format-and-lint:fix": "npm run format && npm run lint:fix"
+	},
+	"exports": {
+		".": {
+			"require": "./dist/index.cjs",
+			"import": "./dist/index.mjs",
+			"types": {
+				"require": "./dist/index.d.cts",
+				"import": "./dist/index.d.mts"
+			}
+		}
+	},
+	"peerDependencies": {
+		"bgutils-js": "^4.0.0",
+		"googlevideo": "^4.0.0"
+	}
 }
