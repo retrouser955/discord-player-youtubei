@@ -1,12 +1,10 @@
-import type { Track } from "discord-player";
-import type { Readable } from "node:stream";
-import type { YoutubeExtractor } from "../Classes";
-import type { ProxyAgent } from "undici";
-import type { ClientList } from "simple-ytdl-core";
+# Options
 
-export interface YoutubeDlOptions {
-	cookiePath?: string;
-}
+These are the options for each YouTube extractor.
+
+```ts
+// this is from simple-ytdl-core
+export type ClientList = { client: Types.InnerTubeClient, requirePoToken: boolean, requireDecipher: boolean }[];
 
 export type TrialItem = "adaptive" | "sabr" | "peer" | "yt-dlp";
 
@@ -46,10 +44,8 @@ export interface YoutubeOptions {
 	};
 }
 
-export interface PlaylistObj {
-	playlistId: string;
-	videoId?: string;
-	isMix?: boolean;
+export interface YoutubeDlOptions {
+	cookiePath?: string;
 }
 
 export interface PeerOptions {
@@ -58,3 +54,7 @@ export interface PeerOptions {
 		| HeadersInit
 		| ((parsedUrl: string) => HeadersInit | Promise<HeadersInit>);
 }
+```
+
+- Take a look at [PeerStreaming](./PeerStreaming.md) for more information on streaming from peers.
+- Take a look at [YTDLP](./YTDLP.md) for more information on using yt-dlp to stream.

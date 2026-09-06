@@ -9,3 +9,6 @@ yarn.lock
 # TypeScript configuration files
 tsconfig.json
 tsdown.config.ts
+
+# Documentation
+docs/*
