@@ -27,6 +27,23 @@ pnpm add discord-player-youtubei
 deno add npm:discord-player-youtubei
 ```
 
+## After installation
+
+`discord-player-youtubei` relies heavily on [`simple-ytdl-core`](https://github.com/retrouser955/simple-ytdl-core) for its streaming functionality as well as [`bgutils-js@4`](https://github.com/LuanRT/BgUtils/) and [`googlevideo@4`](https://github.com/LuanRT/googlevideo/) for extracting YouTube tokens. These dependencies are intentionally kept as peer/dev dependency to allow the user to upgrade these without having to wait for an update on `discord-player-youtubei`. Install these packages prior by using the following.
+
+```bash
+# npm
+npm install simple-ytdl-core bgutils-js googlevideo
+# yarn 
+yarn add simple-ytdl-core bgutils-js googlevideo
+# pnpm
+pnpm add simple-ytdl-core bgutils-js googlevideo
+# deno
+deno add npm:simple-ytdl-core npm:bgutils-js npm:googlevideo
+```
+
+*`discord-player-youtubei` is tested with the major version 4 of both `bgutils-js` and `googlevideo`. Other versions may not work as intended. However, any version of `simple-ytdl-core` will work as this was made explicitly for `discord-player-youtubei`*
+
 # Registering
 
 We strongly recommend using extractorpack to manage your extractors
@@ -76,3 +93,7 @@ export interface YoutubeOptions {
 - [x] Implement live streaming
 - [x] Add support for extractorpack
 - [x] Implement streaming from peers
+
+# Testing
+
+`discord-player-youtubei` has been tested to be functioning with `discord-player@7.2.0`.

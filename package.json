@@ -1,6 +1,6 @@
 {
   "name": "discord-player-youtubei",
-  "version": "3.1.0-beta.0",
+  "version": "3.1.0-beta.1",
   "description": "A YouTube extractor for discord-player",
   "main": "dist/index.js",
   "repository": "https://github.com/retrouser955/discord-player-youtubei",
@@ -10,12 +10,12 @@
   "devDependencies": {
     "@types/node": "^25.5.0",
     "discord-player": "^7.1.0",
+    "simple-ytdl-core": "^1.1.0",
     "tsdown": "^0.21.7",
     "typescript": "^6.0.2",
     "youtube-dl-exec": "^3.1.4"
   },
   "dependencies": {
-    "simple-ytdl-core": "^1.1.0",
     "youtubei.js": "^18.0.0"
   },
   "scripts": {
@@ -31,5 +31,9 @@
         "import": "./dist/index.d.mts"
       }
     }
+  },
+  "peerDependencies": {
+    "bgutils-js": "^4.0.0",
+    "googlevideo": "^4.0.0"
   }
 }
