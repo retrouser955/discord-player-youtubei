@@ -109,16 +109,18 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 		query: string,
 		type?: SearchQueryType | null,
 	): Promise<boolean> {
-		if (typeof query !== "string") return false;
-
-		const t = String(type ?? "auto").toLowerCase();
-		if (!t.startsWith("youtube") && t !== "auto" && t !== "autosearch")
-			return false;
+		if (typeof query !== "string" || !query.length) return false;
 
 		if (query.startsWith("http"))
 			return query.includes("youtube.com") || query.includes("youtu.be");
 
-		return true;
+		return (
+			[
+				QueryType.AUTO,
+				QueryType.AUTO_SEARCH,
+				QueryType.ARBITRARY,
+			] as SearchQueryType[]
+		).some((t) => t === type);
 	}
 
 	public async handle(
