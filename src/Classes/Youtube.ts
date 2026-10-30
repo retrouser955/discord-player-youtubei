@@ -107,9 +107,17 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 
 	public async validate(
 		query: string,
-		_type?: SearchQueryType | null,
+		type?: SearchQueryType | null,
 	): Promise<boolean> {
 		if (typeof query !== "string") return false;
+
+		const t = String(type ?? "auto").toLowerCase();
+		if (!t.startsWith("youtube") && t !== "auto" && t !== "autosearch")
+			return false;
+
+		if (query.startsWith("http"))
+			return query.includes("youtube.com") || query.includes("youtu.be");
+
 		return true;
 	}
 
