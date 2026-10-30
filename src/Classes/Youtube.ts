@@ -24,6 +24,7 @@ import { isYoutubeDlInstalled } from "../Streams/YoutubeDLStream";
 import { ytdlDebugger } from "simple-ytdl-core";
 import type { Readable } from "node:stream";
 import { YTNodes } from "youtubei.js";
+import { YOUTUBE_REGEX } from "../Constants";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	public static identifier: string =
@@ -111,8 +112,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	): Promise<boolean> {
 		if (typeof query !== "string" || !query.length) return false;
 
-		if (query.startsWith("http"))
-			return query.includes("youtube.com") || query.includes("youtu.be");
+		if (isUrl(query)) return YOUTUBE_REGEX.test(query);
 
 		return (
 			[
