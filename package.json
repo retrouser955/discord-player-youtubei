@@ -1,6 +1,6 @@
 {
 	"name": "discord-player-youtubei",
-	"version": "3.1.0",
+	"version": "3.1.1",
 	"description": "A YouTube extractor for discord-player",
 	"main": "dist/index.js",
 	"repository": {

@@ -29,7 +29,7 @@ deno add npm:discord-player-youtubei
 
 ## After installation
 
-`discord-player-youtubei` relies heavily on [`simple-ytdl-core`](https://github.com/retrouser955/simple-ytdl-core) for its streaming functionality as well as [`bgutils-js@4`](https://github.com/LuanRT/BgUtils/) and [`googlevideo@4`](https://github.com/LuanRT/googlevideo/) for extracting YouTube tokens. These dependencies are intentionally kept as peer/dev dependency to allow the user to upgrade these without having to wait for an update on `discord-player-youtubei`. Install these packages prior by using the following.
+`discord-player-youtubei` relies heavily on [`simple-ytdl-core`](https://github.com/retrouser955/simple-ytdl-core) for its streaming functionality as well as [`bgutils-js@4`](https://github.com/LuanRT/BgUtils/) and [`googlevideo@5`](https://github.com/LuanRT/googlevideo/) for extracting YouTube tokens. These dependencies are intentionally kept as peer/dev dependency to allow the user to upgrade these without having to wait for an update on `discord-player-youtubei`. Install these packages prior by using the following.
 
 ```bash
 # npm
@@ -42,7 +42,7 @@ pnpm add simple-ytdl-core bgutils-js googlevideo
 deno add npm:simple-ytdl-core npm:bgutils-js npm:googlevideo
 ```
 
-*`discord-player-youtubei` is tested with the major version 4 of both `bgutils-js` and `googlevideo`. Other versions may not work as intended. However, any version of `simple-ytdl-core` will work as this was made explicitly for `discord-player-youtubei`*
+*`discord-player-youtubei` is tested with the major version 4 of `bgutils-js` and major version 5 of `googlevideo`. Other versions may not work as intended. However, any version of `simple-ytdl-core` will work as this was made explicitly for `discord-player-youtubei`*
 
 # Registering
 
