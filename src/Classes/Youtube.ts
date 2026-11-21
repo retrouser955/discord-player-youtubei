@@ -228,32 +228,51 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	}
 
 	async getRelatedTracks(
-		track: Track,
-		history: GuildQueueHistory,
+	  track: Track,
+	  history: GuildQueueHistory,
 	): Promise<ExtractorInfo> {
-		const id = getVideoId(track.url);
-
-		const info = await this.innertube.getInfo(id);
-		const next = info.watch_next_feed;
-
-		if (!next) return this.createResponse();
-
-		const recommended = next.filter(
-			(v) =>
-				v.is(YTNodes.CompactVideo) &&
-				!history.tracks.some((x) => getVideoId(x.url) === v.video_id),
-		) as YTNodes.CompactVideo[]; // TypeScript failed to actually infer types
-
-		if (recommended.length === 0) {
-			this.context.player.debug("Cannot fetch recommendations");
-			return this.createResponse();
-		}
-
-		const tracks = recommended.map((v) => {
-			return buildTrackFromVideo(v, this);
-		});
-
-		return this.createResponse(null, tracks);
+	  const info = await this.innertube.getInfo(getVideoId(track.url));
+	  const feed = info.watch_next_feed;
+	
+	  if (!feed?.length) return this.createResponse();
+	
+	  const seen = new Set(
+	    history.tracks.flatMap((item) => {
+	      try {
+	        return [getVideoId(item.url)];
+	      } catch {
+	        return [];
+	      }
+	    }),
+	  );
+	
+	  return runWithSearchContext(
+	    {
+	      requestedBy: track.requestedBy,
+	      type: QueryType.YOUTUBE_VIDEO,
+	    },
+	    async () => {
+	      const tracks = feed.flatMap((item) => {
+	        if (item.is(YTNodes.CompactVideo)) {
+	          if (seen.has(item.video_id)) return [];
+	          return [buildTrackFromVideo(item, this)];
+	        }
+	
+	        if (
+	          item.is(YTNodes.LockupView) &&
+	          item.content_type === "VIDEO" &&
+	          item.content_id
+	        ) {
+	          if (seen.has(item.content_id)) return [];
+	          return [buildTrackFromLockupView(item, this)];
+	        }
+	
+	        return [];
+	      });
+	
+	      return this.createResponse(null, tracks);
+	    },
+	  );
 	}
 
 	async stream(info: Track): Promise<ExtractorStreamable> {
