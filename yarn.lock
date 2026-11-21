@@ -1414,7 +1414,7 @@ __metadata:
     tsdown: "npm:^0.21.7"
     typescript: "npm:^6.0.2"
     youtube-dl-exec: "npm:^3.1.4"
-    youtubei.js: "npm:^18.0.0"
+    youtubei.js: "npm:^18.3.0"
   peerDependencies:
     bgutils-js: ^4.0.0
     googlevideo: ^4.0.0
@@ -3385,13 +3385,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"youtubei.js@npm:^18.0.0":
-  version: 18.0.0
-  resolution: "youtubei.js@npm:18.0.0"
+"youtubei.js@npm:^18.3.0":
+  version: 18.3.0
+  resolution: "youtubei.js@npm:18.3.0"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.0.0"
     fflate: "npm:^0.8.2"
     meriyah: "npm:^7.3.1"
-  checksum: 10c0/cd43fc79646f66ca5f3f1f95f55721c8d1eb9cb2b0973cc0133a7bd93a123d442207e0a505e2aff3af8a6d98681a209aab307835aec40269917d3f992ea153b5
+  checksum: 10c0/5c99266f727c5e8600f8204d860755fa630504e95d49589c3bf91f328233fc9df81196af3c2a4e8dc637a27e660ec6ff2ee198dabc281108fb415da418c4aad1
   languageName: node
   linkType: hard

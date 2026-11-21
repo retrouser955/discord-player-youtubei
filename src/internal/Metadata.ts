@@ -120,6 +120,18 @@ export async function search(term: string, ext: YoutubeExtractor) {
 	return buildTracks(searchResult.videos, ext);
 }
 
+/**
+ * Search the YouTube music catalog. Used for bridging internally 
+ */
+export async function searchMusic(term: string): Promise<YTNodes.MusicResponsiveListItem[]> {
+	const tube = await getInnertube();
+	const results = await tube.music.search(term, {
+		type: "song"
+	});
+	
+	return results.contents?.[0]?.contents?.filterType(YTNodes.MusicResponsiveListItem) || []
+}
+
 export async function getMixedPlaylist(
 	playlistId: string,
 	videoId: string,

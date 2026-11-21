@@ -6,11 +6,11 @@ import {
 	type GuildQueueHistory,
 	QueryType,
 	type SearchQueryType,
-	type Track,
+	Track,
 } from "discord-player";
 import type { YoutubeOptions } from "../types";
 import type Innertube from "youtubei.js";
-import { getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
+import { buildVideoUrl, getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import {
 	buildTrackFromVideo,
 	getMixedPlaylist,
@@ -18,13 +18,14 @@ import {
 	getVideo,
 	runWithSearchContext,
 	search,
+	searchMusic,
 } from "../internal";
 import { createStreamFunction } from "../Streams";
 import { isYoutubeDlInstalled } from "../Streams/YoutubeDLStream";
 import { ytdlDebugger } from "simple-ytdl-core";
 import type { Readable } from "node:stream";
 import { YTNodes } from "youtubei.js";
-import { YOUTUBE_REGEX } from "../Constants";
+import { SHELL_YT_TRACK_PRAMS, YOUTUBE_REGEX } from "../Constants";
 
 export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	public static identifier: string =
@@ -180,14 +181,50 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 		});
 	}
 
-	async bridge(track: Track): Promise<ExtractorStreamable | null> {
+	private async bridgeYt(query: string, track: Track): Promise<ExtractorStreamable | null> {
 		const results = await runWithSearchContext(
 			{ requestedBy: track.requestedBy, type: QueryType.YOUTUBE_SEARCH },
-			() => search(this.createBridgeQuery(track), this),
+			() => search(query, this),
 		);
 		const bridgedTrack = results[0];
 
 		return bridgedTrack ? this.stream(bridgedTrack) : null;
+	}
+
+	async bridge(track: Track): Promise<ExtractorStreamable | null> {
+		const query = typeof this.options.bridge?.createQuery === "function" ?
+			this.options.bridge.createQuery(track) : this.createBridgeQuery(track);
+
+		if (!this.options.bridge?.from || this.options.bridge.from === "youtube") {
+			return this.bridgeYt(query, track);
+		} else {
+			try {
+				const results = await searchMusic(query);
+
+				const bridgedTrack = results.at(0);
+
+				if (!bridgedTrack || !bridgedTrack.id) return null;
+
+				// make a shell track only the extractor need to stream
+				const bridge = new Track(this.context.player, {
+					url: buildVideoUrl(bridgedTrack.id),
+					title: SHELL_YT_TRACK_PRAMS,
+					author: SHELL_YT_TRACK_PRAMS,
+					thumbnail: SHELL_YT_TRACK_PRAMS,
+					duration: "1:00",
+					requestedBy: track.requestedBy,
+					source: "youtube",
+					queryType: QueryType.YOUTUBE_VIDEO,
+					live: false
+				});
+
+				return this.stream(bridge);
+			} catch (error) {
+				this.debug("Unable to bridge the track from YouTube Music. Falling back to default behavior");
+				this.debug(error);
+				return this.bridgeYt(query, track);
+			}
+		}
 	}
 
 	async getRelatedTracks(

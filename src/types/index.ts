@@ -44,6 +44,21 @@ export interface YoutubeOptions {
 			customClientOrder?: ClientList;
 		};
 	};
+	/**
+	 * Configure how the YouTube extractor handles bridging
+	 */
+	bridge?: {
+		/**
+		 * Create a bridge query
+		 * @param track The track to bridge from
+		 * @returns the search term the extractor should use
+		 */
+		createQuery?: (track: Track) => string;
+		/**
+		 * Bridge from either YT or YT Music
+		 */
+		from?: "youtube" | "yt-music"
+	}
 }
 
 export interface PlaylistObj {
