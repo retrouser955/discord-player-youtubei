@@ -121,15 +121,33 @@ export async function search(term: string, ext: YoutubeExtractor) {
 }
 
 /**
- * Search the YouTube music catalog. Used for bridging internally 
+ * Search the YouTube music catalog. Used for bridging internally
  */
-export async function searchMusic(term: string): Promise<YTNodes.MusicResponsiveListItem[]> {
+export async function searchMusic(
+	term: string,
+): Promise<YTNodes.MusicResponsiveListItem[]> {
 	const tube = await getInnertube();
 	const results = await tube.music.search(term, {
-		type: "song"
+		type: "song",
 	});
-	
-	return results.contents?.[0]?.contents?.filterType(YTNodes.MusicResponsiveListItem) || []
+
+	// YouTube may prepend notice/promo sections (e.g. an ItemSection holding a Message)
+	// based on the session or IP, so the songs shelf is not always the first section.
+	const shelf =
+		results.songs ??
+		results.contents
+			?.filterType(YTNodes.MusicShelf)
+			.find((s) => s.contents.length > 0);
+
+	if (shelf)
+		return shelf.contents?.filterType(YTNodes.MusicResponsiveListItem) ?? [];
+
+	return (
+		results.contents?.flatMap(
+			(section) =>
+				section.contents?.filterType?.(YTNodes.MusicResponsiveListItem) ?? [],
+		) ?? []
+	);
 }
 
 export async function getMixedPlaylist(
