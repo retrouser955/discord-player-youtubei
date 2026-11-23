@@ -261,33 +261,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@discord-player/equalizer@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@discord-player/equalizer@npm:7.1.0"
-  checksum: 10c0/b211ae77e70d317235f2d6f503c6faf519345544488e8cc5e82c8ac091bc7d57123b59f9e774e76644ff3657adf19f976c254e395630043cdb090958424fcd13
+"@discord-player/equalizer@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "@discord-player/equalizer@npm:7.2.0"
+  checksum: 10c0/dae10b85e93330931d899fa63bf2ed85716c9ed5473c5620c535a684ad5fe14c944635a54542a732e3781bb6b0fefb9548a33cd345afe2a8202437e92a874567
   languageName: node
   linkType: hard
 
-"@discord-player/ffmpeg@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@discord-player/ffmpeg@npm:7.1.0"
-  checksum: 10c0/aecb099f1904c2b80bd23e8139cd8ff50f3253977a71fb8b55d63592f7ec8a387df9bd6cfc2274eb269d57c92c38702e7024356755e944e64ed7aa601d5e11cc
+"@discord-player/ffmpeg@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "@discord-player/ffmpeg@npm:7.2.0"
+  checksum: 10c0/886e0d386001e6806279d61af2d46f1c9086ad01f34a607c13cf5c815181b3f401ff1113886d867c6404d6a8ed35d860dcd4de112a3b0fa476ee84b24bf75d1e
   languageName: node
   linkType: hard
 
-"@discord-player/opus@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@discord-player/opus@npm:7.1.0"
-  checksum: 10c0/5480b1652f3b34917b6b9c8455f60702bca902fcdc9d69b44572df5ccbfb1d210611c21da7a7bd36995da15815562eb0c417807f67f180f879569d4b7b1c9be0
+"@discord-player/opus@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "@discord-player/opus@npm:7.2.0"
+  checksum: 10c0/940363184016f45fa1a9e7180f3df21a96fd96d3e0534edcaccfd0bc402067a2048e7f7afabb4e109fd466e29c9718584e235cb787610c9d5899c4021da316be
   languageName: node
   linkType: hard
 
-"@discord-player/utils@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@discord-player/utils@npm:7.1.0"
+"@discord-player/utils@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "@discord-player/utils@npm:7.2.0"
   dependencies:
     "@discordjs/collection": "npm:^1.1.0"
-  checksum: 10c0/db4eb223e4cd02d7c2a5845509134dab6d1422e602966b2ee7bfd11129bc4aaa90fe0221bb30481474fa443ee7e7e90290bccf3ccfadad61a07d4757927eee7d
+  checksum: 10c0/92310962147522a141e4d973c68614233558adc6485644f3c6690b54ccaca4dc809d08d85259960c8081c3f9389568fbbab034f349cae17e9ce99aeef799ad25
   languageName: node
   linkType: hard
 
@@ -1409,7 +1409,7 @@ __metadata:
   dependencies:
     "@biomejs/biome": "npm:2.5.12"
     "@types/node": "npm:^25.5.0"
-    discord-player: "npm:^7.1.0"
+    discord-player: "npm:^7.2.0"
     simple-ytdl-core: "npm:^1.1.0"
     tsdown: "npm:^0.21.7"
     typescript: "npm:^6.0.2"
@@ -1417,38 +1417,38 @@ __metadata:
     youtubei.js: "npm:^18.3.0"
   peerDependencies:
     bgutils-js: ^4.0.0
-    googlevideo: ^4.0.0
+    googlevideo: ^5.0.0
   languageName: unknown
   linkType: soft
 
-"discord-player@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "discord-player@npm:7.1.0"
+"discord-player@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "discord-player@npm:7.2.0"
   dependencies:
-    "@discord-player/equalizer": "npm:^7.1.0"
-    "@discord-player/ffmpeg": "npm:^7.1.0"
-    "@discord-player/utils": "npm:^7.1.0"
+    "@discord-player/equalizer": "npm:^7.2.0"
+    "@discord-player/ffmpeg": "npm:^7.2.0"
+    "@discord-player/utils": "npm:^7.2.0"
     "@web-scrobbler/metadata-filter": "npm:^3.1.0"
-    discord-voip: "npm:^7.1.0"
+    discord-voip: "npm:^7.2.0"
     libsodium-wrappers: "npm:^0.7.13"
   peerDependencies:
-    "@discord-player/extractor": ^7.1.0
+    "@discord-player/extractor": ^7.2.0
     mediaplex: ^1
-  checksum: 10c0/aadae6c3516ad7772189b44dbcbcff74f5d8a10635cad3bbdad1d2af15e51c6c4f9159fdeddd4d7168818538269da534c9f8737acd867ad8b7a1524c8daa3bde
+  checksum: 10c0/d13b04528d0d932c74a061ae10442331e19a0828a4c9c83a47fb8265164718b6f6b43ab800695b79bae7a9282e0d5447c770984888e85d70047d3c6815eda953
   languageName: node
   linkType: hard
 
-"discord-voip@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "discord-voip@npm:7.1.0"
+"discord-voip@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "discord-voip@npm:7.2.0"
   dependencies:
-    "@discord-player/ffmpeg": "npm:^7.1.0"
-    "@discord-player/opus": "npm:^7.1.0"
-    "@discord-player/utils": "npm:^7.1.0"
+    "@discord-player/ffmpeg": "npm:^7.2.0"
+    "@discord-player/opus": "npm:^7.2.0"
+    "@discord-player/utils": "npm:^7.2.0"
     "@types/ws": "npm:^8.5.10"
     tsup: "npm:^8.3.5"
     typescript: "npm:^5.5.4"
-  checksum: 10c0/bae7badb4f5758969c557a748b4ad3bbc64d29f64f9f3c1609d07b45b53ae25c98431daa3afc38d8f1154e8e3397160dc3e342ad5784865f79e66354cbb1dc26
+  checksum: 10c0/396a272fd775315bbabbc86891fc8c6afda52d129696119f33ea4d40eb6af3441e8a22c463e6993a04c1fa80c568c1b26597b00a7327730d8629f4371d0bf1f1
   languageName: node
   linkType: hard
 

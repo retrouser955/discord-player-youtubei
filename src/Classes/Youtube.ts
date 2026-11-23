@@ -12,6 +12,7 @@ import type { YoutubeOptions } from "../types";
 import type Innertube from "youtubei.js";
 import { buildVideoUrl, getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
 import {
+	buildTrackFromLockupView,
 	buildTrackFromVideo,
 	getMixedPlaylist,
 	getPlaylist,
@@ -237,7 +238,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	  if (!feed?.length) return this.createResponse();
 	
 	  const seen = new Set(
-	    history.tracks.flatMap((item) => {
+	    history.tracks.toArray().flatMap((item) => {
 	      try {
 	        return [getVideoId(item.url)];
 	      } catch {
