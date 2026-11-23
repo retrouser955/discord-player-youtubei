@@ -57,8 +57,8 @@ export interface YoutubeOptions {
 		/**
 		 * Bridge from either YT or YT Music
 		 */
-		from?: "youtube" | "yt-music"
-	}
+		from?: "youtube" | "yt-music";
+	};
 }
 
 export interface PlaylistObj {

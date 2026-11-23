@@ -10,7 +10,13 @@ import {
 } from "discord-player";
 import type { YoutubeOptions } from "../types";
 import type Innertube from "youtubei.js";
-import { buildVideoUrl, getInnertube, getPlaylistId, getVideoId, isUrl } from "../utils";
+import {
+	buildVideoUrl,
+	getInnertube,
+	getPlaylistId,
+	getVideoId,
+	isUrl,
+} from "../utils";
 import {
 	buildTrackFromLockupView,
 	buildTrackFromVideo,
@@ -182,7 +188,10 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 		});
 	}
 
-	private async bridgeYt(query: string, track: Track): Promise<ExtractorStreamable | null> {
+	private async bridgeYt(
+		query: string,
+		track: Track,
+	): Promise<ExtractorStreamable | null> {
 		const results = await runWithSearchContext(
 			{ requestedBy: track.requestedBy, type: QueryType.YOUTUBE_SEARCH },
 			() => search(query, this),
@@ -193,8 +202,10 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	}
 
 	async bridge(track: Track): Promise<ExtractorStreamable | null> {
-		const query = typeof this.options.bridge?.createQuery === "function" ?
-			this.options.bridge.createQuery(track) : this.createBridgeQuery(track);
+		const query =
+			typeof this.options.bridge?.createQuery === "function"
+				? this.options.bridge.createQuery(track)
+				: this.createBridgeQuery(track);
 
 		if (!this.options.bridge?.from || this.options.bridge.from === "youtube") {
 			return this.bridgeYt(query, track);
@@ -204,7 +215,7 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 
 				const bridgedTrack = results.at(0);
 
-				if (!bridgedTrack || !bridgedTrack.id) return null;
+				if (!bridgedTrack?.id) return null;
 
 				// make a shell track only the extractor need to stream
 				const bridge = new Track(this.context.player, {
@@ -216,12 +227,14 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 					requestedBy: track.requestedBy,
 					source: "youtube",
 					queryType: QueryType.YOUTUBE_VIDEO,
-					live: false
+					live: false,
 				});
 
 				return this.stream(bridge);
 			} catch (error) {
-				this.debug("Unable to bridge the track from YouTube Music. Falling back to default behavior");
+				this.debug(
+					"Unable to bridge the track from YouTube Music. Falling back to default behavior",
+				);
 				this.debug(error);
 				return this.bridgeYt(query, track);
 			}
@@ -229,51 +242,51 @@ export class YoutubeExtractor extends BaseExtractor<YoutubeOptions> {
 	}
 
 	async getRelatedTracks(
-	  track: Track,
-	  history: GuildQueueHistory,
+		track: Track,
+		history: GuildQueueHistory,
 	): Promise<ExtractorInfo> {
-	  const info = await this.innertube.getInfo(getVideoId(track.url));
-	  const feed = info.watch_next_feed;
-	
-	  if (!feed?.length) return this.createResponse();
-	
-	  const seen = new Set(
-	    history.tracks.toArray().flatMap((item) => {
-	      try {
-	        return [getVideoId(item.url)];
-	      } catch {
-	        return [];
-	      }
-	    }),
-	  );
-	
-	  return runWithSearchContext(
-	    {
-	      requestedBy: track.requestedBy,
-	      type: QueryType.YOUTUBE_VIDEO,
-	    },
-	    async () => {
-	      const tracks = feed.flatMap((item) => {
-	        if (item.is(YTNodes.CompactVideo)) {
-	          if (seen.has(item.video_id)) return [];
-	          return [buildTrackFromVideo(item, this)];
-	        }
-	
-	        if (
-	          item.is(YTNodes.LockupView) &&
-	          item.content_type === "VIDEO" &&
-	          item.content_id
-	        ) {
-	          if (seen.has(item.content_id)) return [];
-	          return [buildTrackFromLockupView(item, this)];
-	        }
-	
-	        return [];
-	      });
-	
-	      return this.createResponse(null, tracks);
-	    },
-	  );
+		const info = await this.innertube.getInfo(getVideoId(track.url));
+		const feed = info.watch_next_feed;
+
+		if (!feed?.length) return this.createResponse();
+
+		const seen = new Set(
+			history.tracks.toArray().flatMap((item) => {
+				try {
+					return [getVideoId(item.url)];
+				} catch {
+					return [];
+				}
+			}),
+		);
+
+		return runWithSearchContext(
+			{
+				requestedBy: track.requestedBy,
+				type: QueryType.YOUTUBE_VIDEO,
+			},
+			async () => {
+				const tracks = feed.flatMap((item) => {
+					if (item.is(YTNodes.CompactVideo)) {
+						if (seen.has(item.video_id)) return [];
+						return [buildTrackFromVideo(item, this)];
+					}
+
+					if (
+						item.is(YTNodes.LockupView) &&
+						item.content_type === "VIDEO" &&
+						item.content_id
+					) {
+						if (seen.has(item.content_id)) return [];
+						return [buildTrackFromLockupView(item, this)];
+					}
+
+					return [];
+				});
+
+				return this.createResponse(null, tracks);
+			},
+		);
 	}
 
 	async stream(info: Track): Promise<ExtractorStreamable> {
